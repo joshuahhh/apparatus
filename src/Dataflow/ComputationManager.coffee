@@ -25,7 +25,7 @@ module.exports = class ComputationManager
       finally
         @isRunning = false
     else
-      callback()
+      return callback()
 
   # Takes a function and returns a memoized version.
   memoize: (fn) ->
