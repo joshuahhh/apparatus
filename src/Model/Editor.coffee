@@ -47,6 +47,7 @@ module.exports = class Editor
     builtIn = _.clone(Model)
     builtIn["SpreadEnv"] = Dataflow.SpreadEnv
     builtIn["Matrix"] = Util.Matrix
+    builtIn["Cell"] = Dataflow.Cell
     return builtIn
 
   # TODO: get version via build process / ENV variable?

@@ -51,7 +51,7 @@ Model.Component = Model.Node.createVariant
     result = {}
     for attribute in @attributes()
       name = attribute.name
-      value = attribute.value()
+      value = attribute.value.run()
       result[name] = value
     return result
 

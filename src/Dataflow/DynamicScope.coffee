@@ -9,6 +9,8 @@ module.exports = class DynamicScope
 
     try
       result = fn()
+    catch
+      console.log('fn err', fn)
     finally
       @context = previousContext
     return result

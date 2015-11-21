@@ -27,12 +27,14 @@ module.exports = class ComputationManager
     else
       return callback()
 
-  # Takes a function and returns a memoized version.
+  # Takes a function and returns a memoized version. Can be used on class
+  # methods.
   memoize: (fn) ->
     cachedValue = null
     lastEvaluated = -1
-    return =>
-      if lastEvaluated != @counter
-        cachedValue = fn()
-        lastEvaluated = @counter
+    thisComputationManager = @
+    return ->
+      if lastEvaluated != thisComputationManager.counter
+        cachedValue = fn.call(@)
+        lastEvaluated = thisComputationManager.counter
       return cachedValue

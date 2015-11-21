@@ -9,10 +9,17 @@ Model = require "./Model"
 
 module.exports = Attribute = Node.createVariant
   constructor: ->
+    # Object.observe @, (changes) ->
+    #   for change in changes
+    #     if change.name.startsWith('value')
+    #       console.log('@', change)
+
+
     # Call "super" constructor
     Node.constructor.apply(this, arguments)
 
-    @value = Dataflow.cell(@_value.bind(this))
+    @value = new Dataflow.Cell(@_value.bind(this))
+
 
   _value: ->
     # Optimization
@@ -26,7 +33,7 @@ module.exports = Attribute = Node.createVariant
       return new CircularReferenceError(circularReferencePath)
 
     referenceValues = _.mapObject @references(), (referenceAttribute) ->
-      referenceAttribute.value()
+      referenceAttribute.value.run()
 
     try
       return @__compiledExpression.evaluate(referenceValues)
