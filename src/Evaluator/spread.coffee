@@ -2,6 +2,8 @@ _ = require "underscore"
 Dataflow = require "../Dataflow/Dataflow"
 
 
+# This is the user-facing "spread" function which generates spreads from arrays
+# and numeric-range spreads.
 module.exports = spread = (start, end, increment=1) ->
   if _.isArray(start)
     return new Dataflow.Spread(start)

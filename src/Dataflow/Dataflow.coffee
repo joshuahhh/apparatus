@@ -20,6 +20,12 @@ class UnresolvedSpreadError
   constructor: (@spread) ->
 
 
+# A Dataflow.cell is a boxed-up version of a function which handles:
+#   * caching of results during a larger evaluation
+#   * calculation of spreads.
+# A cell is not a primary source of truth in the scene graph. Rather, it is part
+# of the real-time computation system.
+
 cell = (fn) ->
 
   # These are the workhorse functions that together evaluate the cell.
