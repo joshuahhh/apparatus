@@ -312,6 +312,18 @@ HeaderSize = 18px
     width 1.5em
   .ElementRowLabel
     flex-grow 1
+  .ElementRemoveButton
+    padding 0 4px
+    margin-bottom -4px
+    font-size 15px
+    color transparent
+    cursor pointer
+
+.OutlineItem:hover
+  .ElementRemoveButton
+    color rgba(0, 0, 0, 0.25)
+    &:hover
+      color rgba(0, 0, 0, 0.6)
 
 
 .DisclosureTriangle
@@ -399,6 +411,17 @@ HeaderSize = 18px
 
   .AttributeRowExpression
     flex-grow 1
+
+  .AttributeRemoveButton
+    padding 0 4px
+    color transparent
+    cursor pointer
+
+  &:hover
+    .AttributeRemoveButton
+      color rgba(0, 0, 0, 0.25)
+      &:hover
+        color rgba(0, 0, 0, 0.6)
 
   &.isWrapped
     flex-wrap wrap

@@ -55,13 +55,16 @@ module.exports = class Project
     element.expanded = true
     return element
 
+  removeElement: (element) ->
+    parent = element.parent()
+    return unless parent
+    parent.removeChild(element)
+    @select(null) if element == @selectedParticularElement.element
+
   removeSelectedElement: ->
     return unless @selectedParticularElement
     selectedElement = @selectedParticularElement.element
-    parent = selectedElement.parent()
-    return unless parent
-    parent.removeChild(selectedElement)
-    @select(null)
+    @removeElement(selectedElement)
 
   groupSelectedElement: ->
     return unless @selectedParticularElement
@@ -114,4 +117,5 @@ module.exports = class Project
     return @selectedParticularElement?.element.implicitlyControlledAttributes() ? []
 
   controllableAttributes: ->
-    return @selectedParticularElement?.element.controllableAttributes() ? []
+    toReturn = @selectedParticularElement?.element.controllableAttributes() ? []
+    return toReturn

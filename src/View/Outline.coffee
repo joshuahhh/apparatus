@@ -120,6 +120,10 @@ R.create "OutlineItem",
             value: element.label
             setValue: @_setLabelValue
           }
+        R.div {
+          className: "ElementRemoveButton Interactive icon-x"
+          onClick: @_onClickElementRemoveButton
+        }
       R.NovelAttributesList {element}
 
 
@@ -166,6 +170,11 @@ R.create "OutlineItem",
     particularElement = new Model.ParticularElement(element)
     project.select(particularElement)
 
+  _onClickElementRemoveButton: ->
+    {element} = @props
+    {project} = @context
+    project.removeElement(element)
+    return
 
   # ===========================================================================
   # Drag Reorder

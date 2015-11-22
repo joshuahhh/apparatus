@@ -36,6 +36,11 @@ R.create "AttributeRow",
         R.AttributeLabel {attribute}
       R.div {className: "AttributeRowExpression"},
         R.Expression {attribute}
+      if attribute.isNovel()
+        R.div {
+          className: "AttributeRemoveButton icon-x"
+          onClick: @_onClickAttributeRemoveButton
+        }
 
   _isWrapped: ->
     {attribute} = @props
@@ -69,6 +74,14 @@ R.create "AttributeRow",
     else
       selectedElement.addControlledAttribute(attribute)
 
+  _onClickAttributeRemoveButton: ->
+    {attribute} = @props
+    if attribute.isVariantOf(Model.Variable)
+      attribute.parent().removeChild(attribute)
+      # TODO: What about references to the variable?
+    else
+      attribute.clearExpression()
+      # TODO: Weird bit where inspector doesn't update
 
 R.create "AttributeLabel",
   propTypes:
@@ -192,16 +205,3 @@ R.create "AttributeToken",
     {dragManager, hoverManager} = @context
     return if dragManager.drag?
     hoverManager.hoveredAttribute = null
-
-
-
-
-
-
-
-
-
-
-
-
-

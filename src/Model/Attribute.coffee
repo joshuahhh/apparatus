@@ -63,6 +63,15 @@ module.exports = Attribute = Node.createVariant
       referenceLink.setTarget(attribute)
       @addChild(referenceLink)
 
+  clearExpression: () ->
+    delete @exprString
+
+    # Remove all existing reference links
+    for referenceLink in @childrenOfType(Model.ReferenceLink)
+      @removeChild(referenceLink)
+
+    # We assume that the master's expression needs no references
+
   references: ->
     references = {}
     for referenceLink in @childrenOfType(Model.ReferenceLink)
