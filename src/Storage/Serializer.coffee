@@ -14,9 +14,11 @@ module.exports = class Serializer
   # Serialization
   # ===========================================================================
 
-  shouldSerializeProperty: (key, value) ->
+  shouldSerializeProperty: (key, value, object) ->
     # Won't serialize functions.
-    return false if _.isFunction(value)
+    if _.isFunction(value)
+      console.log('FUNCTION WOAH', object, key)
+      return false
     # Won't serialize a key starting with __
     return false if key.slice(0, 2) == "__"
     return true
@@ -48,7 +50,7 @@ module.exports = class Serializer
       result = {}
       # Annotate key/values.
       for own key, value of object
-        if @shouldSerializeProperty(key, value)
+        if @shouldSerializeProperty(key, value, object)
           result[key] = jsonifyValue(value)
       # Annotate prototype.
       proto = Object.getPrototypeOf(object)
