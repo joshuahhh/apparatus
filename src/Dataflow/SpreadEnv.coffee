@@ -2,6 +2,29 @@ Spread = require "./Spread"
 
 # TODO: This should have tests for isEqualTo and contains
 
+# SpreadEnv tells you about where you are inside spreads. If your circle's
+# x-position is set to myXSpread and its y-position is set to myYSpread, then,
+# when you're drawing an instance of the circle, you want to know where you are
+# in those two spreads so you can come up with specific values for the x- and
+# y-positions. Each SpreadEnv handles a single spread origin, but they can be
+# nested into hierarchies. For instance:
+#
+# SpreadEnv1
+#   origin: XAttribute
+#   index: 3
+#   parent:
+#     SpreadEnv2
+#       origin: YAttribute
+#       index: 5
+#       parent:
+#         SpreadEnv.empty
+#           origin: undefined
+#           index: undefined
+#           parent: undefined
+#
+# In this environment, spreads with origin XAttribute will be resolved with
+# index 3, and spreads with origin YAttribute will be resolved with index 5.
+
 module.exports = class SpreadEnv
   constructor: (@parent, @origin, @index) ->
 
