@@ -25,20 +25,19 @@ R.create "RightPanel",
     if layout.fullScreen
       return null
 
-    R.div { 
+    R.div {
         className: R.cx {
-           RightPanel: true
-           FullScreen: layout.fullScreen
+          RightPanel: true
+          FullScreen: layout.fullScreen
         }
         style: {
           width: layout.rightPanelWidth
         }
       },
-      R.div { 
+      R.div {
         className: "RightResize"
         onMouseDown: @_onResizeMouseDown
       }
-      R.div { className: "RightPanelContainer" }, 
+      R.div { className: "RightPanelContainer" },
         R.Outline {}
         R.Inspector {}
-

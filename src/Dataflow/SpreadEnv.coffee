@@ -36,7 +36,8 @@ module.exports = class SpreadEnv
 
   isEqualTo: (spreadEnv) ->
     return false unless spreadEnv?
-    return false unless @origin == spreadEnv.origin and @index == spreadEnv.index
+    return false unless @origin == spreadEnv.origin
+    return false unless @index == spreadEnv.index
     return true if !@parent and !spreadEnv.parent
     return @parent.isEqualTo(spreadEnv.parent)
 
