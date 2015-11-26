@@ -1,0 +1,23 @@
+{
+    "nodes":[
+      {"i": 0, "name":"Rect","width":60,"height":60},
+      {"i": 1, "name":"w","width":60,"height":60},
+      {"i": 2, "name":"h","width":60,"height":60},
+      {"i": 3, "name":"MyRect","width":80,"height":60},
+      {"i": 4, "name":"w","width":60,"height":60},
+      {"i": 5, "name":"h","width":60,"height":60}
+    ],
+    "links":[
+      {"source":1,"target":0,"type":"parent"},
+      {"source":2,"target":0,"type":"parent"},
+      {"source":4,"target":3,"type":"parent"},
+      {"source":5,"target":3,"type":"parent"},
+      {"source":3,"target":0,"type":"master"},
+      {"source":4,"target":1,"type":"master"},
+      {"source":5,"target":2,"type":"master"}
+    ],
+	"groups":[
+	  {"leaves":[0,1,2]},
+	  {"leaves":[3,4,5]}
+	]
+}
