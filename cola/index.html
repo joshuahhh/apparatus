@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>Grouped Layout</title>
+    <style>
+        @import url(../style.css);
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+  cursor: move;
+}
+
+.group {
+  stroke: #fff;
+  stroke-width: 1.5px;
+  cursor: move;
+  opacity: 0.7;
+}
+
+.link {
+  stroke: #7a4e4e;
+  stroke-width: 3px;
+  stroke-opacity: 1;
+  marker-end: url(#end-arrow);
+}
+
+.link.type-master {
+  stroke-dasharray: 10 10;
+}
+
+.label {
+    fill: white;
+    font-family: Verdana;
+    font-size: 25px;
+    text-anchor: middle;
+    cursor: move;
+}
+
+</style>
+</head>
+<body>
+</div>
+    <a href="http://marvl.infotech.monash.edu/webcola/index.html">cola.js home</a>
+    <h1>Layout with hierarchical grouping</h1>
+    <script async="" src="http://www.google-analytics.com/analytics.js"></script><script src="./d3.v3.js"></script>
+    <script src="./cola.v3.js"></script>
+<script>
+    var rectangleConnectionPoint = function(rectCenter, rectSize, point, pad) {
+      var rectCenterX = rectCenter.x, rectCenterY = rectCenter.y;
+      var pointX = point.x, pointY = point.y;
+      var rectWidth = rectSize.width, rectHeight = rectSize.height;
+
+      var deltaX = Math.abs(pointX - rectCenterX), deltaY = Math.abs(pointY - rectCenterY),
+          negX = (pointX < rectCenterX), negY = (pointY < rectCenterY);
+
+      var rectHalfWidth = rectWidth / 2 - pad, rectHalfHeight = rectHeight / 2 - pad;
+
+      var connectionDeltaX, connectionDeltaY;
+      if (deltaX == 0 || (deltaY / deltaX > rectHalfHeight / rectHalfWidth)) {
+        // closer to y-axis
+        connectionDeltaY = rectHalfHeight;
+        connectionDeltaX = deltaX / deltaY * rectHalfHeight;
+      } else {
+        // closer to x-axis
+        connectionDeltaX = rectHalfWidth;
+        connectionDeltaY = deltaY / deltaX * rectHalfWidth;
+      }
+
+      return {
+        x: rectCenterX + connectionDeltaX * (negX ? -1 : 1),
+        y: rectCenterY + connectionDeltaY * (negY ? -1 : 1),
+      };
+    };
+
+    var rectangleConnection = function(sourceCenter, sourceSize, targetCenter, targetSize, pad) {
+      return {
+        source: rectangleConnectionPoint(sourceCenter, sourceSize, targetCenter, pad),
+        target: rectangleConnectionPoint(targetCenter, targetSize, sourceCenter, pad),
+      };
+    };
+
+    var width = 960,
+        height = 500;
+
+    var color = d3.scale.category20();
+
+    var cola = cola.d3adaptor()
+        .linkDistance(80)
+        .avoidOverlaps(true)
+        .handleDisconnected(false)
+        .size([width, height]);
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    // define arrow markers for graph links
+    svg.append('svg:defs').append('svg:marker')
+        .attr('id', 'end-arrow')
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 6)
+        .attr('markerWidth', 3)
+        .attr('markerHeight', 3)
+        .attr('orient', 'auto')
+      .append('svg:path')
+        .attr('d', 'M0,-5L10,0L0,5')
+        .attr('fill', '#000');
+
+
+    d3.json("apparatus.json", function (error, graph) {
+
+        window.graph = graph;
+        // var nodeSize = 95;
+        //
+        graph.nodes.forEach(function (v) {
+            // console.log(JSON.stringify(v));
+            // v.width = v.height = nodeSize;
+            v.width *= 2;
+            v.height *= 2;
+        });
+        graph.groups.forEach(function (g) { g.padding = 0; });
+
+        graph.constraints = [];
+
+        graph.links.forEach(function (e) {
+          if (e.type === 'parent') {
+            graph.constraints.push({"axis":"y", "left":e.target, "right":e.source, "gap":150,
+              type: 'separation'});
+          } else if (e.type === 'master') {
+            graph.constraints.push({"axis":"x", "left":e.target, "right":e.source, "gap":400,
+              type: 'separation'});
+          };
+        });
+
+        var lineFunction = d3.svg.line()
+                .x(function (d) { return d.x; })
+                .y(function (d) { return d.y; })
+                .interpolate("linear");
+
+        cola
+            .avoidOverlaps(true)
+            .nodes(graph.nodes)
+            .links(graph.links)
+            .groups(graph.groups)
+            .constraints(graph.constraints)
+            .start()
+            .on("tick", function () {
+              console.log('tick');
+              graph.nodes.forEach(function (v) {
+                v.innerBounds = v.bounds;
+              });
+            })
+            .on("end", function () {
+                console.log('end');
+                cola.prepareEdgeRouting();
+                link.attr("d", function (d) {
+                    return lineFunction(cola.routeEdge(d
+                     // show visibility graph
+                        //, function (g) {
+                        //    if (d.source.id === 10 && d.target.id === 11) {
+                        //    g.E.forEach(function (e) {
+                        //        vis.append("line").attr("x1", e.source.p.x).attr("y1", e.source.p.y)
+                        //            .attr("x2", e.target.p.x).attr("y2", e.target.p.y)
+                        //            .attr("stroke", "green");
+                        //    });
+                        //    }
+                        //}
+                  ));
+                });
+            });
+
+        console.log('constraints', cola.constraints());
+        var group = svg.selectAll(".group")
+            .data(graph.groups)
+          .enter().append("rect")
+            .attr("rx", 8).attr("ry", 8)
+            .attr("class", "group")
+            .style("fill", function (d, i) { return color(i); });
+
+        var link = svg.selectAll(".link")
+            .data(graph.links)
+          .enter().append("path")
+            .attr('class', function (d) { return "type-" + d.type; })
+            .classed("link", true);
+
+
+        var pad = 20;
+        var node = svg.selectAll(".node")
+            .data(graph.nodes)
+          .enter().append("rect")
+            .attr("class", "node")
+            .attr("width", function (d) { return d.width - 2 * pad; })
+            .attr("height", function (d) { return d.height - 2 * pad; })
+            .attr("rx", 5).attr("ry", 5)
+            .style("fill", function (d) { return color(graph.groups.length); })
+            .call(cola.drag)
+            .on('mouseup', function (d) {
+                // d.fixed = 0;
+                // cola.alpha(1); // fire it off again to satify gridify
+            });
+
+        var label = svg.selectAll(".label")
+            .data(graph.nodes)
+           .enter().append("text")
+            .attr("class", "label")
+            .text(function (d) { return d.name; })
+            .call(cola.drag);
+
+        node.append("title")
+            .text(function (d) { return d.name; });
+
+        cola.on("tick", function () {
+            link.attr("d", function (d) {
+                var connection = rectangleConnection(d.source, d.source, d.target, d.target, pad - 4);
+                var sourceX = connection.source.x, sourceY = connection.source.y;
+                var targetX = connection.target.x, targetY = connection.target.y;
+                return 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
+            });
+
+            link.attr("x1", function (d) { return d.source.x; })
+                .attr("y1", function (d) { return d.source.y; })
+                .attr("x2", function (d) { return d.target.x; })
+                .attr("y2", function (d) { return d.target.y; });
+
+            node.attr("x", function (d) { return d.x - d.width / 2 + pad; })
+                .attr("y", function (d) { return d.y - d.height / 2 + pad; });
+
+            group.attr("x", function (d) { return d.bounds.x; })
+                 .attr("y", function (d) { return d.bounds.y; })
+                .attr("width", function (d) { return d.bounds.width(); })
+                .attr("height", function (d) { return d.bounds.height(); });
+
+            label.attr("x", function (d) { return d.x; })
+                 .attr("y", function (d) {
+                     var h = this.getBBox().height;
+                     return d.y + h/4;
+                 });
+        });
+    });
+
+</script>
+    <p>This graph has a hierarchical grouping defined over the nodes.  We generate constraints to keep the bounding boxes of
+        disjoint groups from overlapping and to keep nested groups fully contained within their parents' bounding boxes.
+    Try dragging the nodes so that they bump into other nodes and groups.
+    </p>
+
+</body></html>
