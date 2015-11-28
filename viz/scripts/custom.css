@@ -1,0 +1,42 @@
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+  cursor: move;
+}
+
+.group {
+  stroke: #fff;
+  stroke-width: 1.5px;
+  cursor: move;
+  opacity: 0.7;
+}
+
+.link {
+  stroke: #7a4e4e;
+  stroke-width: 3px;
+  stroke-opacity: 1;
+  marker-end: url(#end-arrow);
+}
+
+.link.type-parent1, .link.type-parent2 {
+  stroke-width: 5px;
+}
+
+.link.type-master {
+  stroke-width: 2px;
+  stroke-dasharray: 4 4;
+}
+
+.link.type-master-head {
+  stroke-dasharray: 10 10;
+  stroke-width: 5px;
+}
+
+.g-label {
+  fill: white;
+  font-family: Verdana;
+  font-size: 25px;
+  text-anchor: middle;
+  alignment-baseline: middle;
+  cursor: move;
+}

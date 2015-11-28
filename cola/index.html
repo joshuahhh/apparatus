@@ -25,8 +25,18 @@
   marker-end: url(#end-arrow);
 }
 
+.link.type-parent1, .link.type-parent2 {
+  stroke-width: 5px;
+}
+
 .link.type-master {
+  stroke-width: 2px;
+  stroke-dasharray: 4 4;
+}
+
+.link.type-master-head {
   stroke-dasharray: 10 10;
+  stroke-width: 5px;
 }
 
 .label {
@@ -80,8 +90,8 @@
       };
     };
 
-    var width = 960,
-        height = 500;
+    var width = 1100,
+        height = 900;
 
     var color = d3.scale.category20();
 
@@ -105,11 +115,11 @@
         .attr('orient', 'auto')
       .append('svg:path')
         .attr('d', 'M0,-5L10,0L0,5')
-        .attr('fill', '#000');
+        .attr('fill', '#7a4e4e');
 
 
     d3.json("apparatus.json", function (error, graph) {
-
+        console.log(error);
         window.graph = graph;
         // var nodeSize = 95;
         //
@@ -124,14 +134,33 @@
         graph.constraints = [];
 
         graph.links.forEach(function (e) {
-          if (e.type === 'parent') {
+          if (e.type === 'parent1') {
             graph.constraints.push({"axis":"y", "left":e.target, "right":e.source, "gap":150,
               type: 'separation'});
-          } else if (e.type === 'master') {
-            graph.constraints.push({"axis":"x", "left":e.target, "right":e.source, "gap":400,
+          } else if (e.type === 'parent2') {
+            graph.constraints.push({"axis":"y", "left":e.target, "right":e.source, "gap":250,
               type: 'separation'});
+          } else if (e.type === 'master' || e.type === 'master-head') {
+            graph.constraints.push({"axis":"x", "left":e.target, "right":e.source, "gap":300,
+              type: 'separation'});
+            // graph.constraints.push({
+            //   "type": "alignment",
+            //   "axis": "y",
+            //   "offsets": [
+            //     {"node": e.target, "offset": "0"},
+            //     {"node": e.source,"offset": "0"}
+            //   ]
+            // });
           };
         });
+        graph.constraints.push({"axis":"x", "left":1, "right":2, "gap":100,
+          type: 'separation'});
+        graph.constraints.push({"axis":"x", "left":4, "right":5, "gap":100,
+          type: 'separation'});
+        graph.constraints.push({"axis":"x", "left":12, "right":3, "gap":100,
+          type: 'separation'});
+        graph.constraints.push({"axis":"x", "left":14, "right":8, "gap":100,
+          type: 'separation'});
 
         var lineFunction = d3.svg.line()
                 .x(function (d) { return d.x; })
@@ -144,31 +173,31 @@
             .links(graph.links)
             .groups(graph.groups)
             .constraints(graph.constraints)
-            .start()
-            .on("tick", function () {
-              console.log('tick');
-              graph.nodes.forEach(function (v) {
-                v.innerBounds = v.bounds;
-              });
-            })
-            .on("end", function () {
-                console.log('end');
-                cola.prepareEdgeRouting();
-                link.attr("d", function (d) {
-                    return lineFunction(cola.routeEdge(d
-                     // show visibility graph
-                        //, function (g) {
-                        //    if (d.source.id === 10 && d.target.id === 11) {
-                        //    g.E.forEach(function (e) {
-                        //        vis.append("line").attr("x1", e.source.p.x).attr("y1", e.source.p.y)
-                        //            .attr("x2", e.target.p.x).attr("y2", e.target.p.y)
-                        //            .attr("stroke", "green");
-                        //    });
-                        //    }
-                        //}
-                  ));
-                });
-            });
+            .start(10, 10)
+            // .on("tick", function () {
+            //   console.log('tick');
+            //   graph.nodes.forEach(function (v) {
+            //     v.innerBounds = v.bounds;
+            //   });
+            // })
+            // .on("end", function () {
+            //     console.log('end');
+            //     cola.prepareEdgeRouting();
+            //     link.attr("d", function (d) {
+            //         return lineFunction(cola.routeEdge(d
+            //          // show visibility graph
+            //             //, function (g) {
+            //             //    if (d.source.id === 10 && d.target.id === 11) {
+            //             //    g.E.forEach(function (e) {
+            //             //        vis.append("line").attr("x1", e.source.p.x).attr("y1", e.source.p.y)
+            //             //            .attr("x2", e.target.p.x).attr("y2", e.target.p.y)
+            //             //            .attr("stroke", "green");
+            //             //    });
+            //             //    }
+            //             //}
+            //       ));
+            //     });
+            // });
 
         console.log('constraints', cola.constraints());
         var group = svg.selectAll(".group")
@@ -176,7 +205,7 @@
           .enter().append("rect")
             .attr("rx", 8).attr("ry", 8)
             .attr("class", "group")
-            .style("fill", function (d, i) { return color(i); });
+            .style("fill", function (d, i) { return i === 0 ? 'none' : color(i); });
 
         var link = svg.selectAll(".link")
             .data(graph.links)
