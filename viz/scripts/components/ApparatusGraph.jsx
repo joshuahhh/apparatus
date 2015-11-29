@@ -3,7 +3,7 @@ import d3 from 'd3';
 
 import ColaGraph from './ColaGraph';
 
-const width = 1100;
+const width = 1300;
 const height = 900;
 
 var ApparatusGraph = React.createClass({
@@ -39,29 +39,29 @@ var ApparatusGraph = React.createClass({
           v.width *= 1.4;
           v.height *= 1.4;
       });
-      graph.groups.forEach(function (g) { g.padding = 20; });
+      graph.groups.forEach(function (g) { g.padding = 10; });
 
       graph.constraints = [];
 
       graph.links.forEach(function (e) {
         if (e.type === 'parent1') {
-          graph.constraints.push({"axis":"y", "left":e.target, "right":e.source, "gap":150,
+          graph.constraints.push({"axis":"y", "leftId":e.targetId, "rightId":e.sourceId, "gap":150,
             type: 'separation'});
         } else if (e.type === 'parent2') {
-          graph.constraints.push({"axis":"y", "left":e.target, "right":e.source, "gap":250,
+          graph.constraints.push({"axis":"y", "leftId":e.targetId, "rightId":e.sourceId, "gap":250,
             type: 'separation'});
         } else if (e.type === 'master' || e.type === 'master-head') {
-          graph.constraints.push({"axis":"x", "left":e.target, "right":e.source, "gap":300,
+          graph.constraints.push({"axis":"x", "leftId":e.targetId, "rightId":e.sourceId, "gap":200,
             type: 'separation'});
         }
       });
-      graph.constraints.push({"axis":"x", "left":1, "right":2, "gap":100,
+      graph.constraints.push({"axis":"x", "leftId":1, "rightId":2, "gap":100,
         type: 'separation'});
-      graph.constraints.push({"axis":"x", "left":4, "right":5, "gap":100,
+      graph.constraints.push({"axis":"x", "leftId":4, "rightId":5, "gap":100,
         type: 'separation'});
-      graph.constraints.push({"axis":"x", "left":12, "right":3, "gap":100,
+      graph.constraints.push({"axis":"x", "leftId":12, "rightId":3, "gap":100,
         type: 'separation'});
-      graph.constraints.push({"axis":"x", "left":14, "right":8, "gap":100,
+      graph.constraints.push({"axis":"x", "leftId":14, "rightId":8, "gap":100,
         type: 'separation'});
 
       this.setState({graph: graph});
