@@ -112,6 +112,20 @@ const myKindaGraphToColaGraph = function(myKindaGraph, oldColaGraph) {
   return colaGraph;
 };
 
+const loadMyKindaGraphIntoColaGraphAdaptor = function(myKindaGraph, colaGraphAdaptor) {
+  const oldColaGraph = extractColaGraphFromColaGraphAdaptor(colaGraphAdaptor);
+  const newColaGraph = myKindaGraphToColaGraph(myKindaGraph, oldColaGraph);
+  loadColaGraphIntoColaGraphAdaptor(newColaGraph, colaGraphAdaptor);
+};
+
+const loadColaGraphIntoColaGraphAdaptor = function(colaGraph, colaGraphAdaptor) {
+  colaGraphAdaptor
+    .nodes(colaGraph.nodes)
+    .links(colaGraph.links)
+    .groups(colaGraph.groups)
+    .constraints(colaGraph.constraints);
+};
+
 const extractColaGraphFromColaGraphAdaptor = function(colaGraphAdaptor) {
   return {
     nodes: colaGraphAdaptor.nodes(),
@@ -219,34 +233,11 @@ const ColaGraph = React.createClass({
   componentWillReceiveProps(nextProps) {
     if (true || nextProps.graph !== this.props.graph) {
       const {colaGraphAdaptor} = this.state;
-      makeColaGraphAdaptor(nextProps.graph, colaGraphAdaptor);
+      loadMyKindaGraphIntoColaGraphAdaptor(nextProps.graph, colaGraphAdaptor);
       this.setState({colaGraphAdaptor});
       // this.state.colaGraphAdaptor.start(2, 2000, 2000);
       this.state.colaGraphAdaptor.resume();
     }
-  },
-
-  makeColaGraphAdaptor()  {
-    const {width, height, colaOptions, graph} = this.props;
-
-    var colaGraphAdaptor = window.cola.d3adaptor();
-    colaGraphAdaptor.size([width, height]);
-    _(colaOptions || {}).each((value, key) => colaGraphAdaptor[key](value));
-
-    const oldColaGraph = extractColaGraphFromColaGraphAdaptor(colaGraphAdaptor);
-    const colaGraph = myKindaGraphToColaGraph(graph, oldColaGraph);
-    colaGraphAdaptor
-      .nodes(colaGraph.nodes)
-      .links(colaGraph.links)
-      .groups(colaGraph.groups)
-      .constraints(colaGraph.constraints);
-
-    colaGraphAdaptor
-      .start(2, 2000, 2000)
-      .on("tick", this.rerender);
-    window.colaGraphAdaptor = colaGraphAdaptor;
-
-    return colaGraphAdaptor;
   },
 
   relayout() {
