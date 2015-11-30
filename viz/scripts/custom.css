@@ -1,7 +1,10 @@
 .node {
-  stroke: #fff;
+  /*stroke: #fff;*/
+  /*stroke: #888;*/
+  stroke: #222;
+  fill: #eee;
   stroke-width: 1.5px;
-  cursor: move;
+  /*cursor: move;*/
 }
 
 .group {
@@ -33,7 +36,8 @@
 }
 
 .g-label {
-  fill: white;
+  /*fill: white;*/
+  fill: #222;
   font-family: Verdana;
   font-size: 25px;
   text-anchor: middle;
