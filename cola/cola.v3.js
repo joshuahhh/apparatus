@@ -2446,6 +2446,7 @@ var cola;
             for (i = 0; i < n; ++i) {
                 o = nodes[i];
                 if (o.fixed) {
+                    console.log('fixed a', o);
                     if (typeof o.px === 'undefined' || typeof o.py === 'undefined') {
                         o.px = o.x;
                         o.py = o.y;
@@ -2467,6 +2468,7 @@ var cola;
             for (i = 0; i < n; ++i) {
                 o = nodes[i];
                 if (o.fixed) {
+                    console.log('fixed b', o);
                     o.x = o.px;
                     o.y = o.py;
                 } else {
@@ -2586,7 +2588,7 @@ var cola;
         /**
          * list of constraints of various types
          * @property constraints
-         * @type {array} 
+         * @type {array}
          * @default empty list
          */
         d3adaptor.constraints = function (c) {
@@ -2632,7 +2634,7 @@ var cola;
         };
 
         d3adaptor.linkDistance = function (x) {
-            if (!arguments.length) 
+            if (!arguments.length)
 				return typeof linkDistance === "function" ? linkDistance() : linkDistance;
             linkDistance = typeof x === "function" ? x : +x;
             return d3adaptor;
@@ -2688,7 +2690,7 @@ var cola;
         /**
          * start the layout process
          * @method start
-         * @param {number} [initialUnconstrainedIterations=0] unconstrained initial layout iterations 
+         * @param {number} [initialUnconstrainedIterations=0] unconstrained initial layout iterations
          * @param {number} [initialUserConstraintIterations=0] initial layout iterations with user-specified constraints
          * @param {number} [initialAllConstraintsIterations=0] initial layout iterations with all constraints including non-overlap
          */
@@ -2758,7 +2760,7 @@ var cola;
                 linkAccessor.getMinSeparation = directedLinkConstraints.getMinSeparation;
                 curConstraints = curConstraints.concat(cola.generateDirectedEdgeConstraints(n, links, directedLinkConstraints.axis, linkAccessor));
             }
-            
+
             var initialUnconstrainedIterations = arguments.length > 0 ? arguments[0] : 0;
             var initialUserConstraintIterations = arguments.length > 1 ? arguments[1] : 0;
             var initialAllConstraintsIterations = arguments.length > 2 ? arguments[2] : 0;
@@ -2797,7 +2799,7 @@ var cola;
                     descent.x[0][i] = v.x, descent.x[1][i] = v.y;
                 });
             }
-            
+
             return d3adaptor.resume();
         };
 
@@ -2834,7 +2836,7 @@ var cola;
             if (typeof draw !== 'undefined') {
                 draw(vg2);
             }
-            var sourceInd = function(e) { return e.source.id }, targetInd = function(e) { return e.target.id }, length = function(e) { return e.length() }, 
+            var sourceInd = function(e) { return e.source.id }, targetInd = function(e) { return e.target.id }, length = function(e) { return e.length() },
                 spCalc = new cola.shortestpaths.Calculator(vg2.V.length, vg2.E, sourceInd, targetInd, length),
                 shortestPath = spCalc.PathFromNodeToNode(start.id, end.id);
             if (shortestPath.length === 1 || shortestPath.length === vg2.V.length) {
@@ -2845,7 +2847,7 @@ var cola;
                     p = vg2.V[shortestPath[n]].p,
                     q = vg2.V[shortestPath[0]].p,
                     lineData = [d.source.innerBounds.rayIntersection(p.x, p.y)];
-                for (var i = n; i >= 0; --i) 
+                for (var i = n; i >= 0; --i)
                     lineData.push(vg2.V[shortestPath[i]].p);
                 lineData.push(cola.vpsc.makeEdgeTo(q, d.target.innerBounds, 5));
             }
@@ -3451,7 +3453,7 @@ var cola;
 
             global_bottom = 0,
             line = [];
-	  
+
         if (graphs.length == 0)
             return;
 
@@ -3470,7 +3472,7 @@ var cola;
         // get bounding boxes for all separate graphs
         function calculate_bb(graphs){
 
-            graphs.forEach(function(g) { 
+            graphs.forEach(function(g) {
                 calculate_single_bb(g)
             });
 
@@ -3527,7 +3529,7 @@ var cola;
 
             plot_svg.append("circle").attr("cx", 2 * opt_x - 2 * left).attr("cy", 200 - 30 * opt_y)
                 .attr("r", 5).style('fill', "rgba(0,0,0,0.5)");
-            
+
         }
 
         // actuall assigning of position to nodes
@@ -3535,12 +3537,12 @@ var cola;
             graphs.forEach(function(g){
                 // calculate current graph center:
                 var center = {x: 0, y: 0};
-                
+
                 g.array.forEach(function(node){
                     center.x += node.x;
                     center.y += node.y;
                 });
-                
+
                 center.x /= g.array.length;
                 center.y /= g.array.length;
 
@@ -3570,7 +3572,7 @@ var cola;
             var left = x1 = min_width;
             var right = x2 = get_entire_width(data);
             var iterationCounter = 0;
-            
+
             var f_x1 = Number.MAX_VALUE;
             var f_x2 = Number.MAX_VALUE;
             var flag = -1; // determines which among f_x1 and f_x2 to recompute
@@ -3584,9 +3586,9 @@ var cola;
                 if (flag != 1) {
                     var x1 = right - (right - left) / applyPacking.GOLDEN_SECTION;
                     var f_x1 = step(data, x1);
-                } 
+                }
                 if (flag != 0) {
-                    var x2 = left + (right - left) / applyPacking.GOLDEN_SECTION; 
+                    var x2 = left + (right - left) / applyPacking.GOLDEN_SECTION;
                     var f_x2 = step(data, x2);
                 }
 
@@ -3617,7 +3619,7 @@ var cola;
 
                 if (iterationCounter++ > 100) {
                     break;
-                }  
+                }
             }
             // plot(data, min_width, get_entire_width(data), curr_best, curr_best_f);
             step(data, curr_best);
@@ -3639,9 +3641,9 @@ var cola;
             return Math.abs(get_real_ratio() - desired_ratio);
         }
 
-        // looking for a position to one box 
+        // looking for a position to one box
         function put_rect(rect, max_width){
-            
+
 
             var parent = undefined;
 
@@ -3696,12 +3698,12 @@ var cola;
             var link = links[i];
             var n1 = link.source;
             var n2 = link.target;
-            if (ways[n1.index]) 
+            if (ways[n1.index])
                 ways[n1.index].push(n2);
             else
                 ways[n1.index] = [n2];
-            
-            if (ways[n2.index]) 
+
+            if (ways[n2.index])
                 ways[n2.index].push(n1);
             else
                 ways[n2.index] = [n1];
@@ -3723,12 +3725,12 @@ var cola;
             graphs[clusters - 1].array.push(n);
             var adjacent = ways[n.index];
             if (!adjacent) return;
-        
+
             for (var j = 0; j < adjacent.length; j++){
                 explore_node(adjacent[j], false);
             }
         }
-    
+
         return graphs;
     }
     return cola;
