@@ -2455,7 +2455,7 @@ var cola;
                 }
             }
 
-            var s1 = descent.rungeKutta();
+            var s1 = descent.run(20);
             //var s1 = descent.reduceStress();
             if (s1 === 0) {
                 alpha = 0;

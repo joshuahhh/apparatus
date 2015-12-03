@@ -8,7 +8,8 @@ const height = 900;
 
 var ApparatusGraph = React.createClass({
   getInitialState() {
-    graph.nodes.forEach(function (v) {
+    const realNodes = graph.nodes;
+    realNodes.forEach(function (v) {
         // console.log(JSON.stringify(v));
         // v.width = v.height = nodeSize;
         v.width *= 1.4;
@@ -39,19 +40,12 @@ var ApparatusGraph = React.createClass({
     graph.constraints.push({"axis":"x", "leftId":14, "rightId":8, "gap":100,
       type: 'separation'});
 
+    var i = 1;
+    graph.nodes = realNodes.slice(0, i);
     window.doit = () => {
-      graph.nodes.splice(0, 1);
-      console.log('doit', graph.nodes.length);
+      i++;
+      graph.nodes = realNodes.slice(0, i);
       this.setState({graph: graph});
-    };
-
-    window.doittoit = () => {
-      graph.constraints = [];
-      this.setState({graph: graph});
-    };
-
-    window.nada = () => {
-      this.setState({graph: this.state.graph});
     };
 
     return {

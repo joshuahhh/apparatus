@@ -2,6 +2,8 @@ import React from 'react';
 import d3 from 'd3';
 import _ from 'underscore';
 import rectConnect from 'rect-connect';
+import {Motion, spring} from 'react-motion';
+
 
 import Draggable from './Draggable';
 
@@ -198,30 +200,15 @@ const ColaGraph = React.createClass({
   },
 
   getInitialState() {
-    const {width, height, colaOptions, graph} = this.props;
-
-    var colaGraphAdaptor = window.cola.d3adaptor();
-    colaGraphAdaptor.size([width, height]);
-    _(colaOptions || {}).each((value, key) => colaGraphAdaptor[key](value));
-
-    loadMyKindaGraphIntoColaGraphAdaptor(graph, colaGraphAdaptor);
-
-    colaGraphAdaptor
-      .start(2, 2000, 2000)
-      .on("tick", this.rerender);
-    window.colaGraphAdaptor = colaGraphAdaptor;
-
     return {
-      colaGraphAdaptor: colaGraphAdaptor,
+      colaGraphAdaptor: this.makeColaGraphAdaptor(),
     };
   },
 
   componentWillReceiveProps(nextProps) {
     if (true || nextProps.graph !== this.props.graph) {
-      const {colaGraphAdaptor} = this.state;
-      makeColaGraphAdaptor(nextProps.graph, colaGraphAdaptor);
+      const colaGraphAdaptor = this.makeColaGraphAdaptor(nextProps.graph);
       this.setState({colaGraphAdaptor});
-      // this.state.colaGraphAdaptor.start(2, 2000, 2000);
       this.state.colaGraphAdaptor.resume();
     }
   },
@@ -242,7 +229,7 @@ const ColaGraph = React.createClass({
       .constraints(colaGraph.constraints);
 
     colaGraphAdaptor
-      .start(2, 2000, 2000)
+      .start(20, 20)
       .on("tick", this.rerender);
     window.colaGraphAdaptor = colaGraphAdaptor;
 
@@ -267,16 +254,27 @@ const ColaGraph = React.createClass({
     window.colaGraphAdaptor = colaGraphAdaptor;
 
     const renderedGroups = groups.map((group, i) => group.bounds &&
-      <GroupClass key={group.id} order={i} group={group} colaGraphAdaptor={colaGraphAdaptor} relayout={this.relayout} />
+      <Motion key={group.id} defaultStyle={{opacity: 0}} style={{opacity: spring(1, [120, 100])}}>
+        {({opacity}) =>
+          <g style={{opacity}}>
+            <GroupClass key={group.id} order={i} group={group} colaGraphAdaptor={colaGraphAdaptor} relayout={this.relayout} />
+          </g>
+        }
+      </Motion>
     );
 
-    console.log('x', _.findWhere(nodes, {id: "MyRect"}));
     const renderedNodes = nodes.map((node, i) => node.x && node.y &&
-      <NodeClass key={node.id} order={i} node={node} colaGraphAdaptor={colaGraphAdaptor} relayout={this.relayout} />
+      <Motion key={node.id} defaultStyle={{opacity: 0}} style={{opacity: spring(1, [120, 56])}}>
+        {({opacity}) =>
+          <g style={{opacity}}>
+            <NodeClass order={i} node={node} colaGraphAdaptor={colaGraphAdaptor} relayout={this.relayout} />
+          </g>
+        }
+      </Motion>
     );
 
     const renderedLinks = links.map((link, i) => link.source.bounds && link.target.bounds &&
-      <LinkClass key={i} order={i} link={link} colaGraphAdaptor={colaGraphAdaptor} relayout={this.relayout} />
+      <LinkClass key={link.source.id + '_' + link.target.id} order={i} link={link} colaGraphAdaptor={colaGraphAdaptor} relayout={this.relayout} />
     );
 
     return (
