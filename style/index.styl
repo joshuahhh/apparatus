@@ -360,6 +360,8 @@ HeaderSize = 18px
 
 .AttributesList
   margin-left 1.5em
+  &:not(.isExpanded)
+    text-align right
   // margin-bottom 1em
 
 
@@ -460,7 +462,7 @@ HeaderSize = 18px
 .ReferenceToken
   border-radius 20px
   padding 0 0.75em
-  white-space nowrap
+  display inline-block
 
 .SpreadValue
   &:before

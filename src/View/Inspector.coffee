@@ -78,12 +78,16 @@ R.create "NovelAttributesList",
     {element} = @props
     {project} = @context
 
-    R.div {className: "AttributesList"},
-      for attribute in element.attributes()
-        shouldShow = attribute.isNovel() or attribute.isVariantOf(Model.Variable)
-        if shouldShow
+    attributesToShow = element.attributes().filter (attribute) ->
+      attribute.isNovel() or attribute.isVariantOf(Model.Variable)
+
+    R.div {className: R.cx {AttributesList: true, isExpanded: element.expanded}},
+      for attribute in attributesToShow
+        if element.expanded
           R.AttributeRow {attribute}
-      if element == project.editingElement
+        else
+          R.AttributeLabel {attribute, asToken: true}
+      if element.expanded and element == project.editingElement
         R.div {className: "AddVariableRow"},
           R.button {className: "AddButton Interactive", onClick: @_addVariable}
 

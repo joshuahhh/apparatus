@@ -120,7 +120,10 @@ R.create "OutlineItem",
             value: element.label
             setValue: @_setLabelValue
           }
-      R.NovelAttributesList {element}
+        if !isExpanded
+          R.NovelAttributesList {element}
+      if isExpanded
+        R.NovelAttributesList {element}
 
 
   # ===========================================================================

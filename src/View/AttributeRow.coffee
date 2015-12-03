@@ -73,6 +73,7 @@ R.create "AttributeRow",
 R.create "AttributeLabel",
   propTypes:
     attribute: Model.Attribute
+    asToken: Boolean
 
   contextTypes:
     dragManager: R.DragManager
@@ -81,8 +82,22 @@ R.create "AttributeLabel",
   mixins: [R.AnnotateMixin]
 
   render: ->
-    {attribute} = @props
+    {attribute, asToken} = @props
     {hoverManager} = @context
+
+    if asToken
+      return R.span {
+        className: R.cx {
+          AttributeLabel: true
+          Interactive: true
+          isHovered: hoverManager.hoveredAttribute == attribute
+          isGoingToChange: _.contains(hoverManager.attributesToChange, attribute)
+        }
+        onMouseDown: @_onMouseDown
+        onMouseEnter: @_onMouseEnter
+        onMouseLeave: @_onMouseLeave
+      },
+        attribute.label
 
     R.div {
       className: R.cx {
@@ -192,16 +207,3 @@ R.create "AttributeToken",
     {dragManager, hoverManager} = @context
     return if dragManager.drag?
     hoverManager.hoveredAttribute = null
-
-
-
-
-
-
-
-
-
-
-
-
-
