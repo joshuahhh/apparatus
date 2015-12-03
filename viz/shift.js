@@ -57,12 +57,15 @@ var Triggers = React.createClass({
       var data = JSON.parse(msg.data);
 
       if(data && data.from === 'shift') {
-        if(this.state.currentBreakpoint === BREAKPOINT_STATE_EDITOR) {
-          var json = JSON.stringify(data.state, null, 2);
-          var currentValue = editor.val();
-          if(json !== currentValue) {
-            editor.val(json);
-          }
+        // if(this.state.currentBreakpoint === BREAKPOINT_STATE_EDITOR) {
+        //   var json = JSON.stringify(data.state, null, 2);
+        //   var currentValue = editor.val();
+        //   if(json !== currentValue) {
+        //     editor.val(json);
+        //   }
+        // }
+        if (false) {
+
         }
         else {
           editor.val(initialText);
@@ -299,7 +302,7 @@ var breakpoints = [
   }
 ];
 
-var BREAKPOINT_STATE_EDITOR = breakpoints[4];
+const BREAKPOINT_STATE_EDITOR = breakpoints[4];
 
 document.addEventListener('DOMContentLoaded', function() {
   var div = document.createElement('div');

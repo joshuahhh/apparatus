@@ -3,8 +3,8 @@ import React from 'react';
 import ColaGraph from './ColaGraph';
 import graph from '../data';
 
-const width = 1300;
-const height = 900;
+const width = 550;
+const height = 800;
 
 var ApparatusGraph = React.createClass({
   getInitialState() {
@@ -40,10 +40,7 @@ var ApparatusGraph = React.createClass({
     graph.constraints.push({"axis":"x", "leftId":14, "rightId":8, "gap":100,
       type: 'separation'});
 
-    var i = 1;
-    graph.nodes = realNodes.slice(0, i);
-    window.doit = () => {
-      i++;
+    window.doit = (i) => {
       graph.nodes = realNodes.slice(0, i);
       this.setState({graph: graph});
     };

@@ -1,0 +1,132 @@
+
+h2 {
+    color: #466a5c;
+}
+
+pre .string, pre .number, pre .params {
+    color: #71ab95
+}
+
+pre .comment {
+    color: #666866;
+}
+
+.main-wrapper {
+    /* transition: -webkit-transform .6s; */
+    /* transition: transform .6s; */
+}
+
+iframe.demo {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    border: 0;
+    background-color: #f0f0f0;
+    width: 0;
+    /* transition: width .6s; */
+}
+
+.breakpoint-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.breakpoint-current {
+    position: fixed;
+    top: 33.333333%;
+    left: 0;
+    /*margin-top: -10px;*/
+}
+
+.breakpoint-current .marker, .breakpoint-current .tip {
+    display: inline-block;
+}
+
+.breakpoint-current .marker {
+    font-size: 18px;
+    line-height: 0;
+    margin-left: -4px;
+    color: #466a5c;
+    text-shadow: 0 0 2px #f0f0f0;
+}
+
+.breakpoint-current .tip {
+    position: absolute;
+    top: -22px;
+    left: 2em;
+    background: white;
+    border: 4px solid #38554a;
+    width: 200px;
+    padding: 1em;
+}
+
+.breakpoint-current .tip:after,
+.breakpoint-current .tip:before {
+    right: 100%;
+    top: 30px;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+}
+
+.breakpoint-current .tip:after {
+    border-color: rgba(213, 0, 0, 0);
+    border-right-color: white;
+    border-width: 10px;
+    margin-top: -10px;
+}
+
+.breakpoint-current .tip:before {
+    border-color: rgba(0, 255, 0, 0);
+    border-right-color: #38554a;
+    border-width: 16px;
+    margin-top: -16px;
+}
+
+.breakpoint-marker {
+    position: absolute;
+    width: 7px;
+    height: .25em;
+    background-color: #BEAA8E;
+    /* border-right: 2px solid #aa8c7e; */
+    /* border-bottom: 2px solid #aa8c7e; */
+    /* box-shadow: inset -2px 0 4px 1px #aa8c7e; */
+    /* border-left: 1px solid #99aacc; */
+}
+
+#state-settings {
+    width: 100%;
+    border: 1px solid #f0f0f0;
+    font-size: 16px;
+    font-family: Monaco, monospace;
+    height: 26em;
+    line-height: 1.2em;
+    background-color: #1D1F21;
+    color: #93A1A1;
+    border-radius: 6px;
+    padding: 1em;
+}
+
+#state-settings textarea {
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    color: #93A1A1;
+    border: 0;
+    font-size: 1em;
+}
+
+@media screen and (max-width: 900px) {
+    iframe.demo {
+        display: none;
+    }
+
+    .breakpoint-current, .breakpoint-container {
+        display: none;
+    }
+}
