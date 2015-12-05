@@ -164,6 +164,7 @@ R.create "OutlineItem",
     {element} = @props
     {project} = @context
     particularElement = new Model.ParticularElement(element)
+    window.element = element
     project.select(particularElement)
 
 

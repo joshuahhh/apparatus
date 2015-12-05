@@ -41,6 +41,10 @@ createAttribute = (label, name, exprString) ->
 # =============================================================================
 
 Model.Component = Model.Node.createVariant
+  constructor: ->
+    Model.Node.constructor.apply(this, arguments)
+    @nodeType = 'Component'
+
   attributes: ->
     @childrenOfType(Model.Attribute)
 
@@ -65,6 +69,10 @@ Model.Component = Model.Node.createVariant
 
 
 Model.Transform = Model.Component.createVariant
+  constructor: ->
+    Model.Component.constructor.apply(this, arguments)
+    @nodeType += ' > Transform'
+
   label: "Transform"
   matrix: ->
     {x, y, sx, sy, rotate} = @getAttributesValuesByName()

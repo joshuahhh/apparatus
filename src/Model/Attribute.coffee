@@ -9,6 +9,7 @@ Model = require "./Model"
 
 module.exports = Attribute = Node.createVariant
   constructor: ->
+    @nodeType = 'Attribute'
     # Call "super" constructor
     Node.constructor.apply(this, arguments)
 

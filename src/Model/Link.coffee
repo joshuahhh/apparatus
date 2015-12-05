@@ -1,6 +1,10 @@
 Node = require "./Node"
 
 module.exports = Link = Node.createVariant {
+  constructor: ->
+    Node.constructor.apply(this, arguments)
+    @nodeType = 'Link'
+
   setTarget: (@_target) ->
 
   target: ->

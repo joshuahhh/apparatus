@@ -205,6 +205,7 @@ module.exports = Node = {
   _createVariantWithHead: (head=null, spec) ->
     variant = Object.create(this)
     _.extend(variant, spec) if spec?
+    variant.nodeType = @nodeType
     variant.constructor()
 
     if !head?
