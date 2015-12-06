@@ -1,13 +1,19 @@
 import React from 'react';
 
+import ElasticSvg from './ElasticSvg';
+import StickyExpander from './StickyExpander';
 import ColaGraph from './ColaGraph';
 import graph from '../data';
 
-const width = 550;
-const height = 800;
 
 var ApparatusGraph = React.createClass({
   getInitialState() {
+    return {
+      graph: this.getGraph(),
+    };
+  },
+
+  getGraph() {
     const realNodes = graph.nodes;
     realNodes.forEach(function (v) {
         // console.log(JSON.stringify(v));
@@ -44,27 +50,29 @@ var ApparatusGraph = React.createClass({
       graph.nodes = realNodes.slice(0, i);
       this.setState({graph: graph});
     };
-
-    return {
-      graph: graph,
-    };
   },
 
   render() {
     const {graph} = this.state;
 
     return (
-      <div>
-        <svg width={width} height={height}>
-          {graph &&
-            <ColaGraph width={width} height={height} graph={graph}
-              colaOptions={{
-                linkDistance: 10,
-                avoidOverlaps: true,
-              }} />
-          }
-        </svg>
-      </div>
+      <StickyExpander minHeight={500}>
+        {({height}) =>
+          <ElasticSvg height={height}>
+            {({width}) => graph &&
+              <g>
+                <rect width={width} height={height/2} fill='blue' />
+                <rect width={width} height={height/2} y={height/2} fill='red' />
+              </g>
+              // <ColaGraph width={width} height={height} graph={graph}
+              //   colaOptions={{
+              //     linkDistance: 10,
+              //     avoidOverlaps: true,
+              //   }} />
+            }
+          </ElasticSvg>
+        }
+      </StickyExpander>
     );
   },
 
