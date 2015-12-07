@@ -39,7 +39,7 @@ R.create "ExpressionCode",
     {component: this}
 
   componentDidMount: ->
-    el = @getDOMNode()
+    el = R.findDOMNode(@)
 
     @mirror = CodeMirror(el, {
       mode: "javascript"
@@ -228,7 +228,7 @@ R.create "ExpressionCode",
       context: @context
       childRender: mark.render
     }
-    React.render(wrappedReactElement, el)
+    R.render(wrappedReactElement, el)
 
 
   # ===========================================================================
@@ -291,7 +291,7 @@ R.create "ExpressionCode",
               contextElement: attribute.parentElement()
             }
           }
-          React.render(wrappedReactElement, el)
+          R.render(wrappedReactElement, el)
         hint: =>
           @mirror.setSelection(from, to)
           @_replaceSelectionWithReference(matchingAttribute)
@@ -374,10 +374,3 @@ R.create "ExpressionCode",
           newValue = Util.roundToPrecision(newValue, precision - 1)
         newValue = Util.toPrecision(newValue, precision)
         @mirror.replaceSelection(""+newValue, "around")
-
-
-
-
-
-
-

@@ -13,7 +13,8 @@
     "keymaster": "^1.6.2",
     "numeric": "^1.2.6",
     "query-string": "^2.4.1",
-    "react": "^0.13.3",
+    "react": "^0.14.3",
+    "react-dom": "^0.14.3",
     "underscore": "^1.8.3"
   },
   "devDependencies": {
@@ -27,9 +28,9 @@
     "watchify": "^3.2.3"
   },
   "scripts": {
-    "build-js-vendor": "browserify -r codemirror -r react -r underscore -o dist/vendor.js",
-    "build-js": "browserify -x react -x underscore src/index.coffee -o dist/apparatus.js -t coffeeify --extension=\".coffee\"",
-    "watch-js": "watchify -x react -x underscore src/index.coffee -o dist/apparatus.js -t coffeeify --extension=\".coffee\" -dv",
+    "build-js-vendor": "browserify -r codemirror -r \"codemirror/addon/hint/show-hint\" -r \"codemirror/mode/javascript/javascript\" -r react -r react-dom -r underscore -o dist/vendor.js",
+    "build-js": "browserify -x codemirror -x \"codemirror/addon/hint/show-hint\" -x \"codemirror/mode/javascript/javascript\" -x react -x react-dom -x underscore src/index.coffee -o dist/apparatus.js -t coffeeify --extension=\".coffee\"",
+    "watch-js": "watchify -x codemirror -x \"codemirror/addon/hint/show-hint\" -x \"codemirror/mode/javascript/javascript\" -x react -x react-dom -x underscore src/index.coffee -o dist/apparatus.js -t coffeeify --extension=\".coffee\" -dv",
     "build-css": "stylus -u autoprefixer-stylus style/index.styl --out dist/apparatus.css",
     "watch-css": "stylus -u autoprefixer-stylus style/index.styl --out dist/apparatus.css -w",
     "build": "npm run build-js && npm run build-css",
