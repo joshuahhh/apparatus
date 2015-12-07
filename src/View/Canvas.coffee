@@ -18,15 +18,15 @@ R.create "Canvas",
 
     R.div {
       className: "Canvas"
-      onMouseDown: @_onMouseDown
-      onMouseEnter: @_onMouseEnter
-      onMouseLeave: @_onMouseLeave
-      onMouseMove: @_onMouseMove
-      onWheel: @_onWheel
     },
       R.HTMLCanvas {
         ref: "HTMLCanvas"
         draw: @_draw
+        onMouseDown: @_onMouseDown
+        onMouseEnter: @_onMouseEnter
+        onMouseLeave: @_onMouseLeave
+        onMouseMove: @_onMouseMove
+        onWheel: @_onWheel
       }
       R.div {
         className: R.cx {
@@ -37,6 +37,13 @@ R.create "Canvas",
         }
         onClick: @_toggleLayout
       }
+      R.NotificationSystem {
+        ref: (notificationSystem) =>
+          @context.editor.notificationSystem = notificationSystem
+        style: { Containers: DefaultStyle: position: "absolute" }
+        allowHTML: true
+      }
+
 
   componentDidMount: ->
     window.addEventListener "resize", @_onResize

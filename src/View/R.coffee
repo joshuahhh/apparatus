@@ -96,3 +96,6 @@ require "./Inspector"
 require "./AttributeRow"
 require "./Expression"
 require "./ExpressionCode"
+
+NotificationSystem = require "react-notification-system"
+R.NotificationSystem = React.createFactory(NotificationSystem)
