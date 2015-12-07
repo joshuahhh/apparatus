@@ -1,0 +1,19 @@
+{
+  "rules": {
+    // everything is protected by default
+    ".read": false,
+    ".write": false,
+
+    "drawings": {
+      // but drawings are all readable
+      ".read": true,
+
+      "$drawing": {
+        // you can write iff:
+        //   this is a create (not a delete or update)
+        //   you have an auth uid and you include it in the data
+        ".write": "!data.exists() && newData.exists() && auth != null && newData.child('uid').val() == auth.uid"
+      }
+    }
+  }
+}
