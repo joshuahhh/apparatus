@@ -136,9 +136,7 @@ module.exports = class Editor
       .then (drawingData) =>
         console.log('drawingData', drawingData)
         jsonString = drawingData.source
-        @load(jsonString)
-        @checkpoint()
-        Apparatus.refresh() # HACK: calling Apparatus seems funky here.
+        @loadJsonStringIntoProjectFromExternalSource(jsonString)
       .catch (error) =>
         if error instanceof FirebaseAccess.DrawingNotFoundError
           console.warn "Drawing #{key} not found in Firebase!"
@@ -149,7 +147,7 @@ module.exports = class Editor
   saveToFirebase: ->
     @firebaseAccess ?= new FirebaseAccess()
 
-    jsonString = @save()
+    jsonString = @getJsonStringOfProject()
     @firebaseAccess.saveDrawingPromise(jsonString)
       .then (key) ->
         window.prompt(
