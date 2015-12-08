@@ -1,6 +1,4 @@
 import React from 'react';
-import _ from 'underscore';
-
 
 const ElasticSvg = React.createClass({
   getInitialState: function() {
@@ -11,14 +9,10 @@ const ElasticSvg = React.createClass({
 
   handleResize() {
     const svgNode = React.findDOMNode(this.refs.svg);
-    const parentNode = svgNode.parentNode;
     const newSvgWidth = svgNode.offsetWidth;
-    console.log('bound', JSON.stringify(_.pick(parentNode.getBoundingClientRect(), 'top', 'bottom', 'left', 'right', 'height', 'width')));
-    var newState = {};
     if (newSvgWidth != this.state.svgWidth) {
-      newState.svgWidth = newSvgWidth;
+      this.setState({svgWidth: newSvgWidth});
     }
-    this.setState(newState);
   },
 
   componentDidMount() {
@@ -33,12 +27,11 @@ const ElasticSvg = React.createClass({
   },
 
   render: function() {
-    const {children, ...otherProps} = this.props;
+    const {children, height, ...otherProps} = this.props;
     const {svgWidth} = this.state;
-    const {svgHeight} = this.state;
 
     return (
-      <svg ref='svg' width='100%' height={svgHeight} {...otherProps}>
+      <svg ref='svg' width='100%' height={height} {...otherProps}>
         {children({width: svgWidth})}
       </svg>
     );

@@ -48,7 +48,7 @@ const myKindaGraphToColaGraph = function(myKindaGraph, oldColaGraph) {
   const {nodes, links, groups, constraints} = myKindaGraph;
 
   const {nodes: oldNodes, groups: oldGroups} = oldColaGraph;
-  const oldNodesById = _.indexBy(oldNodes, 'id');
+  // const oldNodesById = _.indexBy(oldNodes, 'id');
   const oldGroupsById = _.indexBy(oldGroups, 'id');
 
   const outNodes = nodes.map(({id, label, ...other}) => {
@@ -156,9 +156,11 @@ const ColaGraphNode = React.createClass({
     return (
       <Draggable onDragStart={this.onDragStart} onDrag={this.onDrag} onDragEnd={this.onDragEnd}>
         <g className='node-g'>
-          <rect className='node' width={node.width} height={node.height}
-            rx={5} ry={5}
-            x={node.x - node.width / 2} y={node.y - node.height / 2}/>
+          {!(node.type == 'prop') &&
+            <rect className='node' width={node.width} height={node.height}
+              rx={5} ry={5}
+              x={node.x - node.width / 2} y={node.y - node.height / 2}/>
+          }
           <text className='g-label' x={node.x} y={node.y}>{node.name}</text>
         </g>
       </Draggable>
@@ -180,6 +182,12 @@ const ColaGraphLink = ({link}) => {
     <g>
       <g dangerouslySetInnerHTML={{__html: markerHtml}} />
       <path className={'link type-' + link.type} d={pathD} />
+      {link.label &&
+        <text className='g-link-label'
+          x={(sourceX + targetX) / 2} y={(sourceY + targetY) / 2} >
+          {link.label}
+        </text>
+      }
     </g>
   );
 };
@@ -201,20 +209,20 @@ const ColaGraph = React.createClass({
 
   getInitialState() {
     return {
-      colaGraphAdaptor: this.makeColaGraphAdaptor(),
+      colaGraphAdaptor: this.makeColaGraphAdaptor(this.props),
     };
   },
 
   componentWillReceiveProps(nextProps) {
     if (true || nextProps.graph !== this.props.graph) {
-      const colaGraphAdaptor = this.makeColaGraphAdaptor(nextProps.graph);
+      const colaGraphAdaptor = this.makeColaGraphAdaptor(nextProps);
       this.setState({colaGraphAdaptor});
       this.state.colaGraphAdaptor.resume();
     }
   },
 
-  makeColaGraphAdaptor()  {
-    const {width, height, colaOptions, graph} = this.props;
+  makeColaGraphAdaptor(props)  {
+    const {width, height, colaOptions, graph} = props;
 
     var colaGraphAdaptor = window.cola.d3adaptor();
     colaGraphAdaptor.size([width, height]);
@@ -250,6 +258,7 @@ const ColaGraph = React.createClass({
     const groups = colaGraphAdaptor.groups();
     const nodes = colaGraphAdaptor.nodes();
     const links = colaGraphAdaptor.links();
+
     window.groups = groups;
     window.colaGraphAdaptor = colaGraphAdaptor;
 

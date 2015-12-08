@@ -1,11 +1,6 @@
 import React from 'react';
 import $ from 'jquery';
 
-const _gaq = {push: (x) => {
-  console.log('gaq', x);
-  // window.doit();
-}};
-
 import CurrentMarker from './CurrentMarker';
 
 
@@ -75,12 +70,11 @@ const Triggers = React.createClass({
       // we haven't hit a breakpoint yet, so render the page as if the
       // initial breakpoint is at the starting point
       if(s.currentBreakpoint) {
-        _gaq.push(['_trackEvent', 'React-Post', 'breakpoint-' + 1]);
-        window.doit(1);
+        window.doit([]);
         this.setState({ currentBreakpoint: null });
       }
       else {
-        window.doit(1);
+        window.doit([]);
         firstBreakpoint.apply && firstBreakpoint.apply(0);
       }
     }
@@ -96,8 +90,8 @@ const Triggers = React.createClass({
            bp.start < currentY &&
            bp.end > currentY) {
           if(s.currentBreakpoint !== bp) {
-            _gaq.push(['_trackEvent', 'React-Post', 'breakpoint-' + (this.props.breakpoints.indexOf(bp.breakpoint)+1)]);
-            window.doit(this.props.breakpoints.indexOf(bp.breakpoint)+1);
+            const index = this.props.breakpoints.indexOf(bp.breakpoint);
+            window.doit(this.props.breakpoints.slice(0, index + 1));
             this.setState({ currentBreakpoint: bp });
           }
           else {
@@ -108,9 +102,8 @@ const Triggers = React.createClass({
 
         if(currentY > (bp.pos || bp.start)) {
           if(s.currentBreakpoint !== bp) {
-            _gaq.push(['_trackEvent', 'React-Post', 'breakpoint-' + (this.props.breakpoints.indexOf(bp.breakpoint)+1)]);
-            window.doit(this.props.breakpoints.indexOf(bp.breakpoint)+1);
-            // callback()
+            const index = this.props.breakpoints.indexOf(bp.breakpoint);
+            window.doit(this.props.breakpoints.slice(0, index + 1));
             this.setState({ currentBreakpoint: bp });
           }
           else {

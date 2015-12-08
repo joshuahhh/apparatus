@@ -45,6 +45,21 @@
   cursor: move;
 }
 
+.g-link-label {
+  /*fill: white;*/
+  font-family: Verdana;
+  font-size: 25px;
+  text-anchor: middle;
+  alignment-baseline: middle;
+  fill: black;
+  fill-opacity: 1;
+  stroke: white;
+  stroke-width: 0.5px;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+  stroke-opacity: 1;
+}
+
 
 
 .example-enter {

@@ -8,10 +8,32 @@
     <div class="page-header">
       <h1>Apparatus Internals <small>Nodes, Masters, and Parents</small></h1>
     </div>
-    <h2>Fascinating introduction</h2>
-    <p>The improvement of the producer-consumer problem has been widely studied. Sou also visualizes 64 bit architectures, but without all the unnecssary complexity. Similarly, A. Taylor et al. [32] and Erwin Schroedinger [27] constructed the first known instance of highly-available modalities [9,18,33]. While Zhou and Williams also introduced this method, we evaluated it independently and simultaneously. Further, we had our approach in mind before H. Zheng et al. published the recent well-known work on the study of Moore's Law [29,30,1]. Complexity aside, Sou develops even more accurately. Along these same lines, W. Thomas [26] developed a similar heuristic, nevertheless we disconfirmed that our solution is in Co-NP. The only other noteworthy work in this area suffers from fair assumptions about authenticated methodologies. Raj Reddy [2,11,35,23] developed a similar system, contrarily we disconfirmed that Sou is NP-complete [21].
+
+    <p>Apparatus is designed to be easy for non-programmers to pick up and use
+    without any special training. Part of what makes it easy to use is an
+    intuitive "call by copy" mechanism. Every part of a drawing can become a
+    reusable component without any extra work.
+
+    <p>But behind the scenes, Apparatus does this with a trick that may strike
+    experienced programmers
+
+    <p>Apparatus uses a new kind of object model to represent the "scene graph".
+    This object model extends Javascript's "prototypal inheritance" with a
+
     <div class="row">
       <div class="col-sm-6">
+        <h2>Background: Prototypes in Javascript</h2>
+
+        <p>As most folk know, Javascript has these funny things called
+        "prototypes". Let's reinvent them, in a belabored but hopefully
+        revealing way.
+
+        <p id="breakpoint-object">On the right is a Javascript object. It
+        represents my beloved cat Fluffy. But an object isn't very interesting
+        unless it has associated data and behaviors.
+
+        <p id="breakpoint-props">So let's add properties.
+
         <h2 id="breakpoint-stuff">Stuff</h2>
         <p>The improvement of the producer-consumer problem has been widely studied. Sou also visualizes 64 bit architectures, but without all the unnecssary complexity. Similarly, A. Taylor et al. [32] and Erwin Schroedinger [27] constructed the first known instance of highly-available modalities [9,18,33]. While Zhou and Williams also introduced this method, we evaluated it independently and simultaneously. Further, we had our approach in mind before H. Zheng et al. published the recent well-known work on the study of Moore's Law [29,30,1]. Complexity aside, Sou develops even more accurately. Along these same lines, W. Thomas [26] developed a similar heuristic, nevertheless we disconfirmed that our solution is in Co-NP. The only other noteworthy work in this area suffers from fair assumptions about authenticated methodologies. Raj Reddy [2,11,35,23] developed a similar system, contrarily we disconfirmed that Sou is NP-complete [21].
         <h2 id="breakpoint-more-stuff">More stuff</h2>
@@ -24,11 +46,11 @@
         <p>The improvement of the producer-consumer problem has been widely studied. Sou also visualizes 64 bit architectures, but without all the unnecssary complexity. Similarly, A. Taylor et al. [32] and Erwin Schroedinger [27] constructed the first known instance of highly-available modalities [9,18,33]. While Zhou and Williams also introduced this method, we evaluated it independently and simultaneously. Further, we had our approach in mind before H. Zheng et al. published the recent well-known work on the study of Moore's Law [29,30,1]. Complexity aside, Sou develops even more accurately. Along these same lines, W. Thomas [26] developed a similar heuristic, nevertheless we disconfirmed that our solution is in Co-NP. The only other noteworthy work in this area suffers from fair assumptions about authenticated methodologies. Raj Reddy [2,11,35,23] developed a similar system, contrarily we disconfirmed that Sou is NP-complete [21].
         <h2 id="breakpoint-coming">Coming</h2>
         <p>The improvement of the producer-consumer problem has been widely studied. Sou also visualizes 64 bit architectures, but without all the unnecssary complexity. Similarly, A. Taylor et al. [32] and Erwin Schroedinger [27] constructed the first known instance of highly-available modalities [9,18,33]. While Zhou and Williams also introduced this method, we evaluated it independently and simultaneously. Further, we had our approach in mind before H. Zheng et al. published the recent well-known work on the study of Moore's Law [29,30,1]. Complexity aside, Sou develops even more accurately. Along these same lines, W. Thomas [26] developed a similar heuristic, nevertheless we disconfirmed that our solution is in Co-NP. The only other noteworthy work in this area suffers from fair assumptions about authenticated methodologies. Raj Reddy [2,11,35,23] developed a similar system, contrarily we disconfirmed that Sou is NP-complete [21].
-        <div style="height: 500px">
+        <!-- <div style="height: 500px">
           APPROPRIATELY SIZED VERTICAL SPACE: MIGHT BE TRICKY
-        </div>
+        </div> -->
       </div>
-      <div class="col-sm-6 sticky" style="position: sticky; top: 10px" id='root'>
+      <div class="col-sm-6 sticky" style="position: sticky; top: 0" id='root'>
       </div>
     </div>
     <h2>Bittersweet ending</h2>

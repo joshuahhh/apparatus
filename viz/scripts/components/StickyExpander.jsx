@@ -1,5 +1,4 @@
 import React from 'react';
-import _ from 'underscore';
 
 
 const StickyExpander = React.createClass({
@@ -13,9 +12,11 @@ const StickyExpander = React.createClass({
     const divNode = React.findDOMNode(this.refs.div);
     const parentNode = divNode.parentNode;
     const parentParentNode = parentNode.parentNode;
-    console.log('bound', JSON.stringify(
-      _.pick(parentParentNode.getBoundingClientRect(), 'top', 'bottom', 'left', 'right', 'height', 'width')
-    ));
+    const screenAvailableTop = Math.max(0, parentParentNode.getBoundingClientRect().top);
+    const screenAvailableBottom = Math.min(window.innerHeight, parentParentNode.getBoundingClientRect().bottom);
+    const screenAvailable = screenAvailableBottom - screenAvailableTop;
+    const correctHeight = Math.max(this.props.minHeight, screenAvailable);
+    this.setState({divHeight: correctHeight});
   },
 
   componentDidMount() {

@@ -1,9 +1,9 @@
 import React from 'react';
+import update from 'react-addons-update';
+import _ from 'underscore';
 
-import ElasticSvg from './ElasticSvg';
-import StickyExpander from './StickyExpander';
 import ColaGraph from './ColaGraph';
-import graph from '../data';
+import graph from '../simple-data';
 
 
 var ApparatusGraph = React.createClass({
@@ -23,14 +23,14 @@ var ApparatusGraph = React.createClass({
     });
     graph.groups.forEach(function (g) { g.padding = 10; });
 
-    graph.constraints = [];
+    graph.constraints = graph.constraints || [];
 
     graph.links.forEach(function (e) {
       if (e.type === 'parent1') {
         graph.constraints.push({"axis":"y", "leftId":e.targetId, "rightId":e.sourceId, "gap":150,
           type: 'separation'});
       } else if (e.type === 'parent2') {
-        graph.constraints.push({"axis":"y", "leftId":e.targetId, "rightId":e.sourceId, "gap":250,
+        graph.constraints.push({"axis":"y", "leftId":e.targetId, "rightId":e.sourceId, "gap":200,
           type: 'separation'});
       } else if (e.type === 'master' || e.type === 'master-head') {
         graph.constraints.push({"axis":"x", "leftId":e.targetId, "rightId":e.sourceId, "gap":200,
@@ -47,32 +47,34 @@ var ApparatusGraph = React.createClass({
       type: 'separation'});
 
     window.doit = (i) => {
-      graph.nodes = realNodes.slice(0, i);
-      this.setState({graph: graph});
+      console.log(i);
+      const goodNodes = realNodes.filter((node) => _.contains(_.pluck(i, 'pos'), '#' + node.introduceOn));
+      // console.log('doin it', i, goodNodes);
+      const newGraph = update(graph, {nodes: {$set: goodNodes}});
+      this.setState({graph: newGraph});
     };
   },
 
+  shouldComponentUpdate(nextProps, nextState) {
+    return !(
+      nextProps.width === this.props.width
+      && nextProps.height === this.props.height
+      && nextState.graph === this.state.graph
+    );
+  },
+
   render() {
+    const {width, height} = this.props;
     const {graph} = this.state;
 
     return (
-      <StickyExpander minHeight={500}>
-        {({height}) =>
-          <ElasticSvg height={height}>
-            {({width}) => graph &&
-              <g>
-                <rect width={width} height={height/2} fill='blue' />
-                <rect width={width} height={height/2} y={height/2} fill='red' />
-              </g>
-              // <ColaGraph width={width} height={height} graph={graph}
-              //   colaOptions={{
-              //     linkDistance: 10,
-              //     avoidOverlaps: true,
-              //   }} />
-            }
-          </ElasticSvg>
-        }
-      </StickyExpander>
+      graph
+      ? <ColaGraph width={width} height={height} graph={graph}
+          colaOptions={{
+            linkDistance: 10,
+            avoidOverlaps: true,
+          }} />
+      : <g/>
     );
   },
 
