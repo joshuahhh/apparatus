@@ -22,8 +22,8 @@ module.exports = Attribute = Node.createVariant
     if @_isDirty()
       @_updateCompiledExpression()
 
-    if (circularReferencePath = @circularReferencePath())?
-      return new CircularReferenceError(circularReferencePath)
+    # if (circularReferencePath = @circularReferencePath())?
+    #   return new CircularReferenceError(circularReferencePath)
 
     referenceValues = _.mapObject @references(), (referenceAttribute) ->
       referenceAttribute.value()
