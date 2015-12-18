@@ -48,7 +48,7 @@ var ApparatusGraph = React.createClass({
 
     window.doit = (i) => {
       console.log(i);
-      const goodNodes = realNodes.filter((node) => _.contains(_.pluck(i, 'pos'), '#' + node.introduceOn));
+      const goodNodes = realNodes.filter((node) => !node.introduceOn || _.contains(_.pluck(i, 'pos'), '#' + node.introduceOn));
       // console.log('doin it', i, goodNodes);
       const newGraph = update(graph, {nodes: {$set: goodNodes}});
       this.setState({graph: newGraph});

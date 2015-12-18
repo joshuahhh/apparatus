@@ -50,11 +50,12 @@
   font-family: Verdana;
   font-size: 25px;
   text-anchor: middle;
+  font-weight: bold;
   alignment-baseline: middle;
   fill: black;
   fill-opacity: 1;
   stroke: white;
-  stroke-width: 0.5px;
+  stroke-width: 0.9px;
   stroke-linecap: butt;
   stroke-linejoin: miter;
   stroke-opacity: 1;
