@@ -1,7 +1,12 @@
 Firebase = require "firebase"
+FirebasePromises = require "../Util/FirebasePromises"
 Q = require "q"
 
-Q.longStackSupport = true;
+
+###
+Manages Apparatus's use of Firebase for drawing storage.
+###
+
 
 module.exports = class FirebaseAccess
   constructor: ->
@@ -12,9 +17,18 @@ module.exports = class FirebaseAccess
 
   # Returns a promise to go through a login process.
   loginPromise: ->
-    return Q.ninvoke(@ref, "authWithOAuthPopup", "google")
+    options = {scope: "email"}
+    return FirebasePromises.authWithOAuthPopupPromise(@ref, "google", options)
       .then (authData) =>
+        # save auth data locally
         @authData = authData
+
+        # save auth data to server
+        userRef = @ref.child("users").child(@authData.uid)
+        newUserData =
+          date: Firebase.ServerValue.TIMESTAMP
+          email: @authData.google.email
+        return FirebasePromises.setPromise(userRef, newUserData)
 
   # Returns a promise to go through a login process, if the user isn't logged in
   # already.
@@ -24,35 +38,30 @@ module.exports = class FirebaseAccess
     else
       return Q()  # simple success
 
+  saveUserInformationPromise: ->
+    @loginIfNecessaryPromise()
+
   # Given a JSON string of a drawing, returns a promise to save the drawing's
   # data and return the drawing key. Will go into a login process, if necessary.
   saveDrawingPromise: (drawing) ->
     @loginIfNecessaryPromise().then =>
       drawingsRef = @ref.child("drawings")
-      newDrawingRef = drawingsRef.push
+      newDrawingData =
         uid: @authData.uid
         date: Firebase.ServerValue.TIMESTAMP
         source: drawing
-      return newDrawingRef.key()
+      return FirebasePromises.pushPromise(drawingsRef, newDrawingData)
+        .then (newDrawingRef) -> newDrawingRef.key()
 
   # Given a drawing key, returns a promise to return the drawing's data block.
   loadDrawingPromise: (key) ->
-    deferred = Q.defer()
-
-    drawingsRef = @ref.child("drawings")
-    thisDrawingRef = drawingsRef.child(key)
-
-    successCallback = (drawingDataSnapshot) =>
-      if not drawingDataSnapshot.exists()
-        deferred.reject(new DrawingNotFoundError())
-      drawingData = drawingDataSnapshot.val()
-      deferred.resolve(drawingData)
-    failureCallback = (error) =>
-      deferred.reject(error)
-
-    thisDrawingRef.once('value', successCallback, failureCallback)
-
-    return deferred.promise
+    drawingRef = @ref.child("drawings").child(key)
+    return FirebasePromises.getValuePromise(drawingRef)
+      .then (drawingDataSnapshot) =>
+        if not drawingDataSnapshot.exists()
+          throw new DrawingNotFoundError()
+        drawingData = drawingDataSnapshot.val()
+        return drawingData
 
 
 # The error that occurs when you try to load a drawing that doesn't exist.

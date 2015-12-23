@@ -134,7 +134,6 @@ module.exports = class Editor
 
     @firebaseAccess.loadDrawingPromise(key)
       .then (drawingData) =>
-        console.log('drawingData', drawingData)
         jsonString = drawingData.source
         @loadJsonStringIntoProjectFromExternalSource(jsonString)
       .catch (error) =>
