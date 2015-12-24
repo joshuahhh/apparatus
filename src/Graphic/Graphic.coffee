@@ -34,7 +34,7 @@ class Graphic.Element
     viewMatrix:
 
     highlight(graphic): A function that takes in a graphic and returns either
-    a color or null.
+    a {color, lineWidth} object or null.
 
     ###
     throw "Not implemented"
@@ -94,6 +94,30 @@ class Graphic.Group extends Graphic.Element
 
 
 class Graphic.Anchor extends Graphic.Element
+  render: (opts) ->
+    @highlightIfNecessary(opts)
+
+  hitDetect: (opts) ->
+    {x, y, viewMatrix} = opts
+    [myX, myY] = viewMatrix.compose(@matrix).origin()
+    distSq = (x - myX) * (x - myX) + (y - myY) * (y - myY)
+    if distSq <= 5 * 5
+      return [@particularElement]
+    else
+      return null
+
+  highlightIfNecessary: ({highlight, ctx, viewMatrix}) ->
+    return unless highlight
+    highlightSpec = highlight(this)
+    if highlightSpec
+      [myX, myY] = viewMatrix.compose(@matrix).origin()
+
+      ctx.save()
+      ctx.beginPath();
+      ctx.arc(myX, myY, 5, 0, 2 * Math.PI, false)
+      ctx.fillStyle = highlightSpec.color
+      ctx.fill()
+      ctx.restore()
 
 
 
@@ -104,7 +128,19 @@ class Graphic.Path extends Graphic.Element
     @performPaintOps(opts)
     @highlightIfNecessary(opts)
 
+    # Render anchor highlights, if necessary
+    for childGraphic in @childGraphics
+      childGraphic.render(opts)
+
   hitDetect: (opts) ->
+    # Check for anchor hits
+    latestHit = null
+    for childGraphic in @childGraphics
+      latestHit = childGraphic.hitDetect(opts) ? latestHit
+    if latestHit
+      console.log('path hit anchor!')
+      return latestHit.concat(@particularElement)
+
     opts.ctx = getDummyCanvasCtx()
     {ctx, x, y} = opts
     @buildPath(opts)
