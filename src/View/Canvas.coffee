@@ -53,6 +53,8 @@ R.create "Canvas",
       particularElement = graphic.particularElement
       if hoverManager.controllerParticularElement?.isAncestorOf(particularElement)
         return {color: "#c00", lineWidth: 2.5}
+      # if hoverManager.doubleHoveredParticularElement?.isAncestorOf(particularElement)
+      #   return {color: "#0c9", lineWidth: 5}
       if project.selectedParticularElement?.isAncestorOf(particularElement)
         return {color: "#09c", lineWidth: 2.5}
       if hoverManager.hoveredParticularElement?.isAncestorOf(particularElement)
@@ -178,6 +180,7 @@ R.create "Canvas",
     Util.clearTextFocus()
 
     isDoubleClick = @_isDoubleClick()
+    console.log('mouse down! double:', isDoubleClick)
     @_updateSelected(mouseEvent, isDoubleClick)
     @_updateHoverAndCursor(mouseEvent)
     @_startAppropriateDrag(mouseEvent)
@@ -205,6 +208,7 @@ R.create "Canvas",
     doubleClickThreshold = 400
     @_lastMouseDownTime ?= 0
     currentTime = Date.now()
+    console.log('isDoubleClick', @_lastMouseDownTime, currentTime, currentTime - @_lastMouseDownTime)
     isDoubleClick = (currentTime - @_lastMouseDownTime < doubleClickThreshold)
     @_lastMouseDownTime = currentTime
     return isDoubleClick
@@ -238,6 +242,8 @@ R.create "Canvas",
       return selectedParticularElement if controlPoint
       return null unless hits
 
+      # console.log(hits.map((h) -> h.element.label))
+
       if !selectedParticularElement
         # Second to last or last element.
         return hits[hits.length - 2] ? hits[hits.length - 1]
@@ -266,12 +272,17 @@ R.create "Canvas",
     else
       attributesToChange = []
 
-    return {controlPoint, controller, nextSelectDouble, nextSelectSingle, attributesToChange}
+    # if nextSelectSingle || nextSelectDouble
+    #   console.log(nextSelectSingle.element.label, nextSelectDouble.element.label, '(s, d)')
+
+
+    return {controlPoint, controller, nextSelectSingle, nextSelectDouble, attributesToChange}
 
   _updateHoverAndCursor: (mouseEvent) ->
     {hoverManager} = @context
-    {controlPoint, controller, nextSelectSingle, attributesToChange} = @_intent(mouseEvent)
+    {controlPoint, controller, nextSelectSingle, nextSelectDouble, attributesToChange} = @_intent(mouseEvent)
     hoverManager.hoveredParticularElement = nextSelectSingle
+    hoverManager.doubleHoveredParticularElement = nextSelectDouble
     hoverManager.controllerParticularElement = controller
     hoverManager.attributesToChange = attributesToChange
     # TODO: set cursor
