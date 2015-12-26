@@ -95,6 +95,14 @@ R.create "OutlineItem",
     isController = element.isController()
     isExpanded = element.expanded
 
+    # headMaster is the non-built-in master of a head
+    headMaster = null
+    if element.head() == element
+      master = element.master()
+      builtIn = _.values(Model)
+      if !_.contains(builtIn, master)
+        headMaster = master
+
     R.div {
       className: R.cx {
         OutlineItem: true
@@ -120,6 +128,12 @@ R.create "OutlineItem",
             value: element.label
             setValue: @_setLabelValue
           }
+        if headMaster
+          R.div {className: "ElementRowHeadMasterLink"},
+            R.a {href: "#", onClick: @_onClickHeadMaster},
+              "master"
+            if element.hasOwnProperty('label')
+              " (#{headMaster.label})"
       R.NovelAttributesList {element}
 
 
@@ -166,6 +180,11 @@ R.create "OutlineItem",
     particularElement = new Model.ParticularElement(element)
     project.select(particularElement)
 
+  _onClickHeadMaster: (ev) ->
+    ev.preventDefault()
+    project = @context.project
+    element = @props.element
+    project.setEditing(element.master())
 
   # ===========================================================================
   # Drag Reorder
