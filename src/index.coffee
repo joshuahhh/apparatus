@@ -94,6 +94,7 @@ everyTick = ->
     lastTime = now
 
     editor.project.runEvolveSteps()
+    editor.project.runConstrainSteps()
     render()
     if shouldCheckpoint
       editor.checkpoint()

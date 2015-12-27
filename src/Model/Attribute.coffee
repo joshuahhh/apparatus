@@ -132,6 +132,21 @@ module.exports = Attribute = Node.createVariant
       result = result.parent()
     return result
 
+  initEvolve: ->
+    # HACK: this shouldn't be a property (should be a link), and should be
+    # able to put it optionally on any attribute, should have UI.
+    @evolve = Model.Attribute.createVariant()
+    @evolve.setExpression("")
+    @evolveOn = false
+
+  initConstrain: ->
+    # HACK: this shouldn't be a property (should be a link), and should be
+    # able to put it optionally on any attribute, should have UI.
+    @constrainLeft = Model.Attribute.createVariant()
+    @constrainLeft.setExpression("")
+    @constrainRight = Model.Attribute.createVariant()
+    @constrainRight.setExpression("")
+    @constrainOn = false
 
 
 

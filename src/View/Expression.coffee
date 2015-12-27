@@ -12,7 +12,7 @@ R.create "Expression",
   render: ->
     attribute = @props.attribute
 
-    R.span {},
+    R.span {onClick: @_onClick},
       R.div {className: "Expression"},
         R.ExpressionCode {attribute}
         R.ExpressionValue {attribute}
@@ -22,10 +22,24 @@ R.create "Expression",
             R.input {type: "checkbox", className: "Interactive", checked: attribute.evolveOn, onChange: @_setEvolveOn}
             "Followed By:"
           R.Expression {attribute: attribute.evolve}
+      if attribute.constrainLeft
+        R.span {},
+          R.div {style: {fontStyle: "italic"}},
+            R.input {type: "checkbox", className: "Interactive", checked: attribute.constrainOn, onChange: @_setConstrainOn}
+            "Constrained by:"
+          R.Expression {attribute: attribute.constrainLeft}
+          R.Expression {attribute: attribute.constrainRight}
+
+  _onClick: ->
+    window.attribute = @props.attribute
 
   _setEvolveOn: (e) ->
     {attribute} = @props
     attribute.evolveOn = e.target.checked
+
+  _setConstrainOn: (e) ->
+    {attribute} = @props
+    attribute.constrainOn = e.target.checked
 
 R.create "ExpressionValue",
   propTypes:

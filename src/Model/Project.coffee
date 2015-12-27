@@ -1,6 +1,7 @@
 _ = require "underscore"
 Model = require "./Model"
 Dataflow = require "../Dataflow/Dataflow"
+Util = require "../Util/Util"
 
 
 module.exports = class Project
@@ -138,3 +139,45 @@ module.exports = class Project
         unless _.isNumber(newValue)
           newValue = JSON.stringify(newValue)
         attribute.setExpression(newValue)
+
+
+  # ===========================================================================
+  # Evolve
+  # ===========================================================================
+
+  runConstrainSteps: ->
+    # Collect all attribute descendants of @editingElement with constraints.
+    # Note this will break recursion.
+    attributes = []
+    collect = (node) ->
+      if node.isVariantOf(Model.Attribute) and node?.constrainOn
+        attributes.push(node)
+      for childNode in node.children()
+        collect(childNode)
+    collect(@editingElement)
+
+    if attributes.length == 0
+      return
+
+    initialValues = _.invoke(attributes, 'value')
+
+    objective = (trialValues) =>
+      for attribute, index in attributes
+        trialValue = trialValues[index]
+        attribute.setExpression(trialValue)
+      leftAttributes = _.pluck(attributes, 'constrainLeft')
+      leftValues = _.invoke(leftAttributes, 'value')
+      rightAttributes = _.pluck(attributes, 'constrainRight')
+      rightValues = _.invoke(rightAttributes, 'value')
+      error = Util.quadrance(leftValues, rightValues)  # TODO: relative weighting? hopefully won't matter due to full satisfaction?
+      return error
+
+    initError = objective(initialValues)
+    if _.isNaN(initError)
+      return
+
+    solvedValues = Util.solve(objective, initialValues)
+
+    for attribute, i in attributes
+      newValue = solvedValues[i]
+      attribute.setExpression(newValue)
