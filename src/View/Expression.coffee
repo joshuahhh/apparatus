@@ -46,7 +46,7 @@ R.create "Value",
     value = @props.value
     R.span {className: "Value"},
       if value instanceof Error
-        "(Error)"
+        "(" + value + ")"
       else if _.isFunction(value)
         "(Function)"
       else if value instanceof Dataflow.Spread
