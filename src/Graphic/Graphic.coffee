@@ -92,6 +92,34 @@ class Graphic.Group extends Graphic.Element
       return null
 
 
+class Graphic.SignPoint extends Graphic.Element
+  render: (opts) ->
+    # TODO: only render in currently edited element
+    {ctx, viewMatrix} = opts
+    [myX, myY] = viewMatrix.compose(@matrix).origin()
+
+    markSize = 5
+
+    ctx.save()
+    ctx.strokeStyle = 'lightgray'
+    ctx.lineWidth = 1
+
+    ctx.beginPath()
+    ctx.lineTo(myX - markSize, myY - markSize)
+    ctx.lineTo(myX + markSize, myY + markSize)
+    ctx.stroke()
+
+    ctx.beginPath()
+    ctx.lineTo(myX + markSize, myY - markSize)
+    ctx.lineTo(myX - markSize, myY + markSize)
+    ctx.stroke()
+
+    ctx.restore()
+
+  hitDetect: (opts) ->
+    # TODO
+    return false
+
 
 class Graphic.Anchor extends Graphic.Element
   render: (opts) ->

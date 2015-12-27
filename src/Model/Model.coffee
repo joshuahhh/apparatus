@@ -98,6 +98,45 @@ Model.Transform.addChildren [
 ]
 
 
+Model.Measure = Model.Attribute.createVariant
+  label: "Attribute"
+
+  constructor: ->
+    # Call "super" constructor
+    Node.constructor.apply(this, arguments)
+
+    @value = Dataflow.cell(@_value.bind(this))
+
+  value: ->
+    throw "Not implemented"
+
+  dependencies: ->
+    attributes = []
+    curElement = @parentElement()
+    while curElement
+      transform = curElement.childOfType(Model.Transform)
+      {x, y, sx, sy, rotate} = transform.getAttributesValuesByName()
+      attributes.push(x, y, sx, sy, rotate)
+      curElement = curElement.parent()
+    return Model.Element.allDependencies(attributes)
+
+  setExpression: (exprString, references={}) ->
+    # NO CAN DO, BUDDY
+    return
+
+Model.XAbsolute = Model.Measure.createVariant
+  label: "X (absolute)"
+  value: ->
+    [x, y] = @parentElement.accumulatedMatrix().origin()
+    return x
+
+Model.YAbsolute = Model.Measure.createVariant
+  label: "Y (absolute)"
+  value: ->
+    [x, y] = @parentElement.accumulatedMatrix().origin()
+    return y
+
+
 Model.Position = Model.Component.createVariant
   label: "Position"
   matrix: ->
@@ -118,6 +157,10 @@ Model.Position = Model.Component.createVariant
 Model.Position.addChildren [
   createAttribute("X", "x", "0.00")
   createAttribute("Y", "y", "0.00")
+  Model.XAbsolute.createVariant
+    name: "x_abs"
+  Model.YAbsolute.createVariant
+    name: "y_abs"
 ]
 
 
@@ -157,6 +200,23 @@ Model.Point.addChildren [
   Model.Position.createVariant()
 ]
 
+createPointOfType = (type, x, y) ->
+  point = type.createVariant()
+  position = point.childOfType(Model.Position)
+  attributes = position.getAttributesByName()
+  attributes.x.setExpression(x)
+  attributes.y.setExpression(y)
+  return point
+
+
+Model.SignPoint = Model.Point.createVariant
+  # TODO: hide signpoints of built-in elements? all signpoints?
+  devLabel: "SignPoint"
+  label: "Sign Point"
+  graphicClass: Graphic.SignPoint
+
+createSignPoint = _.partial(createPointOfType, Model.SignPoint)
+
 
 Model.Group = Model.Shape.createVariant
   label: "Group"
@@ -167,13 +227,7 @@ Model.Anchor = Model.Point.createVariant
   label: "Anchor"
   graphicClass: Graphic.Anchor
 
-createAnchor = (x, y) ->
-  anchor = Model.Anchor.createVariant()
-  position = anchor.childOfType(Model.Position)
-  attributes = position.getAttributesByName()
-  attributes.x.setExpression(x)
-  attributes.y.setExpression(y)
-  return anchor
+createAnchor = _.partial(createPointOfType, Model.Anchor)
 
 
 Model.PathComponent = Model.Component.createVariant
@@ -209,6 +263,10 @@ Model.Rectangle.addChildren [
   createAnchor("0.00", "1.00")
   createAnchor("1.00", "1.00")
   createAnchor("1.00", "0.00")
+  createSignPoint(0, 0)
+  createSignPoint(0, 1)
+  createSignPoint(1, 0)
+  createSignPoint(1, 1)
 ]
 
 
