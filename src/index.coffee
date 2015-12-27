@@ -13,6 +13,7 @@ Apparatus.Model = Model
 Apparatus.Storage = Storage
 Apparatus.R = R
 Apparatus.Util = Util
+Apparatus._ = _
 
 
 
@@ -75,4 +76,3 @@ refreshEventNames = [
 
 for eventName in refreshEventNames
   window.addEventListener(eventName, refresh)
-

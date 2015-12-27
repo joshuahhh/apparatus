@@ -37,9 +37,11 @@ R.create "OutlineTree",
       drag.consummated and
       drag.element == element
 
-    isHead = (element.head() == element) and element.parent()
+    master = element.master()
+    builtIn = _.values(Model)
+    isNonTopHead = (element.head() == element) and element.parent() and !_.contains(builtIn, master)
 
-    outlineTree = R.div {className: R.cx {OutlineTree: true, isHead}},
+    outlineTree = R.div {className: R.cx {OutlineTree: true, isNonTopHead}},
       R.OutlineItem {element}
       if isExpanded
         R.OutlineChildren {element}
@@ -99,12 +101,11 @@ R.create "OutlineItem",
     isExpanded = element.expanded
 
     # headMaster is the non-built-in master of a head
-    headMaster = null
-    if element.head() == element
-      master = element.master()
-      builtIn = _.values(Model)
-      if !_.contains(builtIn, master)
-        headMaster = master
+    master = element.master()
+    builtIn = _.values(Model)
+    isHead = (element.head() == element) and !_.contains(builtIn, master)
+    if isHead
+      headMaster = master
 
     R.div {
       className: R.cx {
