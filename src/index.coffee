@@ -16,6 +16,9 @@ Apparatus.Util = Util
 
 
 
+Error.stackTraceLimit = undefined
+
+
 
 editor = new Model.Editor()
 

@@ -52,12 +52,13 @@ Model.Component = Model.Node.createVariant
   getAttributesByName: ->
     _.indexBy @attributes(), "name"
 
-  getAttributesValuesByName: ->
+  getAttributesValuesByName: (names) ->
     result = {}
     for attribute in @attributes()
       name = attribute.name
-      value = attribute.value()
-      result[name] = value
+      if !names or _.contains(names, name)
+        value = attribute.value()
+        result[name] = value
     return result
 
   graphicClass: Graphic.Component
@@ -97,20 +98,16 @@ Model.Transform.addChildren [
   createAttribute("Rotate", "rotate", "0.00")
 ]
 
-
 Model.Measure = Model.Attribute.createVariant
   label: "Attribute"
 
-  constructor: ->
-    # Call "super" constructor
-    Node.constructor.apply(this, arguments)
+  exprString: "MEASURE"
 
-    @value = Dataflow.cell(@_value.bind(this))
-
-  value: ->
+  _value: ->
     throw "Not implemented"
 
   dependencies: ->
+    return []
     attributes = []
     curElement = @parentElement()
     while curElement
@@ -126,21 +123,21 @@ Model.Measure = Model.Attribute.createVariant
 
 Model.XAbsolute = Model.Measure.createVariant
   label: "X (absolute)"
-  value: ->
-    [x, y] = @parentElement.accumulatedMatrix().origin()
+  _value: ->
+    [x, y] = @parentElement().accumulatedMatrix().origin()
     return x
 
 Model.YAbsolute = Model.Measure.createVariant
   label: "Y (absolute)"
-  value: ->
-    [x, y] = @parentElement.accumulatedMatrix().origin()
+  _value: ->
+    [x, y] = @parentElement().accumulatedMatrix().origin()
     return y
 
 
 Model.Position = Model.Component.createVariant
   label: "Position"
   matrix: ->
-    {x, y} = @getAttributesValuesByName()
+    {x, y} = @getAttributesValuesByName(["x", "y"])
     return Util.Matrix.naturalConstruct(x, y, 1, 1, 0)
   defaultAttributesToChange: ->
     {x, y} = @getAttributesByName()
@@ -195,7 +192,9 @@ Model.Shape.addChildren [
 ]
 
 
-Model.Point = Model.Element.createVariant()
+Model.Point = Model.Element.createVariant
+  label: "Point"
+
 Model.Point.addChildren [
   Model.Position.createVariant()
 ]
@@ -211,7 +210,7 @@ createPointOfType = (type, x, y) ->
 
 Model.SignPoint = Model.Point.createVariant
   # TODO: hide signpoints of built-in elements? all signpoints?
-  devLabel: "SignPoint"
+  _devLabel: "SignPoint"
   label: "Sign Point"
   graphicClass: Graphic.SignPoint
 
@@ -258,6 +257,8 @@ Model.Circle = Model.Path.createVariant
 Model.Rectangle = Model.Path.createVariant
   label: "Rectangle"
 
+window.crazyMode = true
+window.crazyDepth = 0
 Model.Rectangle.addChildren [
   createAnchor("0.00", "0.00")
   createAnchor("0.00", "1.00")
