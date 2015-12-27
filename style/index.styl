@@ -290,6 +290,11 @@ HeaderSize = 18px
 // Outline
 // ============================================================================
 
+.OutlineTree
+  &.isHead
+    border 1px solid lightgray
+    margin-top 4px
+
 .OutlineChildren
   margin-left 1.5em
 
@@ -307,11 +312,11 @@ HeaderSize = 18px
 
 .ElementRow
   display flex
-  padding: 0.175em 0
+  padding: 0.175em 0.35em 0.175em 0
   .ElementRowDisclosure
     width 1.5em
   .ElementRowLabel
-    flex-grow 0
+    flex-grow 1
   .ElementRowHeadMasterLink
     flex-grow 0
     opacity 0.3

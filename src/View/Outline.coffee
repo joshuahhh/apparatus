@@ -14,7 +14,8 @@ R.create "Outline",
     R.div {className: "Outline"},
       R.div {className: "Header"}, "Outline"
       R.div {className: "Scroller"},
-        R.OutlineTree {element}
+        R.div {style: {paddingRight: '0.5em'}},
+          R.OutlineTree {element}
 
 
 R.create "OutlineTree",
@@ -36,7 +37,9 @@ R.create "OutlineTree",
       drag.consummated and
       drag.element == element
 
-    outlineTree = R.div {className: "OutlineTree"},
+    isHead = (element.head() == element) and element.parent()
+
+    outlineTree = R.div {className: R.cx {OutlineTree: true, isHead}},
       R.OutlineItem {element}
       if isExpanded
         R.OutlineChildren {element}
@@ -130,10 +133,13 @@ R.create "OutlineItem",
           }
         if headMaster
           R.div {className: "ElementRowHeadMasterLink"},
+            # "(cl. from "
             R.a {href: "#", onClick: @_onClickHeadMaster},
-              "master"
-            if element.hasOwnProperty('label')
-              " (#{headMaster.label})"
+              if element.hasOwnProperty('label')
+                "#{headMaster.label}"
+              else
+                "master"
+            # ")"
       R.NovelAttributesList {element}
 
 
