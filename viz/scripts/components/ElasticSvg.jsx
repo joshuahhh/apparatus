@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 
 const ElasticSvg = React.createClass({
   getInitialState: function() {
@@ -8,7 +9,7 @@ const ElasticSvg = React.createClass({
   },
 
   handleResize() {
-    const svgNode = React.findDOMNode(this.refs.svg);
+    const svgNode = ReactDOM.findDOMNode(this.refs.svg);
     const newSvgWidth = svgNode.offsetWidth;
     if (newSvgWidth != this.state.svgWidth) {
       this.setState({svgWidth: newSvgWidth});

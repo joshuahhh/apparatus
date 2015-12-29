@@ -1,32 +1,26 @@
 import React from 'react';
 
-import ElasticSvg from './ElasticSvg';
-import StickyExpander from './StickyExpander';
+import ScriptFollower from './ScriptFollower';
+import GenericRightPane from './GenericRightPane';
 import ApparatusGraph from './ApparatusGraph';
 
-const svgHeight = 400;
-
+import {initialState, steps} from '../script';
 
 var RightPane = React.createClass({
   render() {
+    const {breakpoint} = this.props;
+    const curStepName = breakpoint && breakpoint.replace('#breakpoint-', '');
+
     return (
-      <StickyExpander minHeight={svgHeight}>
-        {({height}) =>
-          <ElasticSvg height={svgHeight} style={{position: 'relative', top: (height - svgHeight) / 2}}>
-            {({width}) => width &&
-              <ApparatusGraph width={width} height={svgHeight} />
-              // <g>
-              //   <rect width={width} height={height/2} fill='blue' />
-              //   <rect width={width} height={height/2} y={height/2} fill='red' />
-              // </g>
-            }
-          </ElasticSvg>
+      <ScriptFollower initialState={initialState} steps={steps} curStepName={curStepName}>
+        {({nodesToShow, svgHeight}) =>
+          <GenericRightPane svgHeight={svgHeight}>
+            <ApparatusGraph nodesToShow={nodesToShow} />
+          </GenericRightPane>
         }
-      </StickyExpander>
+      </ScriptFollower>
     );
-  },
-
+  }
 });
-
 
 export default RightPane;

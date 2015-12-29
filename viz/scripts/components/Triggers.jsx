@@ -17,7 +17,6 @@ const Triggers = React.createClass({
     return {
       pageY: $(window).scrollTop(),
       pageHeight: window.innerHeight,
-      // positionedBreakpoints: this.props.breakpoints
     };
   },
 
@@ -41,8 +40,6 @@ const Triggers = React.createClass({
         }
       });
 
-    console.log('positionedBreakpoints', positionedBreakpoints);
-
     this.setState({positionedBreakpoints});
   },
 
@@ -62,36 +59,36 @@ const Triggers = React.createClass({
   },
 
   syncBreakpoint: function() {
-    var s = this.state;
-    var currentY = s.pageY + s.pageHeight / 3;
-    var firstBreakpoint = s.positionedBreakpoints[0];
+    const {onBreakpointChange} = this.props;
+    const {currentBreakpoint, positionedBreakpoints, pageY, pageHeight} = this.state;
+    const currentY = pageY + pageHeight / 3;
+    const firstBreakpoint = positionedBreakpoints[0];
 
     if(currentY < (firstBreakpoint.start || firstBreakpoint.pos)) {
       // we haven't hit a breakpoint yet, so render the page as if the
       // initial breakpoint is at the starting point
-      if(s.currentBreakpoint) {
-        window.doit([]);
+      if(currentBreakpoint) {
+        onBreakpointChange(undefined);
         this.setState({ currentBreakpoint: null });
       }
       else {
-        window.doit([]);
+        onBreakpointChange(undefined);
         firstBreakpoint.apply && firstBreakpoint.apply(0);
       }
     }
     else {
-      if(s.currentBreakpoint && s.currentBreakpoint !== firstBreakpoint) {
+      if(currentBreakpoint && currentBreakpoint !== firstBreakpoint) {
         firstBreakpoint.apply && firstBreakpoint.apply(1);
       }
 
       // iterate backwards over the breakpoints, and the stop when it
       // finds the first breakpoint to apply
-      eachl(s.positionedBreakpoints, (bp) => {
+      eachl(positionedBreakpoints, (bp) => {
         if(bp.start && bp.end &&
            bp.start < currentY &&
            bp.end > currentY) {
-          if(s.currentBreakpoint !== bp) {
-            const index = this.props.breakpoints.indexOf(bp.breakpoint);
-            window.doit(this.props.breakpoints.slice(0, index + 1));
+          if(currentBreakpoint !== bp) {
+            onBreakpointChange(bp.breakpoint.pos);
             this.setState({ currentBreakpoint: bp });
           }
           else {
@@ -101,9 +98,8 @@ const Triggers = React.createClass({
         }
 
         if(currentY > (bp.pos || bp.start)) {
-          if(s.currentBreakpoint !== bp) {
-            const index = this.props.breakpoints.indexOf(bp.breakpoint);
-            window.doit(this.props.breakpoints.slice(0, index + 1));
+          if(currentBreakpoint !== bp) {
+            onBreakpointChange(bp.breakpoint.pos);
             this.setState({ currentBreakpoint: bp });
           }
           else {

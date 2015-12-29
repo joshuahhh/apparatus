@@ -9,6 +9,7 @@
     "url": "http://tobyschachman.com"
   },
   "dependencies": {
+    "babel-plugin-transform-react-display-name": "^6.3.13",
     "codemirror": "^5.4.0",
     "keymaster": "^1.6.2",
     "numeric": "^1.2.6",

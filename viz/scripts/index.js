@@ -9,7 +9,7 @@ import './shift.css';
 
 import RightPane from './components/RightPane';
 import Triggers from './components/Triggers';
-import graph from './simple-data.js';
+import {steps} from './script';
 
 ReactDOM.render(<RightPane />, document.getElementById('root'));
 
@@ -21,13 +21,18 @@ for (var i = stickyElements.length - 1; i >= 0; i--) {
 }
 
 const breakpoints =
-  _.uniq(_.compact(_.pluck(graph.nodes, 'introduceOn')))
-  .map((bp) => ({pos: '#' + bp}));
+  _.pluck(steps, 'name')
+  .map((bp) => ({pos: '#breakpoint-' + bp}));
 
+console.log('breakpoints', breakpoints);
+
+const onBreakpointChange = (breakpoint) => {
+  ReactDOM.render(<RightPane breakpoint={breakpoint}/>, document.getElementById('root'));
+};
 
 document.addEventListener('DOMContentLoaded', function() {
   var div = document.createElement('div');
   document.body.appendChild(div);
   ReactDOM.render(
-    <Triggers breakpoints={breakpoints} />, div);
+    <Triggers breakpoints={breakpoints} onBreakpointChange={onBreakpointChange} />, div);
 });

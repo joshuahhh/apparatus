@@ -8,25 +8,94 @@
     <div class="page-header">
       <h1>Apparatus Internals <small>Nodes, Masters, and Parents</small></h1>
     </div>
+    <div class="row"><div class="col-sm-6">
+    <p><i><a href="http://aprt.us/">Apparatus</a> is a direct-manipulation
+    editor for dynamic diagrams. In this series, we walk through the design and
+    implementation of the systems that make Apparatus tick.</i>
 
-    <p>Apparatus is designed to be easy for non-programmers to pick up and use
-    without any special training. Part of what makes it easy to use is an
-    intuitive "call by copy" mechanism. Every part of a drawing can become a
+    <h2>Spiritual background</h2>
+
+    <p>The improvement of the producer-consumer problem has been widely studied. Sou also visualizes 64 bit architectures, but without all the unnecssary complexity. Similarly, A. Taylor et al. [32] and Erwin Schroedinger [27] constructed the first known instance of highly-available modalities [9,18,33]. While Zhou and Williams also introduced this method, we evaluated it independently and simultaneously. Further, we had our approach in mind before H. Zheng et al. published the recent well-known work on the study of Moore's Law [29,30,1]. Complexity aside, Sou develops even more accurately. Along these same lines, W. Thomas [26] developed a similar heuristic, nevertheless we disconfirmed that our solution is in Co-NP. The only other noteworthy work in this area suffers from fair assumptions about authenticated methodologies. Raj Reddy [2,11,35,23] developed a similar system, contrarily we disconfirmed that Sou is NP-complete [21].
+    <!--
+
+    <p>How do you reuse pieces of code?
+
+    <p>Traditional answers to this question include <b>functions</b> and
+    <b>classes</b>.
+
+    <div class="container row"><div class="row">
+      <div class="col-sm-6">
+        <h3>Functions</h3>
+        <blockquote>
+          <i>I keep on computing the formula:</i>
+          <pre>var dist = Math.sqrt(x * x + y * y);</pre>
+          <i>Hey! I should box this calculation up into a function:</i>
+          <pre>
+function dist(x, y) {
+  return Math.sqrt(x * x + y * y);
+}</pre>
+        </blockquote>
+      </div>
+      <div class="col-sm-6">
+        <h3>Classes</h3>
+        <blockquote>
+          <i>I keep on having (x, y) pairs which I add to each other like:</i>
+          <pre>
+var x3 = x1 + x2;
+var y3 = y1 + y2;</pre>
+          <i>Hey! I should box this behavior up into a class:</i>
+          <pre>
+class Vector2 {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  add(other) {
+    return new Vector2(this.x + other.x, this.y + other.y);
+  }
+}</pre>
+        </blockquote>
+      </div>
+    </div></div>
+
+    <p>In both of these cases, we took something we were already doing and put a
+    bit of effort into making a nice box for it. In both of these cases, that
+    involved defining clear interfaces for the pieces of code: what goes in (as
+    function arguments, or method calls), and what comes out (as returned
+    values, or object state).
+
+    <p>This is the way computer programmers usually think about abstraction. We
+    accept that there's a lot of genuinely tricky work involved in defining
+    these interfaces.
+
+    <p>What would the alternative be to putting in this work? The only obvious
+    way around defining interfaces is just to copy and paste your code wherever
+    it is needed.
+
+    <p>TODO<p>
+
+    <p>Making diagrams in Apparatus should be as casual a process as possible. ...
+    an intuitive "call by copy" mechanism. Every part of a drawing can become a
     reusable component without any extra work.
 
-    <p>But behind the scenes, Apparatus does this with a trick that may strike
-    experienced programmers
+<p>TODO<p>
 
     <p>Apparatus uses a new kind of object model to represent the "scene graph".
     This object model extends Javascript's "prototypal inheritance" with a
 
-    <div class="row">
+<p>TODO<p>
+
+-->
+    <div class="container row">
+      <hr/>
+      <div class="row">
       <div class="col-sm-6">
-        <h2>Background: Prototypes in Javascript</h2>
+        <h2>Prototypes in Javascript</h2>
 
         <p>As most folk know, Javascript has these funny things called
-        "prototypes". Let's reinvent them, in a belabored but hopefully
-        revealing way.
+        "prototypes". Before we get to Apparatus's system, let's reinvent
+        Javascript's prototypes.
 
         <p id="breakpoint-object">On the right is a Javascript object. It
         represents my beloved cat Fluffy. But an object isn't very interesting
@@ -57,12 +126,14 @@
       </div>
       <div class="col-sm-6 sticky" style="position: sticky; top: 0" id='root'>
       </div>
-    </div>
+
+    </div><hr/></div>
     <h2>Bittersweet ending</h2>
     <p>The improvement of the producer-consumer problem has been widely studied. Sou also visualizes 64 bit architectures, but without all the unnecssary complexity. Similarly, A. Taylor et al. [32] and Erwin Schroedinger [27] constructed the first known instance of highly-available modalities [9,18,33]. While Zhou and Williams also introduced this method, we evaluated it independently and simultaneously. Further, we had our approach in mind before H. Zheng et al. published the recent well-known work on the study of Moore's Law [29,30,1]. Complexity aside, Sou develops even more accurately. Along these same lines, W. Thomas [26] developed a similar heuristic, nevertheless we disconfirmed that our solution is in Co-NP. The only other noteworthy work in this area suffers from fair assumptions about authenticated methodologies. Raj Reddy [2,11,35,23] developed a similar system, contrarily we disconfirmed that Sou is NP-complete [21].
     <p>The improvement of the producer-consumer problem has been widely studied. Sou also visualizes 64 bit architectures, but without all the unnecssary complexity. Similarly, A. Taylor et al. [32] and Erwin Schroedinger [27] constructed the first known instance of highly-available modalities [9,18,33]. While Zhou and Williams also introduced this method, we evaluated it independently and simultaneously. Further, we had our approach in mind before H. Zheng et al. published the recent well-known work on the study of Moore's Law [29,30,1]. Complexity aside, Sou develops even more accurately. Along these same lines, W. Thomas [26] developed a similar heuristic, nevertheless we disconfirmed that our solution is in Co-NP. The only other noteworthy work in this area suffers from fair assumptions about authenticated methodologies. Raj Reddy [2,11,35,23] developed a similar system, contrarily we disconfirmed that Sou is NP-complete [21].
     <hr/>
     <a href='http://joshuahhh.com'><i>Joshua Horowitz</i></a>
+    </div></div>
   </div>
   </body>
   <script src='cola.v3.js'></script>

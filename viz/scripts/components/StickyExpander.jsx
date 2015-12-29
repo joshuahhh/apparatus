@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 
 
 const StickyExpander = React.createClass({
@@ -9,7 +10,7 @@ const StickyExpander = React.createClass({
   },
 
   handleResize() {
-    const divNode = React.findDOMNode(this.refs.div);
+    const divNode = ReactDOM.findDOMNode(this.refs.div);
     const parentNode = divNode.parentNode;
     const parentParentNode = parentNode.parentNode;
     const screenAvailableTop = Math.max(0, parentParentNode.getBoundingClientRect().top);

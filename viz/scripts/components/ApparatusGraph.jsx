@@ -9,11 +9,11 @@ import graph from '../simple-data';
 var ApparatusGraph = React.createClass({
   getInitialState() {
     return {
-      graph: this.getGraph(),
+      baseGraph: this.getBaseGraph(),
     };
   },
 
-  getGraph() {
+  getBaseGraph() {
     const realNodes = graph.nodes;
     realNodes.forEach(function (v) {
         // console.log(JSON.stringify(v));
@@ -46,26 +46,32 @@ var ApparatusGraph = React.createClass({
     graph.constraints.push({"axis":"x", "leftId":14, "rightId":8, "gap":100,
       type: 'separation'});
 
-    window.doit = (i) => {
-      console.log(i);
-      const goodNodes = realNodes.filter((node) => !node.introduceOn || _.contains(_.pluck(i, 'pos'), '#' + node.introduceOn));
-      // console.log('doin it', i, goodNodes);
-      const newGraph = update(graph, {nodes: {$set: goodNodes}});
-      this.setState({graph: newGraph});
-    };
+    return graph;
   },
 
-  shouldComponentUpdate(nextProps, nextState) {
-    return !(
+  getGraph() {
+    const {nodesToShow} = this.props;
+    const {baseGraph} = this.state;
+
+    const goodNodes = baseGraph.nodes.filter((node) => nodesToShow[node.id]);
+    const newGraph = update(baseGraph, {nodes: {$set: goodNodes}});
+    return newGraph;
+  },
+
+  shouldComponentUpdate(nextProps, _nextState) {
+    const toReturn = !(
       nextProps.width === this.props.width
       && nextProps.height === this.props.height
-      && nextState.graph === this.state.graph
+      && _.isEqual(nextProps.nodesToShow, this.props.nodesToShow)
     );
+    return toReturn;
   },
 
   render() {
     const {width, height} = this.props;
-    const {graph} = this.state;
+    const graph = this.getGraph();
+
+    console.log('ApparatusGraph::render', this.props.breakpoint);
 
     return (
       graph

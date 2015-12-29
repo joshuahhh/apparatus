@@ -56,7 +56,7 @@ const myKindaGraphToColaGraph = function(myKindaGraph, oldColaGraph) {
     const oldNode = {};
     return _.defaults({
       id,
-      name: label,
+      label,
       x: oldNode.x,
       y: oldNode.x,
       ...other
@@ -161,7 +161,7 @@ const ColaGraphNode = React.createClass({
               rx={5} ry={5}
               x={node.x - node.width / 2} y={node.y - node.height / 2}/>
           }
-          <text className='g-label' x={node.x} y={node.y}>{node.name}</text>
+          <text className='g-label' x={node.x} y={node.y}>{node.label}</text>
         </g>
       </Draggable>
     );
