@@ -5,8 +5,6 @@ import rectConnect from 'rect-connect';
 import {Motion, spring} from 'react-motion';
 
 
-import Draggable from './Draggable';
-
 /* Data flow:
  *
  *   myKindaGraph  --->  colaGraph  --->  colaGraphAdaptor
@@ -154,16 +152,20 @@ const ColaGraphNode = React.createClass({
     const {node} = this.props;
 
     return (
-      <Draggable onDragStart={this.onDragStart} onDrag={this.onDrag} onDragEnd={this.onDragEnd}>
-        <g className='node-g'>
-          {!(node.type == 'prop') &&
-            <rect className='node' width={node.width} height={node.height}
-              rx={5} ry={5}
-              x={node.x - node.width / 2} y={node.y - node.height / 2}/>
-          }
-          <text className='g-label' x={node.x} y={node.y}>{node.label}</text>
-        </g>
-      </Draggable>
+      <Motion style={{x: spring(node.x), y: spring(node.y)}}>
+        {({x, y}) =>
+          <g className='node-g' style={{opacity: node.ghost && 0.3}}>
+            {!(node.type == 'prop') &&
+              <rect className='node' width={node.width} height={node.height}
+                rx={5} ry={5}
+                x={x - node.width / 2} y={y - node.height / 2}/>
+            }
+            <text className='g-label' x={x} y={y} style={node.style}>
+              {node.label}
+            </text>
+          </g>
+        }
+      </Motion>
     );
   },
 });
@@ -172,23 +174,35 @@ const ColaGraphLink = ({link}) => {
   const connection = rectConnect(link.source, link.source, link.target, link.target);
   const sourceX = connection.source.x, sourceY = connection.source.y;
   const targetX = connection.target.x, targetY = connection.target.y;
-  const pathD = 'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY;
 
   if (_.isNaN(sourceX)) {
     console.log('bad!', link);
   }
 
+  const backgroundWidth = 100;
+  const backgroundHeight = 30;
+
   return (
-    <g>
-      <g dangerouslySetInnerHTML={{__html: markerHtml}} />
-      <path className={'link type-' + link.type} d={pathD} />
-      {link.label &&
-        <text className='g-link-label'
-          x={(sourceX + targetX) / 2} y={(sourceY + targetY) / 2} >
-          {link.label}
-        </text>
+    <Motion style={{sourceX: spring(sourceX), sourceY: spring(sourceY), targetX: spring(targetX), targetY: spring(targetY)}}>
+      {({sourceX, sourceY, targetX, targetY}) =>
+        <g style={{opacity: link.ghost && 0.3}}>
+          <g dangerouslySetInnerHTML={{__html: markerHtml}} />
+          <path className={'link type-' + link.type} d={'M' + sourceX + ',' + sourceY + 'L' + targetX + ',' + targetY} />
+          {link.label &&
+            [
+              <rect className='g-link-label-background'
+                x={(sourceX + targetX - backgroundWidth) / 2} y={(sourceY + targetY - backgroundHeight) / 2}
+                width={backgroundWidth} height={backgroundHeight} />
+            ,
+              <text className='g-link-label'
+                x={(sourceX + targetX) / 2} y={(sourceY + targetY) / 2} >
+                {link.label}
+              </text>
+            ]
+          }
+        </g>
       }
-    </g>
+    </Motion>
   );
 };
 

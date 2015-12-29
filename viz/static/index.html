@@ -93,20 +93,52 @@ class Vector2 {
       <div class="col-sm-6">
         <h2>Prototypes in Javascript</h2>
 
-        <p>As most folk know, Javascript has these funny things called
-        "prototypes". Before we get to Apparatus's system, let's reinvent
-        Javascript's prototypes.
+        <p>As most folk know, objects in Javascript can have these mysterious
+        things called "prototypes". Apparatus's node system starts with
+        prototypal inheritance and the extends it in a powerful way. Before we
+        get to Apparatus's system, let's reinvent Javascript's prototypes.
 
-        <p id="breakpoint-object">On the right is a Javascript object. It
-        represents my beloved cat Fluffy. But an object isn't very interesting
-        unless it has associated data and behaviors.
+        <p id="breakpoint-object">On the right is a Javascript object
+        <span class="js-obj">TodoList</span>. It represents a todo list UI element in some hip
+        new todo webapp.
 
-        <p id="breakpoint-props">So let's add properties. Here we have added two
-        properties, <code>mood</code> and <code>mew</code>. Turns out that
-        <ul><code>Fluffy.mood == "happy"</code></ul> Hooray! Also,
-        <ul><code>Fluffy.mew == function() {...}</code></ul> How useful!
+        <p id="breakpoint-props">Our object represents a bundle of data and
+        behaviors. These are attached using properties. Here are some properties
+        of <span class="js-obj">TodoList</span>:
 
-        <p id="breakpoint-object2">Here's my other cat, Whiskers.
+        <ul><li>
+          <b><code><span class="js-obj">TodoList</span>.todos</code> = <code>["Run", "Play"]</code></b>
+          <p>This is the data backing the UI element: a simple list of todo
+          tasks as strings.
+        </li><li>
+          <b><code><span class="js-obj">TodoList</span>.render</code> = <code>function() {...}</code></b>
+          <p>This is a function which renders the list to the screen. The
+          function can refer to <code>this.todos</code>, which, when
+          <code><span class="js-obj">TodoList</span>.render()</code> is called, will refer to
+          <code><span class="js-obj">TodoList</span>.todos</code>.
+        </li></ul>
+
+        <p id="breakpoint-object2">But later in the development of the hip
+        webapp, we decide that there should be two todo lists on the screen. We
+        add a second object, <span class="js-obj">TodoList2</span>. It has a very similar
+        structure to <span class="js-obj">TodoList</span>.
+
+        <p>Now is a good time to make clear that, so far, there are no classes
+        or prototypes or anything. All we have are simple objects, representing
+        bundles of properties.
+
+        <p>But this is clearly a messy situation. <span
+        class="js-obj">TodoList</span> and <span class="js-obj">TodoList2</span>
+        have different data (<code>.todos</code>), but they share the same
+        behavior (<code>.render</code>). What we would like is some way to take
+        the shared behavior and store it in just one place.
+
+        <p id="breakpoint-proto">That is exactly what prototypes let us do. Here
+        we introduce a new object called <span
+        class="js-obj">TodoListProto</span>. It will serve as the "prototype"
+        for TODO
+
+        <p id="breakpoint-ghosts">GHOSTS
 
         <h2 id="breakpoint-stuff">Stuff</h2>
         <p>The improvement of the producer-consumer problem has been widely studied. Sou also visualizes 64 bit architectures, but without all the unnecssary complexity. Similarly, A. Taylor et al. [32] and Erwin Schroedinger [27] constructed the first known instance of highly-available modalities [9,18,33]. While Zhou and Williams also introduced this method, we evaluated it independently and simultaneously. Further, we had our approach in mind before H. Zheng et al. published the recent well-known work on the study of Moore's Law [29,30,1]. Complexity aside, Sou develops even more accurately. Along these same lines, W. Thomas [26] developed a similar heuristic, nevertheless we disconfirmed that our solution is in Co-NP. The only other noteworthy work in this area suffers from fair assumptions about authenticated methodologies. Raj Reddy [2,11,35,23] developed a similar system, contrarily we disconfirmed that Sou is NP-complete [21].

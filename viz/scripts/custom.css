@@ -38,11 +38,14 @@
 .g-label {
   /*fill: white;*/
   fill: #222;
-  font-family: Verdana;
+  /*font-family: Verdana;*/
   font-size: 25px;
   text-anchor: middle;
   alignment-baseline: middle;
-  cursor: move;
+}
+
+.g-link-label-background {
+  fill: white
 }
 
 .g-link-label {
@@ -54,11 +57,11 @@
   alignment-baseline: middle;
   fill: black;
   fill-opacity: 1;
-  stroke: white;
+  /*stroke: white;
   stroke-width: 0.9px;
   stroke-linecap: butt;
   stroke-linejoin: miter;
-  stroke-opacity: 1;
+  stroke-opacity: 1;*/
 }
 
 
@@ -79,4 +82,17 @@
 .example-leave.example-leave-active {
   opacity: 0.01;
   transition: opacity 300ms ease-in;
+}
+
+code {
+  color: hsl(344.8,0%,33.3%);
+  background-color: hsl(342.9,0%,96.3%);
+}
+
+.js-obj {
+  background-color: #eee;
+  border: 1.5px solid black;
+  padding: 3px;
+  border-radius: 5px;
+  padding-top: 1px;
 }

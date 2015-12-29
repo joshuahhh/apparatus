@@ -37,14 +37,6 @@ var ApparatusGraph = React.createClass({
           type: 'separation'});
       }
     });
-    graph.constraints.push({"axis":"x", "leftId":"Rect-w", "rightId":"Rect-h", "gap":100,
-      type: 'separation'});
-    graph.constraints.push({"axis":"x", "leftId":"MyRect-w", "rightId":"MyRect-h", "gap":100,
-      type: 'separation'});
-    graph.constraints.push({"axis":"x", "leftId":12, "rightId":"MyRect", "gap":100,
-      type: 'separation'});
-    graph.constraints.push({"axis":"x", "leftId":14, "rightId":8, "gap":100,
-      type: 'separation'});
 
     return graph;
   },
