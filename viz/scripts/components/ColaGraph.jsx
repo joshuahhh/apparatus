@@ -151,10 +151,12 @@ const ColaGraphNode = React.createClass({
   render() {
     const {node} = this.props;
 
+    const gClassName = node.hovered ? 'node-g hovered' : 'node-g';
+
     return (
       <Motion style={{x: spring(node.x), y: spring(node.y)}}>
         {({x, y}) =>
-          <g className='node-g' style={{opacity: node.ghost && 0.3}}>
+          <g className={gClassName} style={{opacity: node.ghost && 0.3}}>
             {!(node.type == 'prop') &&
               <rect className='node' width={node.width} height={node.height}
                 rx={5} ry={5}

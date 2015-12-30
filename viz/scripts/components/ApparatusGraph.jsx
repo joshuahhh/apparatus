@@ -27,14 +27,20 @@ var ApparatusGraph = React.createClass({
 
     graph.links.forEach(function (e) {
       if (e.type === 'parent1') {
-        graph.constraints.push({"axis":"y", "leftId":e.targetId, "rightId":e.sourceId, "gap":150,
-          type: 'separation'});
+        graph.constraints.push({
+          axis: "y",
+          leftId: e.sourceId, rightId: e.targetId,
+          type: 'separation', gap: 150});
       } else if (e.type === 'parent2') {
-        graph.constraints.push({"axis":"y", "leftId":e.targetId, "rightId":e.sourceId, "gap":200,
-          type: 'separation'});
+        graph.constraints.push({
+          axis: "y",
+          leftId: e.sourceId, rightId: e.targetId,
+          type: 'separation', gap: 200});
       } else if (e.type === 'master' || e.type === 'master-head') {
-        graph.constraints.push({"axis":"x", "leftId":e.targetId, "rightId":e.sourceId, "gap":200,
-          type: 'separation'});
+        graph.constraints.push({
+          axis: "x",
+          leftId: e.targetId, rightId: e.sourceId,
+          type: 'separation', gap: 200});
       }
     });
 
@@ -42,11 +48,16 @@ var ApparatusGraph = React.createClass({
   },
 
   getGraph() {
-    const {nodesToShow} = this.props;
+    const {nodesToShow, nodeToHighlight} = this.props;
     const {baseGraph} = this.state;
 
     const goodNodes = baseGraph.nodes.filter((node) => nodesToShow[node.id]);
     const newGraph = update(baseGraph, {nodes: {$set: goodNodes}});
+
+    newGraph.nodes.forEach((node) =>
+      node.hovered = (node.id === nodeToHighlight)
+    );
+
     return newGraph;
   },
 
@@ -54,6 +65,7 @@ var ApparatusGraph = React.createClass({
     const toReturn = !(
       nextProps.width === this.props.width
       && nextProps.height === this.props.height
+      && nextProps.nodeToHighlight === this.props.nodeToHighlight
       && _.isEqual(nextProps.nodesToShow, this.props.nodesToShow)
     );
     return toReturn;

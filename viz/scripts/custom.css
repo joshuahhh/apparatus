@@ -6,7 +6,12 @@
   stroke-width: 1.5px;
   /*cursor: move;*/
 }
-
+.node-g.hovered .node {
+  fill: rgb(132, 184, 217);
+}
+.node-g.hovered .g-label {
+  fill: white;
+}
 .group {
   stroke: #fff;
   stroke-width: 1.5px;
@@ -90,9 +95,14 @@ code {
 }
 
 .js-obj {
+  display: inline-block;
   background-color: #eee;
   border: 1.5px solid black;
-  padding: 3px;
+  padding: 2px 4px;
   border-radius: 5px;
-  padding-top: 1px;
+}
+
+.js-obj:hover {
+  background-color: rgb(132, 184, 217);
+  color: white;
 }

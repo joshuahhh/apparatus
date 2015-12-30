@@ -1,34 +1,49 @@
 import React from 'react';
 import $ from 'jquery';
+import _ from 'underscore';
 
 import CurrentMarker from './CurrentMarker';
 
 
-function eachl(arr, func) {
-  for(var i=arr.length-1; i>=0; i--) {
-    if(func(arr[i])) {
-      break;
-    }
-  }
-}
+// Props:
+//   * breakpoints: breakpoint specs
+//   * onBreakpointChange: callback
+// State:
+//   * windowHeight
+//   * pageY
+//   * currentBreakpoint
+//   * positionedBreakpoints
 
 const Triggers = React.createClass({
   getInitialState: function() {
     return {
+      curBreakpointName: 'UNDEFINED',
       pageY: $(window).scrollTop(),
-      pageHeight: window.innerHeight,
+      windowHeight: window.innerHeight,
     };
   },
 
   componentDidMount: function() {
-    $(window).on('resize', this.updatePageHeight);
+    $(window).on('resize', this.onResize);
     $(window).on('scroll', this.updatePageY);
+
+    this.onResize();
+    this.updatePageY();
+  },
+
+  componentWillUnmount: function(_e) {
+    $(window).off('resize', this.onResize);
+    $(window).off('scroll', this.updatePageY);
+  },
+
+  onResize: function(_e) {
+    this.setState({windowHeight: window.innerHeight});
 
     const positionedBreakpoints =
       this.props.breakpoints.map((bp) => {
         var el = $(bp.start || bp.pos);
         if(el.length) {
-          var top = el.offset().top + 30;
+          var top = el.offset().top;
           var toReturn = {breakpoint: bp};
           if(bp.start) {
             toReturn.start = top;
@@ -40,76 +55,44 @@ const Triggers = React.createClass({
         }
       });
 
+    window.positionedBreakpoints = positionedBreakpoints;
     this.setState({positionedBreakpoints});
   },
 
-  componentWillUnmount: function(_e) {
-    $(window).off('resize', this.updatePageHeight);
-    $(window).off('scroll', this.updatePageY);
-  },
-
-  updatePageHeight: function(_e) {
-    this.setState({ pageHeight: $(window).height() });
-  },
-
   updatePageY: function(e) {
-    if(e.target === document) {
-      this.setState({ pageY: $(window).scrollTop() });
+    if(!e || e.target === document) {
+      this.setState({pageY: $(window).scrollTop()});
     }
+  },
+
+  shouldComponentUpdate: function(nextProps, nextState) {
+    return !_.isEqual(JSON.stringify(this.props), JSON.stringify(nextProps)) || !_.isEqual(this.state, nextState);
   },
 
   syncBreakpoint: function() {
     const {onBreakpointChange} = this.props;
-    const {currentBreakpoint, positionedBreakpoints, pageY, pageHeight} = this.state;
-    const currentY = pageY + pageHeight / 3;
-    const firstBreakpoint = positionedBreakpoints[0];
+    const {curBreakpointName, positionedBreakpoints, pageY, windowHeight} = this.state;
 
-    if(currentY < (firstBreakpoint.start || firstBreakpoint.pos)) {
-      // we haven't hit a breakpoint yet, so render the page as if the
-      // initial breakpoint is at the starting point
-      if(currentBreakpoint) {
-        onBreakpointChange(undefined);
-        this.setState({ currentBreakpoint: null });
-      }
-      else {
-        onBreakpointChange(undefined);
-        firstBreakpoint.apply && firstBreakpoint.apply(0);
-      }
-    }
-    else {
-      if(currentBreakpoint && currentBreakpoint !== firstBreakpoint) {
-        firstBreakpoint.apply && firstBreakpoint.apply(1);
-      }
+    const currentY = pageY + windowHeight / 3;
 
-      // iterate backwards over the breakpoints, and the stop when it
-      // finds the first breakpoint to apply
-      eachl(positionedBreakpoints, (bp) => {
-        if(bp.start && bp.end &&
-           bp.start < currentY &&
-           bp.end > currentY) {
-          if(currentBreakpoint !== bp) {
-            onBreakpointChange(bp.breakpoint.pos);
-            this.setState({ currentBreakpoint: bp });
-          }
-          else {
-            bp.apply(Math.min(1.0, (currentY - bp.start) / (bp.end - bp.start)));
-          }
-          return true;
-        }
+    // iterate backwards over the breakpoints, and the stop when it
+    // finds the first breakpoint to apply
+    const newPositionedBreakpointIndex = _.findLastIndex(
+      positionedBreakpoints,
+      (positionedBreakpoint) => currentY > positionedBreakpoint.pos
+    );
 
-        if(currentY > (bp.pos || bp.start)) {
-          if(currentBreakpoint !== bp) {
-            onBreakpointChange(bp.breakpoint.pos);
-            this.setState({ currentBreakpoint: bp });
-          }
-          else {
-            if(bp.apply) {
-              bp.apply(1);
-            }
-          }
-          return true;
-        }
-      });
+    if (newPositionedBreakpointIndex === -1) {
+      if (curBreakpointName) {
+        onBreakpointChange(null);
+        this.setState({curBreakpointName: null});
+      }
+    } else {
+      const newBreakpointName = positionedBreakpoints[newPositionedBreakpointIndex].breakpoint.name;
+      if (newBreakpointName !== curBreakpointName) {
+        onBreakpointChange(newBreakpointName);
+        this.setState({curBreakpointName: newBreakpointName});
+      }
     }
   },
 

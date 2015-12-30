@@ -29,13 +29,6 @@ var ScriptFollower = React.createClass({
     const stepsToPerform = steps.slice(0, curStepIndex + 1);
 
     var state = initialState;
-    // const setState = (nextState) => {
-    //   if (_.isFunction(nextState)) {
-    //     nextState = nextState(state);
-    //   }
-    //   _.extend(state, nextState);
-    // };
-    // stepsToPerform.each((step) => step.onStep(setState));
     stepsToPerform.forEach((step) => {
       state = update(state, step.stateUpdater);
     });
