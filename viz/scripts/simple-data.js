@@ -1,15 +1,15 @@
 export default {
   nodes: [
     {id: 'TodoList', label: 'TodoList', width: 100, height: 40},
-    {id: 'TodoList_render', label: 'function', width: 80, height: 24, type: 'prop', style: {fontStyle: 'italic'}},
-    {id: 'TodoList_render_ghost', label: 'function', width: 80, height: 24, type: 'prop', style: {fontStyle: 'italic'}, ghost: true},
+    {id: 'TodoList_render', label: 'function', width: 80, height: 24, type: 'prop', className: 'italic'},
+    {id: 'TodoList_render_ghost', label: 'function', width: 80, height: 24, type: 'prop', className: 'italic', ghost: true},
     {id: 'TodoList_todos', label: '["Run", "Play"]', width: 80, height: 24, type: 'prop'},
     {id: 'TodoList2', label: 'TodoList2', width: 100, height: 40},
-    {id: 'TodoList2_render', label: 'function', width: 80, height: 24, type: 'prop', style: {fontStyle: 'italic'}},
-    {id: 'TodoList2_render_ghost', label: 'function', width: 80, height: 24, type: 'prop', style: {fontStyle: 'italic'}, ghost: true},
+    {id: 'TodoList2_render', label: 'function', width: 80, height: 24, type: 'prop', className: 'italic'},
+    {id: 'TodoList2_render_ghost', label: 'function', width: 80, height: 24, type: 'prop', className: 'italic', ghost: true},
     {id: 'TodoList2_todos', label: '["Work", "Sleep"]', width: 80, height: 24, type: 'prop'},
     {id: 'TodoListProto', label: 'TodoListProto', width: 130, height: 40},
-    {id: 'TodoListProto_render', label: 'function', width: 80, height: 24, type: 'prop', style: {fontStyle: 'italic'}},
+    {id: 'TodoListProto_render', label: 'function', width: 80, height: 24, type: 'prop', className: 'italic'},
   ],
   links: [
     {sourceId: 'TodoList', targetId: 'TodoList_render', type: 'parent1', label: '.render' },

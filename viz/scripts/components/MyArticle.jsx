@@ -6,7 +6,7 @@ import Triggers from './Triggers';
 import Stickyfill from './Stickyfill';
 import {steps} from '../script';
 
-const Breakpoint = ({name}) => <div id={'breakpoint-' + name}>BREAKPOINT</div>;
+const Breakpoint = ({name}) => <div id={'breakpoint-' + name}></div>;
 
 const Header = ({title, subtitle}) =>
   <div className="page-header">
@@ -28,12 +28,43 @@ const LeftColumn = ({children, rightColumn}) =>
     </div>
   </div>;
 
-const JsObj = ({children, onHover}, {setHovered}) =>
-  <span className="js-obj"
-      onMouseOver={_.partial(setHovered, children)} onMouseOut={_.partial(setHovered, false)}>
-    {children}
-  </span>;
-JsObj.contextTypes = {setHovered: React.PropTypes.any};
+const Hoverify = React.createClass({
+  getInitialState() {
+    return {
+      hovered: false,
+    };
+  },
+
+  contextTypes: {
+    setHovered: React.PropTypes.any
+  },
+
+  render() {
+    const {children, hoverCode} = this.props;
+    const {hovered} = this.state;
+
+    return React.cloneElement(children, {
+      className: (children.props.className || '') + (hovered ? ' hoverified' : ''),
+      onMouseOver: _.partial(this.onHover, hoverCode),
+      onMouseOut: _.partial(this.onHover, false),
+    });
+  },
+
+  onHover(hoverCode) {
+    const {setHovered} = this.context;
+
+    setHovered(hoverCode);
+    this.setState({hovered: !!hoverCode});
+  }
+});
+
+
+const JsObj = ({children}) =>
+  <Hoverify hoverCode={children}>
+    <span className="js-obj">
+      {children}
+    </span>
+  </Hoverify>;
 
 const MyArticle = React.createClass({
   getInitialState() {
@@ -63,7 +94,7 @@ const MyArticle = React.createClass({
     return (
       <div>
         <Triggers breakpoints={breakpoints} onBreakpointChange={onBreakpointChange} />
-        <div className='container' style={{fontSize: 20, fontFamily: 'palatino,georgia,serif'}}>
+        <div className='container'>
           <Header title='Apparatus Internals' subtitle='Nodes, Masters, and Parents' />
           <div className="row">
             <div className="col-sm-6">
@@ -92,11 +123,6 @@ const MyArticle = React.createClass({
     const {breakpoint, hovered} = this.state;
     const rightColumn = <RightPane breakpoint={breakpoint} nodeToHighlight={hovered}/>;
 
-    const a = 3;
-    const test = <a />;
-
-    window.test = test;
-
     return (
       <LeftColumn rightColumn={rightColumn}>
         <h2>Prototypes in Javascript</h2>
@@ -116,14 +142,16 @@ const MyArticle = React.createClass({
 
         <ul>
           <li>
-            <b><code><JsObj>TodoList</JsObj>.render</code> = <code>function() {'{...}'}</code></b>
+            <b><code><JsObj>TodoList</JsObj>.render</code> = <Hoverify hoverCode='TodoList_render'><code>function() {'{...}'}</code></Hoverify></b>
             <p>This is a function which renders the list to the screen. The
-            function can refer to <code>this.todos</code>, which, when
-            <code><JsObj>TodoList</JsObj>.render()</code> is called, will refer to
-            {' '}<code><JsObj>TodoList</JsObj>.todos</code>.</p>
+            function's code can refer to <code>this.todos</code>. When
+            <code><JsObj>TodoList</JsObj>.render()</code> is called,
+            <code>this</code> will be bound to <JsObj>TodoList</JsObj>, so the
+            correct data will be accessed.
+            </p>
           </li>
           <li>
-            <b><code><JsObj>TodoList</JsObj>.todos</code> = <code>["Run", "Play"]</code></b>
+            <b><code><JsObj>TodoList</JsObj>.todos</code> = <Hoverify hoverCode='TodoList_todos'><code>["Run", "Play"]</code></Hoverify></b>
             <p>This is the data backing the UI element: a simple list of todo
             tasks as strings.</p>
           </li>
@@ -131,14 +159,17 @@ const MyArticle = React.createClass({
 
         <Breakpoint name='object2' />
 
-        <p>But later in the development of the hip webapp, we decide that there
-        should be two todo lists on the screen. We add a second object,
-        {' '}<JsObj>TodoList2</JsObj>. It has a very similar structure to
-        {' '}<JsObj>TodoList</JsObj>.</p>
+        <p>Later in the development of the hip webapp, we decide that there
+        should be two todo lists on the screen. We add a second object, {' '}
+        <JsObj>TodoList2</JsObj>. It's practically the same as {' '}
+        <JsObj>TodoList</JsObj>. In particular, it shares the exact same
+        <code>.render</code> function. The only difference is that <JsObj>TodoList2</JsObj>
+        has different data stored in <code>.todos</code>, so when <code><JsObj>TodoList2</JsObj>.render()</code>
+      is called, a different set of todos will be rendered.</p>
 
-        <p>Now is a good time to make clear that, so far, there are no classes
-        or prototypes or anything. All we have are simple objects, representing
-        bundles of properties.</p>
+        <p>(Now is a good time to make clear that, so far, there are no
+        prototypes or classes or anything like that in the picture. All we have
+        are simple objects, representing bundles of properties.)</p>
 
         <p>But this is clearly a messy situation. <JsObj>TodoList</JsObj> and
         {' '}<JsObj>TodoList2</JsObj> have different data (<code>.todos</code>), but
@@ -147,9 +178,9 @@ const MyArticle = React.createClass({
 
         <Breakpoint name="proto" />
 
-        That is exactly what prototypes let us do. Here
+        <p>That is exactly what prototypes let us do. Here
         we introduce a new object called <JsObj>TodoListProto</JsObj>. It will
-        serve as the "prototype" for TODO
+        serve as the "prototype" for TODO</p>
 
         <p>The improvement of the producer-consumer problem has been widely studied. Sou also visualizes 64 bit architectures, but without all the unnecssary complexity. Similarly, A. Taylor et al. [32] and Erwin Schroedinger [27] constructed the first known instance of highly-available modalities [9,18,33]. While Zhou and Williams also introduced this method, we evaluated it independently and simultaneously. Further, we had our approach in mind before H. Zheng et al. published the recent well-known work on the study of Moore's Law [29,30,1]. Complexity aside, Sou develops even more accurately. Along these same lines, W. Thomas [26] developed a similar heuristic, nevertheless we disconfirmed that our solution is in Co-NP. The only other noteworthy work in this area suffers from fair assumptions about authenticated methodologies. Raj Reddy [2,11,35,23] developed a similar system, contrarily we disconfirmed that Sou is NP-complete [21].</p>
 

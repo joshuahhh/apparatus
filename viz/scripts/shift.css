@@ -90,7 +90,7 @@ iframe.demo {
 
 .breakpoint-marker {
     position: absolute;
-    width: 7px;
+    width: 100px;
     height: .25em;
     background-color: #BEAA8E;
     /* border-right: 2px solid #aa8c7e; */

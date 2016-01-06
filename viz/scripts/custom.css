@@ -1,3 +1,12 @@
+p {
+  margin: 0 0 20px;
+}
+
+body {
+  font-size: 18px;
+  font-family: palatino,georgia,serif;
+}
+
 .node {
   /*stroke: #fff;*/
   /*stroke: #888;*/
@@ -12,6 +21,17 @@
 .node-g.hovered .g-label {
   fill: white;
 }
+
+.node-g.hovered.prop .g-label {
+  fill: rgb(132, 184, 217);
+  font-weight: bold;
+}
+
+code {
+  display: inline-block;
+  margin: 2px;
+}
+
 .group {
   stroke: #fff;
   stroke-width: 1.5px;
@@ -96,13 +116,18 @@ code {
 
 .js-obj {
   display: inline-block;
+  font-family: palatino,georgia,serif;
   background-color: #eee;
   border: 1.5px solid black;
   padding: 2px 4px;
   border-radius: 5px;
 }
 
-.js-obj:hover {
+.hoverified {
   background-color: rgb(132, 184, 217);
   color: white;
+}
+
+.italic {
+  font-style: italic;
 }
