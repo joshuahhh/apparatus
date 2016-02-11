@@ -87,6 +87,8 @@ module.exports = Node = {
 
     @_isHatched = false
 
+    @_incomingLinks = []
+
 
   # ===========================================================================
   # Accessors
@@ -177,6 +179,9 @@ module.exports = Node = {
       variant.addChild(correspondingChild, insertionIndex)
 
   removeChild: (childToRemove) ->
+    # Warning: removeChild cannot "delete" the child, since it is used in "move
+    # child" contexts (like View/Outline.coffee's _reorderItem).
+
     @_hatch()
 
     # Remove the child
@@ -262,6 +267,21 @@ module.exports = Node = {
     index = @children().indexOf(childToReplace)
     @removeChild(childToReplace)
     @addChild(replacementNode, index)
+
+
+  # ===========================================================================
+  # Incoming link management
+  # ===========================================================================
+
+  registerIncomingLink: (link) ->
+    if !_.contains(@_incomingLinks, link)
+      @_incomingLinks.push(link)
+
+  deregisterIncomingLink: (link) ->
+    @_incomingLinks = _.without(@_incomingLinks, link)
+
+  incomingLinksOfType: (type) ->
+    _.filter @_incomingLinks, (link) -> link.isVariantOf(type)
 
 
   # ===========================================================================

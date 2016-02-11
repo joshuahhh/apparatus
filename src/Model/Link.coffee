@@ -3,7 +3,10 @@ Node = require "./Node"
 module.exports = Link = Node.createVariant
   label: "Link"
 
-  setTarget: (@_target) ->
+  setTarget: (newTarget) ->
+    @deregisterFromTarget()
+    @_target = newTarget
+    @_registered = false
 
   target: ->
     # First, trace backwards from me to the link which originally established
@@ -26,4 +29,10 @@ module.exports = Link = Node.createVariant
 
       cursor = nextCursor
 
+    cursor.registerIncomingLink(this)
+    @_registered = true
     return cursor
+
+  deregisterFromTarget: ->
+    if @_registered
+      @target().deregisterIncomingLink(this)

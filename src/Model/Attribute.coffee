@@ -54,6 +54,7 @@ module.exports = Attribute = Node.createVariant
 
     # Remove all existing reference links
     for referenceLink in @childrenOfType(Model.ReferenceLink)
+      referenceLink.deregisterFromTarget()
       @removeChild(referenceLink)
 
     # Create appropriate reference links
