@@ -27,7 +27,8 @@ module.exports = Element = Node.createVariant
       "accumulatedMatrix"
     ]
     for prop in propsToCellify
-      this[prop] = Dataflow.cell(this["_" + prop].bind(this))
+      this[prop + 'Cell'] = new Dataflow.Cell(this["_" + prop + 'Fn'].bind(this))
+      this[prop] = -> this[prop + 'Cell'].call()
 
   # viewMatrix determines the pan and zoom of an Element. It is only used for
   # Elements that can be a Project.editingElement (i.e. Elements within the
@@ -176,14 +177,14 @@ module.exports = Element = Node.createVariant
       matrix = matrix.compose(transform.matrix())
     return matrix
 
-  _contextMatrix: ->
+  _contextMatrixFn: ->
     parent = @parent()
     if parent and parent.isVariantOf(Element)
       return parent.accumulatedMatrix()
     else
       return new Util.Matrix()
 
-  _accumulatedMatrix: ->
+  _accumulatedMatrixFn: ->
     return @contextMatrix().compose(@matrix())
 
 
@@ -191,7 +192,7 @@ module.exports = Element = Node.createVariant
   # Graphic
   # ===========================================================================
 
-  _graphic: ->
+  _graphicFn: ->
     graphic = new @graphicClass()
 
     spreadEnv = Dataflow.currentSpreadEnv()

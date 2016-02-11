@@ -14,9 +14,9 @@ module.exports = Attribute = Node.createVariant
     # Call "super" constructor
     Node.constructor.apply(this, arguments)
 
-    @value = Dataflow.cell(@_value.bind(this))
+    @valueCell = new Dataflow.Cell(@_valueFn.bind(this))
 
-  _value: ->
+  _valueFn: ->
     # Optimization
     if @isNumber()
       return parseFloat(@exprString)
@@ -34,9 +34,13 @@ module.exports = Attribute = Node.createVariant
       return @__compiledExpression.evaluate(referenceValues)
     catch error
       if error instanceof Dataflow.UnresolvedSpreadError
+        # This is legit uncool.
         throw error
       else
         return error
+
+  value: ->
+    @valueCell.call()
 
   _isDirty: ->
     return true if !@hasOwnProperty("__compiledExpression")
