@@ -6,6 +6,20 @@ module.exports = Util = {}
 Util.Matrix = require "./Matrix"
 
 
+depth = 0
+Util.decorate = (label, fn) ->
+  return (args...) ->
+    # if (depth > 60) then throw new Error('TERRIBLY DEEP')
+    Util.log "<#{label}>"
+    depth++
+    toReturn = fn.apply(this, args)
+    depth--
+    Util.log "</#{label}>"
+    return toReturn
+Util.log = (args...) ->
+  # console.log ' '.repeat(2 * depth), args...
+
+
 # =============================================================================
 # DOM
 # =============================================================================

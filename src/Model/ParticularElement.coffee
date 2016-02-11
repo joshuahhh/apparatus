@@ -14,11 +14,11 @@ module.exports = class ParticularElement
       @spreadEnv.contains(particularElement.spreadEnv)
 
   accumulatedMatrix: ->
-    accumulatedMatrix = @element.accumulatedMatrix.asSpread()
+    accumulatedMatrix = @element.accumulatedMatrixAsSpread()
     accumulatedMatrix = @spreadEnv.resolveWithDefault(accumulatedMatrix)
     return accumulatedMatrix
 
   contextMatrix: ->
-    contextMatrix = @element.contextMatrix.asSpread()
+    contextMatrix = @element.contextMatrixAsSpread()
     contextMatrix = @spreadEnv.resolveWithDefault(contextMatrix)
     return contextMatrix

@@ -27,8 +27,9 @@ module.exports = Element = Node.createVariant
       "accumulatedMatrix"
     ]
     for prop in propsToCellify
-      this[prop + 'Cell'] = new Dataflow.Cell(this["_" + prop + 'Fn'].bind(this))
-      this[prop] = -> this[prop + 'Cell'].call()
+      this['__' + prop + 'Cell'] = new Dataflow.Cell(this["_" + prop + 'Fn'].bind(this), 'element ' + prop)
+      this[prop] = do (prop) -> -> this['__' + prop + 'Cell'].call()
+      this[prop + 'AsSpread'] = do (prop) -> -> this['__' + prop + 'Cell'].asSpread()
 
   # viewMatrix determines the pan and zoom of an Element. It is only used for
   # Elements that can be a Project.editingElement (i.e. Elements within the
@@ -171,20 +172,20 @@ module.exports = Element = Node.createVariant
   # Geometry
   # ===========================================================================
 
-  matrix: ->
+  matrix: Util.decorate 'Element::matrix', ->
     matrix = new Util.Matrix()
     for transform in @childrenOfType(Model.Transform)
       matrix = matrix.compose(transform.matrix())
     return matrix
 
-  _contextMatrixFn: ->
+  _contextMatrixFn: Util.decorate 'Element::_contextMatrixFn', ->
     parent = @parent()
     if parent and parent.isVariantOf(Element)
       return parent.accumulatedMatrix()
     else
       return new Util.Matrix()
 
-  _accumulatedMatrixFn: ->
+  _accumulatedMatrixFn: Util.decorate 'Element::_accumulatedMatrixFn', ->
     return @contextMatrix().compose(@matrix())
 
 
@@ -211,7 +212,8 @@ module.exports = Element = Node.createVariant
 
   allGraphics: ->
     return [] if @_isBeyondMaxDepth()
-    result = @graphic.asSpread()
+    Util.log('allGraphics','@__graphicCell', @__graphicCell)
+    result = @graphicAsSpread()
     if result instanceof Dataflow.Spread
       return result.flattenToArray()
     else

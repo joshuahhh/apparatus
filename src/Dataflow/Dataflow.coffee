@@ -3,7 +3,10 @@ ComputationManager = require "./ComputationManager"
 DynamicScope = require "./DynamicScope"
 Spread = require "./Spread"
 SpreadEnv = require "./SpreadEnv"
+Util = require "../Util/Util"
 
+# TODO: CHROME HACKAGE
+Error.stackTraceLimit = undefined
 
 computationManager = new ComputationManager()
 
@@ -19,52 +22,72 @@ dynamicScope = new DynamicScope {
 class UnresolvedSpreadError
   constructor: (@spread) ->
 
-
-# resolve will recursively try to resolve value in the current spread
-# environment until it gets to a non-Spread or a Spread that is not in the
-# environment.
-resolve: (value) ->
-  currentSpreadEnv = dynamicScope.context.spreadEnv
-  return currentSpreadEnv.resolve(value)
-
-
-class Cell
-  constructor: (@fn) ->
-    @evaluateFull = computationManager.memoize ->
-      return dynamicScope.with {spreadEnv: SpreadEnv.empty}, @_runFn.bind(this)
+cell = (fn) ->
 
   # These are the workhorse functions that together evaluate the cell.
 
-  _runFn: ->
+  runFn = ->
     try
-      return @fn() if dynamicScope.context.shouldThrow
-      return dynamicScope.with {shouldThrow: true}, @fn
+      return fn() if dynamicScope.context.shouldThrow
+      return dynamicScope.with {shouldThrow: true}, fn
     catch error
       if error instanceof UnresolvedSpreadError
-        return @_distributeAcrossSpread(error.spread)
+        return distributeAcrossSpread(error.spread)
       else
         throw error
 
-  _distributeAcrossSpread: (spread) ->
+  distributeAcrossSpread = (spread) ->
     currentSpreadEnv = dynamicScope.context.spreadEnv
     items = _.map spread.items, (item, index) ->
       spreadEnv = currentSpreadEnv.assign(spread, index)
-      return dynamicScope.with {spreadEnv}, @_runFn.bind(this)
+      return dynamicScope.with {spreadEnv}, runFn
     return new Spread(items, spread.origin)
 
+
+  evaluateFull = computationManager.memoize ->
+    Util.log 'cell -- evaluateFull'
+    return dynamicScope.with {spreadEnv: SpreadEnv.empty}, runFn
+
+
+  # resolve will recursively try to resolve value in the current spread
+  # environment until it gets to a non-Spread or a Spread that is not in the
+  # environment.
+  resolve = (value) ->
+    currentSpreadEnv = dynamicScope.context.spreadEnv
+    return currentSpreadEnv.resolve(value)
+
+
   # "Public" methods.
-  asSpread: ->
+  asSpread = ->
+    Util.log 'cell -- asSpread'
     computationManager.run ->
-      value = @evaluateFull()
+      value = evaluateFull()
       value = resolve(value)
       return value
 
-  call: ->
+  cellFn = ->
+    Util.log 'cell -- cellFn'
     computationManager.run ->
-      value = @asSpread()
+      value = asSpread()
       if dynamicScope.context.shouldThrow and value instanceof Spread
         throw new UnresolvedSpreadError(value)
       return value
+
+  # Package it up.
+  cellFn.asSpread = asSpread
+  return cellFn
+
+
+class Cell
+  constructor: (@fn, @label) ->
+    @_secretInternalCell = cell(@fn)
+
+  call: Util.decorate 'Cell::call', ->
+    Util.log "We're in Cell with label '#{@label}'"
+    return @_secretInternalCell()
+
+  asSpread: Util.decorate 'Cell::asSpread', ->
+    return @_secretInternalCell.asSpread()
 
 
 module.exports = Dataflow = {

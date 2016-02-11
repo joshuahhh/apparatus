@@ -10,11 +10,11 @@ Model = require "./Model"
 module.exports = Attribute = Node.createVariant
   label: "Attribute"
 
-  constructor: ->
+  constructor: Util.decorate 'Attribute::constructor', ->
     # Call "super" constructor
     Node.constructor.apply(this, arguments)
 
-    @valueCell = new Dataflow.Cell(@_valueFn.bind(this))
+    @__valueCell = new Dataflow.Cell(@_valueFn.bind(this))
 
   _valueFn: ->
     # Optimization
@@ -39,8 +39,8 @@ module.exports = Attribute = Node.createVariant
       else
         return error
 
-  value: ->
-    @valueCell.call()
+  value: Util.decorate 'Attribute::value', ->
+    @__valueCell.call()
 
   _isDirty: ->
     return true if !@hasOwnProperty("__compiledExpression")
