@@ -40,7 +40,7 @@ module.exports = Attribute = Node.createVariant
         return error
 
   value: Util.decorate 'Attribute::value', ->
-    @__valueCell.call()
+    @__valueCell.run()
 
   _isDirty: ->
     return true if !@hasOwnProperty("__compiledExpression")

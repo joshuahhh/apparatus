@@ -1,6 +1,9 @@
 _ = require "underscore"
 
 
+# A spread is an array annotated with an origin (a Model.Attribute). Spreads can
+# be nested: you can have a spread of spreads.
+
 module.exports = class Spread
   constructor: (@items, @origin) ->
 

@@ -28,7 +28,7 @@ module.exports = Element = Node.createVariant
     ]
     for prop in propsToCellify
       this['__' + prop + 'Cell'] = new Dataflow.Cell(this["_" + prop + 'Fn'].bind(this), 'element ' + prop)
-      this[prop] = do (prop) -> -> this['__' + prop + 'Cell'].call()
+      this[prop] = do (prop) -> -> this['__' + prop + 'Cell'].run()
       this[prop + 'AsSpread'] = do (prop) -> -> this['__' + prop + 'Cell'].asSpread()
 
   # viewMatrix determines the pan and zoom of an Element. It is only used for
