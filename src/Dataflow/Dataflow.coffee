@@ -36,6 +36,12 @@ resolve = (value) ->
 #     Invalidation of a cell will immediately cause cells which depend on it to
 #       be invalidated.
 
+# A Dataflow.cell is a boxed-up version of a function which handles:
+#   * caching of results during a larger evaluation
+#   * calculation of spreads.
+# A cell is not stored as part of the scene graph. Rather, it is part of the
+# real-time computation system.
+
 class Cell
   constructor: (@fn, @dependersGetter) ->
     @_evaluateFull = computationManager.memoize =>
