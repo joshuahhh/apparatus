@@ -73,6 +73,7 @@ class Cell
       value = @asSpread()
       if dynamicScope.context.shouldThrow and value instanceof Spread
         throw new UnresolvedSpreadError(value)
+      @valid = true
       return value
 
   invalidate: ->
@@ -81,7 +82,7 @@ class Cell
     else
       @valid = false
       dependers = @dependersGetter()
-      dependers.forEach(depender -> depender.invalidate())
+      dependers.forEach((depender) -> depender.invalidate())
 
 
 module.exports = Dataflow = {

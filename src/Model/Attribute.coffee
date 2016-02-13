@@ -3,7 +3,6 @@ Util = require "../Util/Util"
 Dataflow = require "../Dataflow/Dataflow"
 Evaluator = require "../Evaluator/Evaluator"
 Node = require "./Node"
-Link = require "./Link"
 Model = require "./Model"
 
 
@@ -14,7 +13,7 @@ module.exports = Attribute = Node.createVariant
     # Call "super" constructor
     Node.constructor.apply(this, arguments)
 
-    @__valueCell = new Dataflow.Cell(@_valueFn.bind(this))
+    @__valueCell = new Dataflow.Cell(@_valueFn.bind(this), @dependerCells.bind(this))
 
   _valueFn: ->
     # Optimization
@@ -67,6 +66,9 @@ module.exports = Attribute = Node.createVariant
       referenceLink.key = key
       referenceLink.setTarget(attribute)
       @addChild(referenceLink)
+
+    # Invalidate the value cell
+    @__valueCell.invalidate()
 
   references: ->
     references = {}
@@ -136,6 +138,9 @@ module.exports = Attribute = Node.createVariant
       result = result.parent()
     return result
 
+  dependerCells: ->
+    incomingReferenceLinks = @incomingLinksOfType(Model.ReferenceLink)
+    return incomingReferenceLinks.map((link) -> link.parent().__valueCell)
 
 
 

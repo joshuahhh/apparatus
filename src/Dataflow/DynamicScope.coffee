@@ -1,5 +1,8 @@
 _ = require "underscore"
 
+# A DynamicScope object is just a dictionary which you can temporarily extend
+# for the duration of a function call and which restores itself afterwards.
+
 module.exports = class DynamicScope
   constructor: (@context={}) ->
 
