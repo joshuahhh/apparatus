@@ -28,10 +28,20 @@ resolve = (value) ->
   return currentSpreadEnv.resolve(value)
 
 
+# IMPORTANT INVARIANT: if A depends on B, and B is invalid, then A is invalid.
+#   This is maintained as follows:
+#     Everyone starts invalid
+#     A calculation occurs which makes a cell valid only if all of the cells it
+#       depends on are already valid.
+#     Invalidation of a cell will immediately cause cells which depend on it to
+#       be invalidated.
+
 class Cell
-  constructor: (@fn) ->
+  constructor: (@fn, @dependersGetter) ->
     @_evaluateFull = computationManager.memoize =>
       return dynamicScope.with {spreadEnv: SpreadEnv.empty}, @_runFn.bind(this)
+
+    @valid = false
 
   # These are the workhorse functions that together evaluate the cell.
 
@@ -64,6 +74,14 @@ class Cell
       if dynamicScope.context.shouldThrow and value instanceof Spread
         throw new UnresolvedSpreadError(value)
       return value
+
+  invalidate: ->
+    if not @valid
+      # by the invariant, we can assume all dependers are already invalid
+    else
+      @valid = false
+      dependers = @dependersGetter()
+      dependers.forEach(depender -> depender.invalidate())
 
 
 module.exports = Dataflow = {
