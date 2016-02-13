@@ -12,9 +12,12 @@ R.create "Expression",
   render: ->
     attribute = @props.attribute
 
-    R.div {className: "Expression"},
+    R.div {className: "Expression", onClick: @_onClick},
       R.ExpressionCode {attribute}
       R.ExpressionValue {attribute}
+
+  _onClick: ->
+    window.attribute = @props.attribute
 
 R.create "ExpressionValue",
   propTypes:
