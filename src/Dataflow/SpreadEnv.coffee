@@ -28,13 +28,15 @@ Spread = require "./Spread"
 module.exports = class SpreadEnv
   constructor: (@parent, @origin, @index) ->
 
+  # Returns the location in a spread which the SpreadEnv is "at" (an integer
+  # index), or `undefined` if the SpreadEnv is not in the spread.
   lookup: (spread) ->
     if spread.origin == @origin
       return @index
     return @parent?.lookup(spread)
 
-  # If value is a spread, resolve will recursively try to lookup an index and
-  # return the item at that index.
+  # Returns the particular value the SpreadEnv is "at", given a value which
+  # might be spread in various directions.
   resolve: (value) ->
     if value instanceof Spread
       index = @lookup(value)
@@ -57,12 +59,14 @@ module.exports = class SpreadEnv
   assign: (spread, index) ->
     return new SpreadEnv(this, spread.origin, index)
 
+  # Not sure if this is used? Not sure if this is correct.
   isEqualTo: (spreadEnv) ->
     return false unless spreadEnv?
     return false unless @origin == spreadEnv.origin and @index == spreadEnv.index
     return true if !@parent and !spreadEnv.parent
     return @parent.isEqualTo(spreadEnv.parent)
 
+  # Not sure if this is used? Not sure if this is correct.
   contains: (spreadEnv) ->
     return false unless spreadEnv?
     return true if @isEqualTo(spreadEnv)

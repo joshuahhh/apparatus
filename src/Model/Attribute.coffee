@@ -36,6 +36,7 @@ module.exports = Attribute = Node.createVariant
         # This is legit uncool.
         throw error
       else
+        # This is a user error.
         return error
 
   value: Util.decorate 'Attribute::value', ->
