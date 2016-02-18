@@ -172,20 +172,20 @@ module.exports = Element = Node.createVariant
   # Geometry
   # ===========================================================================
 
-  matrix: Util.decorate 'Element::matrix', ->
+  matrix: ->
     matrix = new Util.Matrix()
     for transform in @childrenOfType(Model.Transform)
       matrix = matrix.compose(transform.matrix())
     return matrix
 
-  _contextMatrixFn: Util.decorate 'Element::_contextMatrixFn', ->
+  _contextMatrixFn: ->
     parent = @parent()
     if parent and parent.isVariantOf(Element)
       return parent.accumulatedMatrix()
     else
       return new Util.Matrix()
 
-  _accumulatedMatrixFn: Util.decorate 'Element::_accumulatedMatrixFn', ->
+  _accumulatedMatrixFn: ->
     return @contextMatrix().compose(@matrix())
 
 
@@ -212,7 +212,6 @@ module.exports = Element = Node.createVariant
 
   allGraphics: ->
     return [] if @_isBeyondMaxDepth()
-    Util.log('allGraphics','@__graphicCell', @__graphicCell)
     result = @graphicAsSpread()
     if result instanceof Dataflow.Spread
       return result.flattenToArray()

@@ -3,6 +3,7 @@ ComputationManager = require "./ComputationManager"
 DynamicScope = require "./DynamicScope"
 Spread = require "./Spread"
 SpreadEnv = require "./SpreadEnv"
+Util = require "../Util/Util"
 
 
 computationManager = new ComputationManager()
@@ -11,21 +12,16 @@ dynamicScope = new DynamicScope {
   # The current spread environment.
   spreadEnv: SpreadEnv.empty
 
-  # Whether or not cells should throw an UnresolvedSpreadError if they
-  # encounter a spread that is not in the current spread environment.
-  shouldThrow: false
+  # Whether we are evaluating a top-level request from outside the Dataflow
+  # system or a lower-level evaluation. (This matters because the top level has
+  # the responsibility of gathering all the spreads which occur further down and
+  # then distributing the computation over all of them.)
+  topLevel: true
 }
 
 class UnresolvedSpreadError
   constructor: (@spread) ->
-
-
-# resolve will recursively try to resolve value in the current spread
-# environment until it gets to a non-Spread or a Spread that is not in the
-# environment.
-resolve = (value) ->
-  currentSpreadEnv = dynamicScope.context.spreadEnv
-  return currentSpreadEnv.resolve(value)
+    Util.log('%cConstructing UnresolvedSpreadError', 'color:orange; background:blue; font-size: 16pt', @spread)
 
 
 # IMPORTANT INVARIANT: if A depends on B, and B is invalid, then A is invalid.
@@ -44,40 +40,55 @@ resolve = (value) ->
 
 class Cell
   constructor: (@fn, @dependersGetter) ->
-    @_evaluateFull = computationManager.memoize =>
+    @_evaluateFull = Util.decorate 'Cell::_evaluteFull', computationManager.memoize =>
       return dynamicScope.with {spreadEnv: SpreadEnv.empty}, @_runFn.bind(this)
 
     @valid = false
 
+    # @origin = (new Error).stack()
+
   # These are the workhorse functions that together evaluate the cell.
 
-  _runFn: ->
+  _runFn: Util.decorate 'Cell::_runFun', ->
+    Util.log dynamicScope.context
     try
-      return @fn() if dynamicScope.context.shouldThrow
-      return dynamicScope.with {shouldThrow: true}, @fn
+      # Ensure that topLevel is false...
+      if not dynamicScope.context.topLevel
+        return @fn()
+      else
+        return dynamicScope.with {topLevel: false}, @fn
     catch error
       if error instanceof UnresolvedSpreadError
         return @_distributeAcrossSpread(error.spread)
       else
         throw error
 
-  _distributeAcrossSpread: (spread) ->
+  _distributeAcrossSpread: Util.decorate 'Cell::_distributeAcrossSpread', (spread) ->
+    Util.log dynamicScope.context
     currentSpreadEnv = dynamicScope.context.spreadEnv
     items = _.map spread.items, (item, index) =>
       spreadEnv = currentSpreadEnv.assign(spread, index)
       return dynamicScope.with {spreadEnv}, @_runFn.bind(this)
     return new Spread(items, spread.origin)
 
-  asSpread: ->
+
+  # asSpread returns the simplest representation of the cell in the current
+  # spreadEnv: just evaluate the spread fully and then resolve using the
+  # spreadEnv.
+  asSpread: Util.decorate 'Cell::asSpread', ->
+    Util.log dynamicScope.context
     computationManager.run =>
       value = @_evaluateFull()
-      value = resolve(value)
+      currentSpreadEnv = dynamicScope.context.spreadEnv
+      value = currentSpreadEnv.resolve(value)
       return value
 
-  run: ->
+  # run does the asSpread thing, but wrapped in a check...
+  run: Util.decorate 'Cell::run', ->
+    Util.log dynamicScope.context
     computationManager.run =>
       value = @asSpread()
-      if dynamicScope.context.shouldThrow and value instanceof Spread
+      if (not dynamicScope.context.topLevel) and value instanceof Spread
         throw new UnresolvedSpreadError(value)
       @valid = true
       return value

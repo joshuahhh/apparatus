@@ -9,13 +9,15 @@ Model = require "./Model"
 module.exports = Attribute = Node.createVariant
   label: "Attribute"
 
-  constructor: Util.decorate 'Attribute::constructor', ->
+  constructor: ->
     # Call "super" constructor
     Node.constructor.apply(this, arguments)
 
     @__valueCell = new Dataflow.Cell(@_valueFn.bind(this), @dependerCells.bind(this))
 
-  _valueFn: ->
+  _valueFn: Util.decorate 'Attribute::_valueFn', ->
+    Util.log @devLabel(), Dataflow.currentSpreadEnv()
+    
     # Optimization
     if @isNumber()
       return parseFloat(@exprString)
@@ -40,6 +42,9 @@ module.exports = Attribute = Node.createVariant
         return error
 
   value: Util.decorate 'Attribute::value', ->
+    # Util.log JSON.stringify(@headThenMasterLineage(true))
+    Util.log @devLabel(), Dataflow.currentSpreadEnv()
+    # Util.log (new Error).stack
     @__valueCell.run()
 
   _isDirty: ->

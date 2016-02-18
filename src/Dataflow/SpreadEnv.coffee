@@ -1,4 +1,5 @@
 Spread = require "./Spread"
+Util = require "../Util/Util"
 
 # TODO: This should have tests for isEqualTo and contains
 
@@ -37,7 +38,7 @@ module.exports = class SpreadEnv
 
   # Returns the particular value the SpreadEnv is "at", given a value which
   # might be spread in various directions.
-  resolve: (value) ->
+  resolve: Util.decorate 'SpreadEnv::resolve', (value) ->
     if value instanceof Spread
       index = @lookup(value)
       if index?

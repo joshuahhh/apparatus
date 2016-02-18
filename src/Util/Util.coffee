@@ -6,18 +6,21 @@ module.exports = Util = {}
 Util.Matrix = require "./Matrix"
 
 
-depth = 0
+active = false
+Util.activate = -> active = true
+Util.deactivate = -> active = false
 Util.decorate = (label, fn) ->
   return (args...) ->
-    # if (depth > 60) then throw new Error('TERRIBLY DEEP')
-    Util.log "<#{label}>"
-    depth++
-    toReturn = fn.apply(this, args)
-    depth--
-    Util.log "</#{label}>"
+    try
+      if active then console.group(label, args...)
+      toReturn = fn.apply(this, args)
+      Util.log 'RETURNS', toReturn
+    finally
+      if active then console.groupEnd()
     return toReturn
 Util.log = (args...) ->
-  # console.log ' '.repeat(2 * depth), args...
+  if active then console.log args...
+
 
 
 # =============================================================================
