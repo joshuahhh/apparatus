@@ -48,6 +48,14 @@ test "Spreads cross product", (t) ->
     t.deepEqual(item.items, [index * 10, index * 20])
   t.end()
 
+test "Spreads tree", (t) ->
+  a = new Dataflow.Cell -> new Dataflow.Spread([0 ... 8], a)
+  b = new Dataflow.Cell -> new Dataflow.Spread([0 ... a.run()], b)
+  c = new Dataflow.Cell -> a.run() * b.run()
+  for item, index in c.run().items
+    t.deepEqual(item.items, [0 ... index].map((i) -> i * index))
+  t.end()
+
 test "Spreads rejoin", (t) ->
   a = new Dataflow.Cell -> new Dataflow.Spread([0 ... 10], a)
   b = new Dataflow.Cell -> a.run() * 2
@@ -63,8 +71,11 @@ test "Spreads rejoin", (t) ->
 test "All spreads should try to resolve as deep as possible", (t) ->
   a = new Dataflow.Cell -> new Dataflow.Spread([0, 1], a)
   b = new Dataflow.Cell -> a.run() * 2
-  c = new Dataflow.Cell -> {a: a.run(), b: b.asSpread()}
+  c = new Dataflow.Cell -> {a: a.run(), b: b.run()}
   t.deepEqual(c.run().items, [{a: 0, b: 0}, {a: 1, b: 2}])
-  d = new Dataflow.Cell -> {b: b.asSpread()}
-  t.deepEqual(d.run().b.items, [0, 2])
+  d = new Dataflow.Cell -> {b: b.run()}
+  t.deepEqual(d.run().items, [{b: 0}, {b: 2}])
+  # Using "asSpread" stops the propagation of the spread upwards in the expression.
+  e = new Dataflow.Cell -> {b: b.asSpread()}
+  t.deepEqual(e.run().b.items, [0, 2])
   t.end()

@@ -83,7 +83,8 @@ class Cell
       value = currentSpreadEnv.resolve(value)
       return value
 
-  # run does the asSpread thing, but wrapped in a check...
+  # run does the asSpread thing, but if the value is a spread, it reports it
+  # upwards so that a higher level can distribute over the spread.
   run: Util.decorate 'Cell::run', ->
     Util.log dynamicScope.context
     computationManager.run =>
