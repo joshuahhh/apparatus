@@ -3,6 +3,8 @@ Node = require "./Node"
 Link = require "./Link"
 Model = require "./Model"
 Dataflow = require "../Dataflow/Dataflow"
+Monadic = require "../Dataflow/Monadic"
+Spread = Monadic.Spread
 Util = require "../Util/Util"
 
 
@@ -192,6 +194,10 @@ module.exports = Element = Node.createVariant
   # ===========================================================================
   # Graphic
   # ===========================================================================
+
+  particularElementSpread: ->
+    Spread.multimap (@accumulatedMatrixSpread(), @contextMatrixSpread()), (accumulatedMatrix, contextMatrix, spreadEnv) =>
+      new Model.ParticularElement2(this, accumulatedMatrixSpread, contextMatrix)
 
   _graphicFn: ->
     graphic = new @graphicClass()

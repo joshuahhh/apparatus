@@ -1,6 +1,8 @@
 _ = require "underscore"
 Util = require "../Util/Util"
 Dataflow = require "../Dataflow/Dataflow"
+Monadic = require "../Dataflow/Monadic"
+Spread = Monadic.Spread
 Evaluator = require "../Evaluator/Evaluator"
 Node = require "./Node"
 Model = require "./Model"
@@ -17,7 +19,7 @@ module.exports = Attribute = Node.createVariant
 
   _valueFn: Util.decorate 'Attribute::_valueFn', ->
     Util.log @devLabel(), Dataflow.currentSpreadEnv()
-    
+
     # Optimization
     if @isNumber()
       return parseFloat(@exprString)
@@ -32,7 +34,7 @@ module.exports = Attribute = Node.createVariant
       referenceAttribute.value()
 
     try
-      return @__compiledExpression.evaluate(referenceValues)
+      return Spread.flexibind(referenceValues, (args) => @__compiledExpression.evaluate(args))
     catch error
       if error instanceof Dataflow.UnresolvedSpreadError
         # This is legit uncool.

@@ -1,12 +1,12 @@
 _ = require "underscore"
-Dataflow = require "../Dataflow/Dataflow"
+Monadic = require "../Dataflow/Monadic"
 
 
 # This is the user-facing "spread" function which generates spreads from arrays
 # and numeric-range spreads.
 module.exports = spread = (start, end, increment=1) ->
   if _.isArray(start)
-    return new Dataflow.Spread(start)
+    return Monadic.Spread.fromArray(start)
 
   if !start? or !end?
     throw "Spread needs arguments: spread(start, end) or spread(start, end, increment) or spread(array)"
@@ -17,4 +17,4 @@ module.exports = spread = (start, end, increment=1) ->
 
   n = (end - start) / increment
   array = (start + increment * i for i in [0 ... n])
-  return new Dataflow.Spread(array)
+  return Monadic.Spread.fromArray(array)
