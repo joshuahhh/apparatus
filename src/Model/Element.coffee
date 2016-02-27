@@ -171,10 +171,7 @@ module.exports = Element = Node.createVariant
   # ===========================================================================
 
   matrix: ->
-    matrix = new Util.Matrix()
-    for transform in @childrenOfType(Model.Transform)
-      matrix = matrix.compose(transform.matrix())
-    return matrix
+    @childOfType(Model.Transform).getAttributesByName().matrix.value() ? new Util.Matrix()
 
   _contextMatrix: ->
     parent = @parent()

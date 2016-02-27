@@ -6,7 +6,7 @@ Util = require "../Util/Util"
 
 R.create "AttributeRow",
   propTypes:
-    attribute: Model.Attribute
+    attribute: Model.ExpressionAttribute
 
   contextTypes:
     project: Model.Project
@@ -192,16 +192,3 @@ R.create "AttributeToken",
     {dragManager, hoverManager} = @context
     return if dragManager.drag?
     hoverManager.hoveredAttribute = null
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -15,13 +15,15 @@ Model.Layout = require "./Layout"
 Model.Node = require "./Node"
 Model.Link = require "./Link"
 Model.Attribute = require "./Attribute"
+Model.ExpressionAttribute = Model.Attribute.ExpressionAttribute
+Model.InternalAttribute = Model.Attribute.InternalAttribute
 Model.Element = require "./Element"
 
 
 Model.Editor = require "./Editor"
 
 
-Model.Variable = Model.Attribute.createVariant
+Model.Variable = Model.ExpressionAttribute.createVariant
   label: "Variable"
 
 # Links an Element to the Attributes it controls.
@@ -33,7 +35,7 @@ Model.ReferenceLink = Model.Link.createVariant
   label: "ReferenceLink"
 
 createAttribute = (label, name, exprString) ->
-  attribute = Model.Attribute.createVariant
+  attribute = Model.ExpressionAttribute.createVariant
     label: label
     name: name
   attribute.setExpression(exprString)
@@ -48,6 +50,12 @@ Model.Component = Model.Node.createVariant
 
   attributes: ->
     @childrenOfType(Model.Attribute)
+
+  expressionAttributes: ->
+    @childrenOfType(Model.ExpressionAttribute)
+
+  internalAttributes: ->
+    @childrenOfType(Model.InternalAttribute)
 
   getAttributesByName: ->
     _.indexBy @attributes(), "name"
@@ -89,14 +97,24 @@ Model.Transform = Model.Component.createVariant
       {point: [0, 1], attributesToChange: [sy], filled: false}
     ]
 
-Model.Transform.addChildren [
-  createAttribute("X", "x", "0.00")
-  createAttribute("Y", "y", "0.00")
-  createAttribute("Scale X", "sx", "1.00")
-  createAttribute("Scale Y", "sy", "1.00")
-  createAttribute("Rotate", "rotate", "0.00")
-]
+Model.InternalAttributeMatrix = Model.InternalAttribute.createVariant
+  label: 'Matrix'
+  name: 'matrix'
+  internalFunction: ({x, y, sx, sy, rotate}) ->
+    Util.Matrix.naturalConstruct(x, y, sx, sy, rotate)
 
+do ->
+  Model.Transform.addChildren [
+    x = createAttribute("X", "x", "0.00")
+    y = createAttribute("Y", "y", "0.00")
+    sx = createAttribute("Scale X", "sx", "1.00")
+    sy = createAttribute("Scale Y", "sy", "1.00")
+    rotate = createAttribute("Rotate", "rotate", "0.00")
+  ]
+
+  matrix = Model.InternalAttributeMatrix.createVariant {}
+  matrix.setReferences({x, y, sx, sy, rotate})
+  Model.Transform.addChild matrix
 
 
 Model.Fill = Model.Component.createVariant

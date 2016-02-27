@@ -1,22 +1,24 @@
 test = require "tape"
 Model = require "../src/Model/Model"
 Attribute = Model.Attribute
+ExpressionAttribute = Model.ExpressionAttribute
+InternalAttribute = Model.InternalAttribute
 
 test "Numbers work", (t) ->
-  a = Attribute.createVariant()
+  a = ExpressionAttribute.createVariant()
   a.setExpression("6")
   t.equal(a.value(), 6)
   t.end()
 
 test "Math expressions work", (t) ->
-  a = Attribute.createVariant()
+  a = ExpressionAttribute.createVariant()
   a.setExpression("5 + 5")
   t.equal(a.value(), 10)
   t.end()
 
 test "References work", (t) ->
-  a = Attribute.createVariant()
-  b = Attribute.createVariant()
+  a = ExpressionAttribute.createVariant()
+  b = ExpressionAttribute.createVariant()
 
   a.setExpression("20")
   b.setExpression("$$$a$$$ * 2", {$$$a$$$: a})
@@ -25,8 +27,8 @@ test "References work", (t) ->
   t.end()
 
 test "Changes recompile", (t) ->
-  a = Attribute.createVariant()
-  b = Attribute.createVariant()
+  a = ExpressionAttribute.createVariant()
+  b = ExpressionAttribute.createVariant()
 
   a.setExpression("20")
   b.setExpression("$$$a$$$ * 2", {$$$a$$$: a})
@@ -41,9 +43,9 @@ test "Changes recompile", (t) ->
   t.end()
 
 test "Dependencies work", (t) ->
-  a = Attribute.createVariant({label: 'a'})
-  b = Attribute.createVariant({label: 'b'})
-  c = Attribute.createVariant({label: 'c'})
+  a = ExpressionAttribute.createVariant({label: 'a'})
+  b = ExpressionAttribute.createVariant({label: 'b'})
+  c = ExpressionAttribute.createVariant({label: 'c'})
 
   a.setExpression("$$$b$$$ * 2", {$$$b$$$: b})
   b.setExpression("$$$c$$$ * 3", {$$$c$$$: c})
@@ -55,9 +57,9 @@ test "Dependencies work", (t) ->
   t.end()
 
 test "Dependencies work with circular references", (t) ->
-  a = Attribute.createVariant({label: 'a'})
-  b = Attribute.createVariant({label: 'b'})
-  c = Attribute.createVariant({label: 'c'})
+  a = ExpressionAttribute.createVariant({label: 'a'})
+  b = ExpressionAttribute.createVariant({label: 'b'})
+  c = ExpressionAttribute.createVariant({label: 'c'})
 
   a.setExpression("$$$b$$$", {$$$b$$$: b})
   b.setExpression("$$$c$$$", {$$$c$$$: c})
@@ -71,3 +73,14 @@ test "Dependencies work with circular references", (t) ->
   t.deepEqual(a.dependencies(), [b, c], 'dependencies works')
   t.deepEqual(a.circularReferencePath(), expectedCircularReferencePath, 'circularReferencePath works')
   t.end()
+
+test "Attributes based on internal functions work", (t) ->
+    a = ExpressionAttribute.createVariant()
+    a.setExpression("1 + 1")
+
+    b = InternalAttribute.createVariant
+      internalFunction: (referenceValues) -> referenceValues.$$$a$$$ + 1
+    b.setReferences({$$$a$$$: a})
+
+    t.equal(b.value(), 3)
+    t.end()
