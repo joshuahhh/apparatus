@@ -36,10 +36,11 @@ module.exports = Attribute = Node.createVariant
     try
       return @_evaluate(referenceValues)
     catch error
-      if error instanceof Dataflow.UnresolvedSpreadError
-        throw error
-      else
-        return error
+      throw error
+      # if error instanceof Dataflow.UnresolvedSpreadError
+      #   throw error
+      # else
+      #   return error
 
   setReferences: (references) ->
     # Remove all existing reference links

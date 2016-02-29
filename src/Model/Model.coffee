@@ -70,11 +70,28 @@ Model.Component = Model.Node.createVariant
 
   graphicClass: Graphic.Component
 
+  graphicAttribute: ->
+    @getAttributesByName().graphic
+
   graphic: ->
-    graphic = new @graphicClass()
-    _.extend graphic, @getAttributesValuesByName()
+    @graphicAttribute().value()
+
+Model.ComponentGraphic = Model.InternalAttribute.createVariant
+  label: 'Graphic'
+  name: 'graphic'
+  internalFunction: (attributeValues) ->
+    # TRICKY BUSINESS: This depends on @parent().graphicClass, so you can
+    # override this in Component's variants. But make sure to set its children
+    # to link to whatever other attributes it depends on! ALSO TRICKY:
+    # graphicClass is not part of the attribute system, so it's got to be
+    # static.
+    graphic = new (@parent().graphicClass)
+    graphic.attributeValues = attributeValues
     return graphic
 
+Model.Component.addChildren [
+  Model.ComponentGraphic.createVariant {}
+]
 
 
 Model.Transform = Model.Component.createVariant
@@ -144,19 +161,24 @@ Model.Fill = Model.Component.createVariant
   label: "Fill"
   graphicClass: Graphic.Fill
 
-Model.Fill.addChildren [
-  createAttribute("Fill Color", "color", "rgba(0.93, 0.93, 0.93, 1.00)")
-]
+do ->
+  Model.Fill.addChildren [
+    color = createAttribute("Fill Color", "color", "rgba(0.93, 0.93, 0.93, 1.00)")
+  ]
 
+  Model.Fill.graphicAttribute().setReferences({color})
 
 Model.Stroke = Model.Component.createVariant
   label: "Stroke"
   graphicClass: Graphic.Stroke
 
-Model.Stroke.addChildren [
-  createAttribute("Stroke Color", "color", "rgba(0.60, 0.60, 0.60, 1.00)")
-  createAttribute("Line Width", "lineWidth", "1")
-]
+do ->
+  Model.Stroke.addChildren [
+    color = createAttribute("Stroke Color", "color", "rgba(0.60, 0.60, 0.60, 1.00)")
+    lineWidth = createAttribute("Line Width", "lineWidth", "1")
+  ]
+
+  Model.Stroke.graphicAttribute().setReferences({color, lineWidth})
 
 
 # =============================================================================
@@ -194,9 +216,12 @@ Model.PathComponent = Model.Component.createVariant
   label: "Path"
   graphicClass: Graphic.PathComponent
 
-Model.PathComponent.addChildren [
-  createAttribute("Close Path", "closed", "true")
-]
+do ->
+  Model.PathComponent.addChildren [
+    closed = createAttribute("Close Path", "closed", "true")
+  ]
+
+  Model.PathComponent.graphicAttribute().setReferences({closed})
 
 Model.Path = Model.Shape.createVariant
   label: "Path"
@@ -230,13 +255,18 @@ Model.TextComponent = Model.Component.createVariant
   label: "Text"
   graphicClass: Graphic.TextComponent
 
-Model.TextComponent.addChildren [
-  createAttribute("Text", "text", '"Text"')
-  createAttribute("Font", "fontFamily", '"Lucida Grande"')
-  createAttribute("Color", "color", "rgba(0.20, 0.20, 0.20, 1.00)")
-  createAttribute("Align", "textAlign", '"start"')
-  createAttribute("Baseline", "textBaseline", '"alphabetic"')
-]
+do ->
+  Model.TextComponent.addChildren [
+    text = createAttribute("Text", "text", '"Text"')
+    fontFamily = createAttribute("Font", "fontFamily", '"Lucida Grande"')
+    color = createAttribute("Color", "color", "rgba(0.20, 0.20, 0.20, 1.00)")
+    textAlign = createAttribute("Align", "textAlign", '"start"')
+    textBaseline = createAttribute("Baseline", "textBaseline", '"alphabetic"')
+  ]
+
+  Model.TextComponent.graphicAttribute().setReferences(
+    {text, fontFamily, color, textAlign, textBaseline})
+
 
 Model.Text = Model.Shape.createVariant
   label: "Text"

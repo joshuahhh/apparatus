@@ -156,7 +156,7 @@ class Graphic.Path extends Graphic.Element
 
   isClosed: ->
     pathComponent = @componentOfType(Graphic.PathComponent)
-    return pathComponent.closed
+    return pathComponent.attributeValues.closed
 
 
 class Graphic.Circle extends Graphic.Path
@@ -184,7 +184,7 @@ class Graphic.Text extends Graphic.Path
     @componentOfType(Graphic.TextComponent)
 
   renderText: ({ctx}) ->
-    {text} = @textComponent()
+    {text} = @textComponent().attributeValues
     ctx.fillText(text, 0, 0)
 
   textMultiplier: 100
@@ -192,7 +192,7 @@ class Graphic.Text extends Graphic.Path
   # setupText will set the appropriate font styles, color, and transformation
   # matrix so that text is ready to be rendered (fillText) at 0,0.
   setupText: ({ctx, viewMatrix}) ->
-    {text, fontFamily, textAlign, textBaseline, color} = @textComponent()
+    {text, fontFamily, textAlign, textBaseline, color} = @textComponent().attributeValues
     matrix = viewMatrix.compose(@matrix)
     matrix = matrix.scale(1 / @textMultiplier, -1 / @textMultiplier)
     matrix.canvasTransform(ctx)
@@ -208,7 +208,7 @@ class Graphic.Text extends Graphic.Path
     ctx.save()
     @setupText(opts)
 
-    {text, fontFamily, textAlign, textBaseline, color} = @textComponent()
+    {text, fontFamily, textAlign, textBaseline, color} = @textComponent().attributeValues
 
     width = ctx.measureText(text).width / @textMultiplier
     height = 1
@@ -265,16 +265,16 @@ class Graphic.PaintOp extends Graphic.Component
 class Graphic.Fill extends Graphic.PaintOp
   paint: (ctx) ->
     ctx.save()
-    ctx.fillStyle = @color
+    ctx.fillStyle = @attributeValues.color
     ctx.fill()
     ctx.restore()
 
 class Graphic.Stroke extends Graphic.PaintOp
   paint: (ctx) ->
-    return if @lineWidth <= 0
+    return if @attributeValues.lineWidth <= 0
     ctx.save()
-    ctx.strokeStyle = @color
-    ctx.lineWidth = @lineWidth
+    ctx.strokeStyle = @attributeValues.color
+    ctx.lineWidth = @attributeValues.lineWidth
     ctx.stroke()
     ctx.restore()
 
