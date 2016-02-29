@@ -103,6 +103,21 @@ Model.InternalAttributeMatrix = Model.InternalAttribute.createVariant
   internalFunction: ({x, y, sx, sy, rotate}) ->
     Util.Matrix.naturalConstruct(x, y, sx, sy, rotate)
 
+Model.InternalAttributeContextMatrix = Model.InternalAttribute.createVariant
+  label: 'Context Matrix'
+  name: 'contextMatrix'
+  internalFunction: ({parentAccumulatedMatrix}) ->
+    if parentAccumulatedMatrix
+      return parentAccumulatedMatrix
+    else
+      return new Util.Matrix()
+
+Model.InternalAttributeAccumulatedMatrix = Model.InternalAttribute.createVariant
+  label: 'Accumulated Matrix'
+  name: 'accumulatedMatrix'
+  internalFunction: ({matrix, contextMatrix}) ->
+    contextMatrix.compose(matrix)
+
 do ->
   Model.Transform.addChildren [
     x = createAttribute("X", "x", "0.00")
@@ -115,6 +130,14 @@ do ->
   matrix = Model.InternalAttributeMatrix.createVariant {}
   matrix.setReferences({x, y, sx, sy, rotate})
   Model.Transform.addChild matrix
+
+  contextMatrix = Model.InternalAttributeContextMatrix.createVariant {}
+  # Only reference is to parent accumulated matrix; set by parent Element
+  Model.Transform.addChild contextMatrix
+
+  accumulatedMatrix = Model.InternalAttributeAccumulatedMatrix.createVariant {}
+  accumulatedMatrix.setReferences({matrix, contextMatrix})
+  Model.Transform.addChild accumulatedMatrix
 
 
 Model.Fill = Model.Component.createVariant

@@ -23,8 +23,6 @@ module.exports = Element = Node.createVariant
     # a cell.
     propsToCellify = [
       "graphic"
-      "contextMatrix"
-      "accumulatedMatrix"
     ]
     for prop in propsToCellify
       this[prop] = Dataflow.cell(this["_" + prop].bind(this))
@@ -34,6 +32,16 @@ module.exports = Element = Node.createVariant
   # create panel). The default is zoomed to 100 pixels per unit.
   viewMatrix: new Util.Matrix(100, 0, 0, 100, 0, 0)
 
+  _setParent: (parent) ->
+    # Call "super" _setParent
+    Node._setParent.apply(this, arguments)
+
+    # Rewire contextMatrix to depend on the right parent matrix
+    if parent and parent.isVariantOf(Element)
+      @contextMatrixAttribute().setReferences
+        parentAccumulatedMatrix: parent.accumulatedMatrixAttribute()
+    else
+      @contextMatrixAttribute().setReferences {}  # no parentAccumulatedMatrix
 
   # ===========================================================================
   # Getters
@@ -170,18 +178,29 @@ module.exports = Element = Node.createVariant
   # Geometry
   # ===========================================================================
 
+  matrixAttribute: ->
+    @childOfType(Model.Transform).getAttributesByName().matrix
+
   matrix: ->
-    @childOfType(Model.Transform).getAttributesByName().matrix.value() ? new Util.Matrix()
+    @matrixAttribute().value()
 
-  _contextMatrix: ->
-    parent = @parent()
-    if parent and parent.isVariantOf(Element)
-      return parent.accumulatedMatrix()
-    else
-      return new Util.Matrix()
+  contextMatrixAttribute: ->
+    @childOfType(Model.Transform).getAttributesByName().contextMatrix
 
-  _accumulatedMatrix: ->
-    return @contextMatrix().compose(@matrix())
+  contextMatrix: ->
+    @contextMatrixAttribute().value()
+
+  contextMatrixAsSpread: ->
+    @contextMatrixAttribute().value.asSpread()
+
+  accumulatedMatrixAttribute: ->
+    @childOfType(Model.Transform).getAttributesByName().accumulatedMatrix
+
+  accumulatedMatrix: ->
+    @accumulatedMatrixAttribute().value()
+
+  accumulatedMatrixAsSpread: ->
+    @accumulatedMatrixAttribute().value.asSpread()
 
 
   # ===========================================================================
