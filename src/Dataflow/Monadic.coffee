@@ -106,6 +106,9 @@ class Spread
     else
       return result
 
+  _applyEnv: (someEnv) ->
+    matchingPairs = @pairs.filter ([env, value]) -> mapsAgree(env, someEnv)
+    return new Spread(matchingPairs.map ([env, value]) -> [_.omit(env, _.keys(someEnv)), value])
 
 mapsAgree = (map1, map2) ->
   _.pairs(map1).every ([key, value]) -> !_.has(map2, key) or map2[key] == value

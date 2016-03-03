@@ -81,6 +81,27 @@ test "Spread.join works", (t) ->
   t.deepEqual(b.items(), [1, 2, 3, 4])
   t.end()
 
+test "Spread::_applyEnv", (t) ->
+  a = new Spread([
+    [{x: 0, y: 0}, '00']
+    [{x: 0, y: 1}, '01']
+    [{x: 1, y: 0}, '10']
+    [{x: 1, y: 1}, '11']
+  ])
+  t.deepEqual(a._applyEnv({}),
+    a
+  )
+  t.deepEqual(a._applyEnv({x: 1}), new Spread([
+    [{y: 0}, '10']
+    [{y: 1}, '11']
+  ]))
+  t.deepEqual(a._applyEnv({x: 1, y: 0}), new Spread([
+    [{}, '10']
+  ]))
+  t.deepEqual(a._applyEnv({x: 1, y: 0, z: 100}), new Spread([
+    [{}, '10']
+  ]))
+  t.end()
 
 
 
