@@ -196,7 +196,7 @@ module.exports = Element = Node.createVariant
   # ===========================================================================
 
   particularElementSpread: ->
-    Spread.multimap (@accumulatedMatrixSpread(), @contextMatrixSpread()), (accumulatedMatrix, contextMatrix, spreadEnv) =>
+    Spread.multimap [@accumulatedMatrixSpread(), @contextMatrixSpread()], (accumulatedMatrix, contextMatrix, spreadEnv) =>
       new Model.ParticularElement2(this, accumulatedMatrixSpread, contextMatrix)
 
   _graphicFn: ->
