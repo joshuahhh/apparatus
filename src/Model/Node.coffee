@@ -144,6 +144,12 @@ module.exports = Node = {
   # Working with children
   # ===========================================================================
 
+  # This is private because it doesn't do any fancy bookkeeping. It just handles
+  # the assignment of a new parent. Variants of Node can extend this method to
+  # do whatever additional bookkeeping is required.
+  _setParent: (parent) ->
+    @_parent = parent
+
   addChild: (childToAdd, insertionIndex=Infinity) ->
     # Will add childToAdd to children such that it appears in children() at
     # insertionIndex.
@@ -158,7 +164,7 @@ module.exports = Node = {
 
     # Add child
     @_children.splice(insertionIndex, 0, childToAdd)
-    childToAdd._parent = this
+    childToAdd._setParent(this)
 
     # Add a corresponding child to each of my hatched variants.
     for variant in @_variants
@@ -190,7 +196,7 @@ module.exports = Node = {
       throw "Cannot remove a child that doesn't exist"
 
     @_children.splice(insertionIndex, 1)
-    childToRemove._parent = null
+    childToRemove._setParent(null)
 
     # Remove the corresponding child in each of my hatched variants.
     for variant in @_variants

@@ -4,6 +4,7 @@ Dataflow = require "../Dataflow/Dataflow"
 Model = require "./Model"
 Util = require "../Util/Util"
 Storage = require "../Storage/Storage"
+FirebaseAccess = require "../Storage/FirebaseAccess"
 
 
 module.exports = class Editor
@@ -35,8 +36,12 @@ module.exports = class Editor
   # (the ?stuff at the end of the URL).
   _parseQueryString: ->
     parsed = queryString.parse(location.search)
+    if parsed.experimental == '1'
+      @experimental = true
     if parsed.load
       @loadFromURL(parsed.load)
+    else if parsed.loadFirebase
+      @loadFromFirebase(parsed.loadFirebase)
 
   # builtIn returns all of the built in classes and objects that are used as
   # the "anchors" for serialization and deserialization. That is, all of the
@@ -61,6 +66,21 @@ module.exports = class Editor
 
   loadJsonStringIntoProjectFromExternalSource: (jsonString) ->
     @loadJsonStringIntoProject(jsonString)
+    @checkpoint()
+    Apparatus.refresh()  # HACK: calling Apparatus seems funky here.
+
+  mergeJsonStringIntoProject: (jsonString) ->
+    json = JSON.parse(jsonString)
+    # TODO: If the file format changes, this will need to check the version
+    # and convert or fail appropriately.
+    if json.type == "Apparatus"
+      otherProject = @serializer.dejsonify(json)
+      for createPanelElement in otherProject.createPanelElements
+        if createPanelElement not in @project.createPanelElements
+          @project.createPanelElements.push(createPanelElement)
+
+  mergeJsonStringIntoProjectFromExternalSource: (jsonString) ->
+    @mergeJsonStringIntoProject(jsonString)
     @checkpoint()
     Apparatus.refresh()  # HACK: calling Apparatus seems funky here.
 
@@ -108,6 +128,10 @@ module.exports = class Editor
     Storage.loadFile (jsonString) =>
       @loadJsonStringIntoProjectFromExternalSource(jsonString)
 
+  mergeFromFile: ->
+    Storage.loadFile (jsonString) =>
+      @mergeJsonStringIntoProjectFromExternalSource(jsonString)
+
 
   # ===========================================================================
   # External URL
@@ -125,6 +149,33 @@ module.exports = class Editor
       @loadJsonStringIntoProjectFromExternalSource(jsonString)
     xhr.open("GET", url, true)
     xhr.send()
+
+  loadFromFirebase: (key) ->
+    @firebaseAccess ?= new FirebaseAccess()
+
+    @firebaseAccess.loadDrawingPromise(key)
+      .then (drawingData) =>
+        jsonString = drawingData.source
+        @loadJsonStringIntoProjectFromExternalSource(jsonString)
+      .catch (error) =>
+        if error instanceof FirebaseAccess.DrawingNotFoundError
+          console.warn "Drawing #{key} not found in Firebase!"
+        else
+          throw error
+      .done()
+
+  saveToFirebase: ->
+    @firebaseAccess ?= new FirebaseAccess()
+
+    jsonString = @getJsonStringOfProject()
+    @firebaseAccess.saveDrawingPromise(jsonString)
+      .then (key) ->
+        window.prompt(
+          'Saved successfully! Copy this link:',
+          # TODO: Remove experimental=1 when Firebase access is taken out of
+          # experimental mode
+          'http://aprt.us/editor/?experimental=1&loadFirebase=' + key)
+      .done()
 
 
   # ===========================================================================

@@ -20,12 +20,16 @@ module.exports = Attribute = Node.createVariant
   _valueFn: Util.decorate 'Attribute::_valueFn', ->
     Util.log @devLabel(), Dataflow.currentSpreadEnv()
 
-    # Optimization
-    if @isNumber()
-      return parseFloat(@exprString)
+  _evaluate: (referenceValues) ->
+    throw new Error("Not implemented")
 
-    if @_isDirty()
-      @_updateCompiledExpression()
+  # Returns [false] if there's no quick evaluation, or [true, easyValue].
+  _easyEvaluate: ->
+    [false]
+
+  _value: ->
+    [hasEasyValue, easyValue] = @_easyEvaluate()
+    return easyValue if hasEasyValue
 
     if (circularReferencePath = @circularReferencePath())?
       return new CircularReferenceError(circularReferencePath)
@@ -35,34 +39,17 @@ module.exports = Attribute = Node.createVariant
 
     try
       return Spread.flexibind(referenceValues, (args) => @__compiledExpression.evaluate(args))
+      return @_evaluate(referenceValues)
     catch error
-      if error instanceof Dataflow.UnresolvedSpreadError
-        # This is legit uncool.
-        throw error
-      else
-        # This is a user error.
-        return error
+      throw error
+      # if error instanceof Dataflow.UnresolvedSpreadError
+      #   # This is legit uncool.
+      #   throw error
+      # else
+      #   # This is a user error.
+      #   return error
 
-  value: Util.decorate 'Attribute::value', ->
-    # Util.log JSON.stringify(@headThenMasterLineage(true))
-    Util.log @devLabel(), Dataflow.currentSpreadEnv()
-    # Util.log (new Error).stack
-    @__valueCell.run()
-
-  _isDirty: ->
-    return true if !@hasOwnProperty("__compiledExpression")
-    return true if @__compiledExpression.exprString != @exprString
-    return false
-
-  _updateCompiledExpression: ->
-    compiledExpression = new CompiledExpression(this)
-    if compiledExpression.isSyntaxError
-      compiledExpression.fn = @__compiledExpression?.fn ? -> new Error("Syntax error")
-    @__compiledExpression = compiledExpression
-
-  setExpression: (exprString, references={}) ->
-    @exprString = String(exprString)
-
+  setReferences: (references) ->
     # Remove all existing reference links
     for referenceLink in @childrenOfType(Model.ReferenceLink)
       referenceLink.deregisterFromTarget()
@@ -89,14 +76,14 @@ module.exports = Attribute = Node.createVariant
   hasReferences: -> _.any(@references(), -> true)
 
   isNumber: ->
-    return Util.isNumberString(@exprString)
+    false
 
   isTrivial: ->
     # TODO
     return @isNumber()
 
   isNovel: ->
-    @hasOwnProperty("exprString")
+    false
 
   # Descends through all recursively referenced attributes. An object is
   # returned with two properties:
@@ -150,7 +137,47 @@ module.exports = Attribute = Node.createVariant
     incomingReferenceLinks = @incomingLinksOfType(Model.ReferenceLink)
     return incomingReferenceLinks.map((link) -> link.parent().__valueCell)
 
+Attribute.ExpressionAttribute = Attribute.createVariant
+  label: "ExpressionAttribute"
 
+  _easyEvaluate: ->
+    if @isNumber()
+      return [true, parseFloat(@exprString)]
+    return [false]
+
+  _evaluate: (referenceValues) ->
+    if @_isDirty()
+      @_updateCompiledExpression()
+
+    @__compiledExpression.evaluate(referenceValues)
+
+  _isDirty: ->
+    return true if !@hasOwnProperty("__compiledExpression")
+    return true if @__compiledExpression.exprString != @exprString
+    return false
+
+  _updateCompiledExpression: ->
+    compiledExpression = new CompiledExpression(this)
+    if compiledExpression.isSyntaxError
+      compiledExpression.fn = @__compiledExpression?.fn ? -> new Error("Syntax error")
+    @__compiledExpression = compiledExpression
+
+  isNumber: ->
+    return Util.isNumberString(@exprString)
+
+  isNovel: ->
+    @hasOwnProperty("exprString")
+
+  setExpression: (exprString, references={}) ->
+    @exprString = String(exprString)
+    @setReferences(references)
+
+
+Attribute.InternalAttribute = Attribute.createVariant
+  label: "InternalAttribute"
+
+  _evaluate: (referenceValues) ->
+    @internalFunction(referenceValues)
 
 class CompiledExpression
   constructor: (@attribute) ->
