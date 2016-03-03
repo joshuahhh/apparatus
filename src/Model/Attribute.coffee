@@ -20,6 +20,9 @@ module.exports = Attribute = Node.createVariant
   valueCell: ->
     @__valueCell
 
+  value: ->
+    @valueCell().run()
+
   _evaluate: (referenceValues) ->
     throw new Error("Not implemented")
 
@@ -35,7 +38,7 @@ module.exports = Attribute = Node.createVariant
       return new CircularReferenceError(circularReferencePath)
 
     referenceValues = _.mapObject @references(), (referenceAttribute) ->
-      referenceAttribute.valueCell().run()
+      referenceAttribute.value()
 
     try
       return Spread.flexibind(referenceValues, (args) => @_evaluate(args))

@@ -27,7 +27,7 @@ R.create "ExpressionValue",
     if attribute.isTrivial()
       R.span {}
     else
-      value = attribute.valueCell().run()
+      value = attribute.value()
       R.div {className: "ExpressionValue"},
         R.Value {value: value}
 

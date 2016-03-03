@@ -186,13 +186,13 @@ module.exports = Element = Node.createVariant
     @childOfType(Model.Transform).getAttributesByName().matrix
 
   matrix: ->
-    @matrixAttribute().valueCell().run()
+    @matrixAttribute().value()
 
   contextMatrixAttribute: ->
     @childOfType(Model.Transform).getAttributesByName().contextMatrix
 
   contextMatrix: ->
-    @contextMatrixAttribute().valueCell().run()
+    @contextMatrixAttribute().value()
 
   contextMatrixAsSpread: ->
     @contextMatrixAttribute().valueCell().asSpread()
@@ -201,7 +201,7 @@ module.exports = Element = Node.createVariant
     @childOfType(Model.Transform).getAttributesByName().accumulatedMatrix
 
   accumulatedMatrix: ->
-    @accumulatedMatrixAttribute().valueCell().run()
+    @accumulatedMatrixAttribute().value()
 
   accumulatedMatrixAsSpread: ->
     @accumulatedMatrixAttribute().valueCell().asSpread()
