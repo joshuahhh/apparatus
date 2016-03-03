@@ -15,7 +15,10 @@ module.exports = Attribute = Node.createVariant
     # Call "super" constructor
     Node.constructor.apply(this, arguments)
 
-    @value = new Dataflow.Cell(@_value.bind(this), @dependerCells.bind(this))
+    @__valueCell = new Dataflow.Cell(@_value.bind(this), @dependerCells.bind(this))
+
+  valueCell: ->
+    @__valueCell
 
   _evaluate: (referenceValues) ->
     throw new Error("Not implemented")
@@ -32,7 +35,7 @@ module.exports = Attribute = Node.createVariant
       return new CircularReferenceError(circularReferencePath)
 
     referenceValues = _.mapObject @references(), (referenceAttribute) ->
-      referenceAttribute.value()
+      referenceAttribute.valueCell().run()
 
     try
       return Spread.flexibind(referenceValues, (args) => @_evaluate(args))
@@ -59,7 +62,7 @@ module.exports = Attribute = Node.createVariant
       @addChild(referenceLink)
 
     # Invalidate the value cell
-    @value.invalidate()
+    @valueCell().invalidate()
 
   references: ->
     references = {}
@@ -131,7 +134,7 @@ module.exports = Attribute = Node.createVariant
 
   dependerCells: ->
     incomingReferenceLinks = @incomingLinksOfType(Model.ReferenceLink)
-    return incomingReferenceLinks.map((link) -> link.parent().__valueCell)
+    return incomingReferenceLinks.map((link) -> link.parent().valueCell())
 
 Attribute.ExpressionAttribute = Attribute.createVariant
   label: "ExpressionAttribute"

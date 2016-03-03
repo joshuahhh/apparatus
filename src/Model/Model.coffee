@@ -65,7 +65,7 @@ Model.Component = Model.Node.createVariant
     result = {}
     for attribute in @attributes()
       name = attribute.name
-      value = attribute.value()
+      value = attribute.valueCell().run()
       result[name] = value
     return result
 
@@ -75,7 +75,7 @@ Model.Component = Model.Node.createVariant
     @getAttributesByName().graphic
 
   graphic: ->
-    @graphicAttribute().value()
+    @graphicAttribute().valueCell().run()
 
 Model.ComponentGraphic = Model.InternalAttribute.createVariant
   label: 'Graphic'
