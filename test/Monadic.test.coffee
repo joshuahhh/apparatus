@@ -104,9 +104,10 @@ test "Spread::_applyEnv works", (t) ->
   t.end()
 
 class TestNode
-  constructor: (@children, @extraData) ->
+  constructor: (@_children, @_extraData) ->
+  children: -> @_children
   setChildren: (newChildren) ->
-    return new TestNode(newChildren, @extraData)
+    new TestNode(newChildren, @_extraData)
 
 test "Spread::_applyEnvToTree works", (t) ->
   tree = new Spread([
@@ -210,7 +211,7 @@ test "Spread::multimap2WithTree works", (t) ->
   ])
 
   func = (spreadVal, treeVal) ->
-    new TestNode(treeVal.children, spreadVal)
+    new TestNode(treeVal.children(), spreadVal)
 
   expectedOutput = new Spread([
     [

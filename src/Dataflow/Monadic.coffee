@@ -111,15 +111,15 @@ class Spread
     return new Spread(matchingPairs.map ([env, value]) -> [_.omit(env, _.keys(someEnv)), value])
 
   # This method only applies to tree-spreads. A tree-spread is a spread of
-  # tree-spread-nodes. A tree-spread-node must have a property "children", which
-  # must be an array of tree-spreads. A tree-spread-node must also have a
-  # property "setChildren", which should return a new version of itself with new
+  # tree-spread-nodes. A tree-spread-node must have a method "children", which
+  # must return an array of tree-spreads. A tree-spread-node must also have a
+  # method "setChildren", which should return a new version of itself with new
   # children. (The tree-spread-node may store additional data beyond its
   # children; in this case, it should use setChildren as an opportunity to clone
   # that data.)
   _applyEnvToTree: (someEnv) ->
     return @_applyEnv(someEnv).map((node) ->
-      node.setChildren(node.children.map((spreadUnderNode) ->
+      node.setChildren(node.children().map((spreadUnderNode) ->
         spreadUnderNode._applyEnvToTree(someEnv))))
 
   # Here, otherSpread should be a tree-spread.
