@@ -15,10 +15,7 @@ module.exports = Attribute = Node.createVariant
     # Call "super" constructor
     Node.constructor.apply(this, arguments)
 
-    @__valueCell = new Dataflow.Cell(@_valueFn.bind(this), @dependerCells.bind(this))
-
-  _valueFn: Util.decorate 'Attribute::_valueFn', ->
-    Util.log @devLabel(), Dataflow.currentSpreadEnv()
+    @value = new Dataflow.Cell(@_value.bind(this), @dependerCells.bind(this))
 
   _evaluate: (referenceValues) ->
     throw new Error("Not implemented")
@@ -38,8 +35,7 @@ module.exports = Attribute = Node.createVariant
       referenceAttribute.value()
 
     try
-      return Spread.flexibind(referenceValues, (args) => @__compiledExpression.evaluate(args))
-      return @_evaluate(referenceValues)
+      return Spread.flexibind(referenceValues, (args) => @_evaluate(args))
     catch error
       throw error
       # if error instanceof Dataflow.UnresolvedSpreadError
@@ -63,7 +59,7 @@ module.exports = Attribute = Node.createVariant
       @addChild(referenceLink)
 
     # Invalidate the value cell
-    @__valueCell.invalidate()
+    @value.invalidate()
 
   references: ->
     references = {}
