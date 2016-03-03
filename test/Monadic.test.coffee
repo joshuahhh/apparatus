@@ -17,17 +17,19 @@ test "Spread::fromValue works", (t) ->
   t.deepEqual(a.items(), ["Test"])
   t.end()
 
-test "Spread::_concat works", (t) ->
+test "Spread::_multimap2 works", (t) ->
   a = Spread.fromArray([[1], [2]])
   b = Spread.fromArray([[10], [20]])
-  c = a._concat(b)
+  concat = (a, b) -> a.concat(b)
+  c = a._multimap2(b, concat)
   t.deepEqual(c.items(), [[1, 10], [1, 20], [2, 10], [2, 20]])
   t.end()
 
-test "Spread::_concat works on parallel spreads", (t) ->
+test "Spread::_multimap2 works on parallel spreads", (t) ->
   a = Spread.fromArray([[1], [2]])
   b = a.map((x) -> [x[0] * 10])
-  c = a._concat(b)
+  concat = (a, b) -> a.concat(b)
+  c = a._multimap2(b, concat)
   t.deepEqual(c.items(), [[1, 10], [2, 20]])
   t.end()
 
@@ -45,10 +47,24 @@ test "Spread.product works on parallel spreads", (t) ->
   t.deepEqual(c.items(), [[1, 10], [2, 20]])
   t.end()
 
+test "Spread.productObject works", (t) ->
+  a = Spread.fromArray([1, 2])
+  b = Spread.fromArray([10, 20])
+  c = Spread.productObject({a: a, b: b})
+  t.deepEqual(c.items(), [{a: 1, b: 10}, {a: 1, b: 20}, {a: 2, b: 10}, {a: 2, b: 20}])
+  t.end()
+
 test "Spread.multimap works", (t) ->
   a = Spread.fromArray([1, 2])
   b = Spread.fromArray([10, 20])
   c = Spread.multimap([a, b], (a, b) -> a + b)
+  t.deepEqual(c.items(), [11, 21, 12, 22])
+  t.end()
+
+test "Spread.multimap works with an object", (t) ->
+  a = Spread.fromArray([1, 2])
+  b = Spread.fromArray([10, 20])
+  c = Spread.multimap({a: a, b: b}, (obj) -> obj.a + obj.b)
   t.deepEqual(c.items(), [11, 21, 12, 22])
   t.end()
 
