@@ -2,20 +2,28 @@ _ = require "underscore"
 Util = require "../Util/Util"
 
 
+# Note: The main rule that the envs in a spread must obey is that no env can be
+# a superset of another.
+
+# Additional note: We should probably completely hide envs from public methods.
+
+
 # INCREDIBLY STUPID IMPLEMENTATION
 # PLEASE DON'T THINK I'M STUPID
 # (I USUALLY DON'T THINK I'M STUPID)
 class Spread
-  constructor: (@values) ->
+  constructor: (@pairs) ->
+    # NOTE: @pairs is an array of [env, value] arrays
+    #   (and an env is a Map from origins to indices)
 
   # Assuming this is a spread of spreads of Xs, turns it into a spread of Xs
   # NOTE: for now, we assert that the origins of the top-level spread are
   # different than the origins in the lower-level-spreads
   join: () ->
     valuesToReturn = []
-    for [env1, value1] in @values
+    for [env1, value1] in @pairs
       # We assume value1 is a spread
-      for [env2, value2] in value1.values
+      for [env2, value2] in value1.pairs
         valuesToReturn.push([_.extend({}, env1, env2), value2])
     return new Spread(valuesToReturn)
 
@@ -23,17 +31,17 @@ class Spread
   # then this produces Monadic.Spread.multimap([this, otherSpread], func).
   _multimap2: (otherSpread, func) ->
     valuesToReturn = []
-    for [env1, value1] in @values
-      for [env2, value2] in otherSpread.values
+    for [env1, value1] in @pairs
+      for [env2, value2] in otherSpread.pairs
         if mapsAgree(env1, env2)
           valuesToReturn.push([_.extend({}, env1, env2), func(value1, value2)])
     return new Spread(valuesToReturn)
 
   map: (func) ->
-    return new Spread(@values.map(([env, value]) -> [env, func(value, env)]))
+    return new Spread(@pairs.map(([env, value]) -> [env, func(value, env)]))
 
   items: ->
-    return _.pluck(@values, 1)
+    return _.pluck(@pairs, 1)
 
 
   # CONSTRUCTORS
@@ -93,7 +101,7 @@ class Spread
     else
       raise new Error
 
-    if result.values.length and result.values[0][1] instanceof Spread
+    if result.pairs.length and result.pairs[0][1] instanceof Spread
       return result.join()
     else
       return result
