@@ -16,7 +16,7 @@ class Spread
     for [env1, value1] in @values
       # We assume value1 is a spread
       for [env2, value2] in value1.values
-        valuesToReturn.push([mergeMaps(env1, env2), value2])
+        valuesToReturn.push([_.extend({}, env1, env2), value2])
     return new Spread(valuesToReturn)
 
   # If this is a spread of arrays, and otherSpread is a spread of arrays, and
@@ -26,7 +26,7 @@ class Spread
     for [env1, value1] in @values
       for [env2, value2] in otherSpread.values
         if mapsAgree(env1, env2)
-          valuesToReturn.push([mergeMaps(env1, env2), func(value1, value2)])
+          valuesToReturn.push([_.extend({}, env1, env2), func(value1, value2)])
     return new Spread(valuesToReturn)
 
   map: (func) ->
@@ -40,12 +40,12 @@ class Spread
 
   @fromArray: (items, returnNewOrigin = false) ->
     newOrigin = Util.generateId()
-    values = items.map (item, index) -> [new Map([[newOrigin, index]]), item]
+    values = items.map (item, index) -> [_.object([[newOrigin, index]]), item]
     spread = new Spread(values)
     return if returnNewOrigin then [spread, newOrigin] else spread
 
   @fromValue: (value) ->
-    return new Spread([[new Map(), value]])
+    return new Spread([[{}, value]])
 
 
 
@@ -100,11 +100,7 @@ class Spread
 
 
 mapsAgree = (map1, map2) ->
-  Array.from(map1.entries()).every ([key, value]) -> !map2.has(key) or map2.get(key) == value
+  _.pairs(map1).every ([key, value]) -> !_.has(map2, key) or map2[key] == value
 
-mergeMaps = (map1, map2) ->
-  toReturn = new Map(map1)
-  map2.forEach (value, key) -> toReturn.set(key, value)
-  return toReturn
 
 module.exports = Monadic = {Spread}
