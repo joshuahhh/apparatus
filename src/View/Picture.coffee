@@ -30,8 +30,6 @@ R.create "Picture",
     }
 
   _draw: (ctx) ->
-    return  # TEMPORARILY DISABLED
-
     project = @context.project
     hoverManager = @context.hoverManager
     element = @props.element

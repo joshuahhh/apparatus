@@ -15,4 +15,10 @@ module.exports = class ParticularElement
   # This is probably used!
   isAncestorOf: (particularElement) ->
     return @element.isAncestorOf(particularElement.element) and
-      _.isMatch(@spreadEnv, particularElement.spreadEnv)
+      _.isMatch(particularElement.spreadEnv, @spreadEnv)
+
+  accumulatedMatrix: ->
+    @element.accumulatedMatrix()._applyEnv(@spreadEnv).default()
+
+  contextMatrix: ->
+    @element.contextMatrix()._applyEnv(@spreadEnv).default()

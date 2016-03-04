@@ -29,7 +29,6 @@ module.exports = Element = Node.createVariant
     for prop in propsToCellify
       this['__' + prop + 'Cell'] = new Dataflow.Cell(this["_" + prop + 'Fn'].bind(this), 'element ' + prop)
       this[prop] = do (prop) -> -> this['__' + prop + 'Cell'].run()
-      this[prop + 'AsSpread'] = do (prop) -> -> this['__' + prop + 'Cell'].asSpread()
 
   # viewMatrix determines the pan and zoom of an Element. It is only used for
   # Elements that can be a Project.editingElement (i.e. Elements within the
@@ -194,17 +193,11 @@ module.exports = Element = Node.createVariant
   contextMatrix: ->
     @contextMatrixAttribute().value()
 
-  contextMatrixAsSpread: ->
-    @contextMatrixAttribute().valueCell().asSpread()
-
   accumulatedMatrixAttribute: ->
     @childOfType(Model.Transform).getAttributesByName().accumulatedMatrix
 
   accumulatedMatrix: ->
     @accumulatedMatrixAttribute().value()
-
-  accumulatedMatrixAsSpread: ->
-    @accumulatedMatrixAttribute().valueCell().asSpread()
 
 
   # ===========================================================================
@@ -229,12 +222,12 @@ module.exports = Element = Node.createVariant
 
     return allComponentGraphicsSpread.multimap2WithTrees(
       childElementGraphicsSpreads,
-      (allComponentGraphics, childElementGraphics) =>
+      (allComponentGraphics, childElementGraphics, env) =>
         graphic = new @graphicClass()
 
-        graphic.components = allComponentGraphics
+        graphic.components = allComponentGraphics  # These won't be spread at all
         graphic.childGraphicSpreads = childElementGraphics
-
+        graphic.particularElement = new Model.ParticularElement(this, env)
         return graphic
     )
 

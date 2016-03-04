@@ -109,6 +109,15 @@ class Spread
     matchingPairs = @pairs.filter ([env, value]) -> mapsAgree(env, someEnv)
     return new Spread(matchingPairs.map ([env, value]) -> [_.omit(env, _.keys(someEnv)), value])
 
+  # Gets the "default" member of a spread: has all indices set to 0
+  default: ->
+    if @pairs.length == 0
+      throw "default called, but spread is empty!"
+    else
+      return _.find(@pairs, ([env, value]) -> _.every(_.values(env), (index) -> index == 0))[1]
+
+
+
   # This method only applies to tree-spreads. A tree-spread is a spread of
   # tree-spread-nodes. A tree-spread-node must have a method "children", which
   # must return an array of tree-spreads. A tree-spread-node must also have a
@@ -123,11 +132,11 @@ class Spread
 
   # Here, otherSpread should be a tree-spread.
   multimap2WithTree: (otherSpread, func) ->
-    return @map((value, env) -> func(value, otherSpread._applyEnvToTree(env)))
+    return @map((value, env) -> func(value, otherSpread._applyEnvToTree(env), env))
 
   # Here, otherSpreads should be an array of tree-spreads.
   multimap2WithTrees: (otherSpreads, func) ->
-    return @map((value, env) -> func(value, _.invoke(otherSpreads, "_applyEnvToTree", env)))
+    return @map((value, env) -> func(value, _.invoke(otherSpreads, "_applyEnvToTree", env), env))
 
 mapsAgree = (map1, map2) ->
   _.pairs(map1).every ([key, value]) -> !_.has(map2, key) or map2[key] == value
