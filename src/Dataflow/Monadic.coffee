@@ -59,6 +59,10 @@ class Spread
 
   # OPERATORS
 
+  toArray: ->
+    # Throw out envs
+    _.pluck(@pairs, 1)
+
   @product: (spreads) ->
     concat = (arraySoFar, nextValue) -> arraySoFar.concat([nextValue])
     reducer = (spreadSoFar, nextSpread) -> spreadSoFar._multimap2(nextSpread, concat)
@@ -82,20 +86,15 @@ class Spread
 
   @flexibind: (args, func) ->
     # Flexible in two ways:
-    #   If NO arguments are spreads, this is just evaluation.
     #   If some arguments are not spreads, they will automatically be wrapped in one.
     #   If the output of the function is a spread, multibind will be used;
     #     otherwise, multimap.
     #   (With this set-up, it's more-or-less impossible to end up with a spread of spreads.)
 
     if _.isArray(args)
-      if args.every((arg) -> not (arg instanceof Spread))
-        return func.apply(null, args)
       args = args.map (arg) -> if arg instanceof Spread then arg else Spread.fromValue(arg)
       result = Spread.multimap(args, func)
     else if _.isObject(args)
-      if _.values(args).every((arg) -> not (arg instanceof Spread))
-        return func(args)
       args = _.mapObject args, (arg) -> if arg instanceof Spread then arg else Spread.fromValue(arg)
       result = Spread.multimap(args, func)
     else
@@ -124,11 +123,11 @@ class Spread
 
   # Here, otherSpread should be a tree-spread.
   multimap2WithTree: (otherSpread, func) ->
-    return @map((value, env) ->
-        otherSpread
-        ._applyEnvToTree(env)
-        .map((otherValue) -> func(value, otherValue)))
-      .join()
+    return @map((value, env) -> func(value, otherSpread._applyEnvToTree(env)))
+
+  # Here, otherSpreads should be an array of tree-spreads.
+  multimap2WithTrees: (otherSpreads, func) ->
+    return @map((value, env) -> func(value, _.invoke(otherSpreads, "_applyEnvToTree", env)))
 
 mapsAgree = (map1, map2) ->
   _.pairs(map1).every ([key, value]) -> !_.has(map2, key) or map2[key] == value

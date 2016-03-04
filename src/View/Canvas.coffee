@@ -46,10 +46,14 @@ R.create "Canvas",
   # ===========================================================================
 
   _draw: (ctx) ->
+    # return  # TEMPORARILY DISABLED
+
     {project, hoverManager} = @context
     viewMatrix = @_viewMatrix()
 
     highlight = (graphic) ->
+      return
+
       particularElement = graphic.particularElement
       if hoverManager.controllerParticularElement?.isAncestorOf(particularElement)
         return {color: "#c00", lineWidth: 2.5}
@@ -91,8 +95,9 @@ R.create "Canvas",
   _drawBackgroundGrid: (ctx) ->
     {project} = @context
 
-    matrix = project.selectedParticularElement?.contextMatrix()
-    matrix ?= new Util.Matrix()
+    # matrix = project.selectedParticularElement?.contextMatrix()
+    # matrix ?= new Util.Matrix()
+    matrix = new Util.Matrix()
 
     matrix = @_viewMatrix().compose(matrix)
 
@@ -145,6 +150,8 @@ R.create "Canvas",
   _controlPointRadius: 5
 
   _controlPoints: ->
+    return []
+
     {project} = @context
     selectedParticularElement = project.selectedParticularElement
     return [] unless selectedParticularElement
@@ -436,7 +443,8 @@ R.create "Canvas",
     if useCached and @_cachedGraphics
       return @_cachedGraphics
     element = @_editingElement()
-    return @_cachedGraphics = element.allGraphics()
+    console.log (element.graphic().toArray())
+    return @_cachedGraphics = element.graphic().toArray()
 
   _viewMatrix: ->
     element = @_editingElement()

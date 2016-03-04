@@ -128,6 +128,8 @@ R.create "OutlineItem",
   # ===========================================================================
 
   _onMouseDown: (mouseDownEvent) ->
+    window.element = @props.element
+
     target = mouseDownEvent.target
     return if Util.closest(target, ".Interactive")
     mouseDownEvent.preventDefault()

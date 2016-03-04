@@ -97,6 +97,7 @@ Model.Component.addChildren [
 
 Model.Transform = Model.Component.createVariant
   label: "Transform"
+  graphicClass: Graphic.Transform
 
   matrix: ->
     {x, y, sx, sy, rotate} = @getAttributesValuesByName()
@@ -156,6 +157,10 @@ do ->
   accumulatedMatrix = Model.InternalAttributeAccumulatedMatrix.createVariant {}
   accumulatedMatrix.setReferences({matrix, contextMatrix})
   Model.Transform.addChild accumulatedMatrix
+
+  Model.Transform.graphicAttribute().setReferences({
+    x, y, sx, sy, rotate, matrix, contextMatrix, accumulatedMatrix
+  })
 
 
 Model.Fill = Model.Component.createVariant

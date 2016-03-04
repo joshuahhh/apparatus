@@ -1,3 +1,4 @@
+_ = require "underscore"
 Dataflow = require "../Dataflow/Dataflow"
 
 
@@ -5,22 +6,13 @@ Dataflow = require "../Dataflow/Dataflow"
 # specify what the index values are for its Element's spreads.
 module.exports = class ParticularElement
   constructor: (@element, @spreadEnv) ->
-    @spreadEnv ?= Dataflow.SpreadEnv.empty
+    @spreadEnv ?= {}
 
-  isEqualTo: (particularElement) ->
-    return @element == particularElement.element and
-      @spreadEnv.isEqualTo(particularElement.spreadEnv)
+  # isEqualTo: (particularElement) ->
+  #   return @element == particularElement.element and
+  #     @spreadEnv.isEqualTo(particularElement.spreadEnv)
 
+  # This is probably used!
   isAncestorOf: (particularElement) ->
     return @element.isAncestorOf(particularElement.element) and
-      @spreadEnv.contains(particularElement.spreadEnv)
-
-  accumulatedMatrix: ->
-    accumulatedMatrix = @element.accumulatedMatrixAsSpread()
-    accumulatedMatrix = @spreadEnv.resolveWithDefault(accumulatedMatrix)
-    return accumulatedMatrix
-
-  contextMatrix: ->
-    contextMatrix = @element.contextMatrixAsSpread()
-    contextMatrix = @spreadEnv.resolveWithDefault(contextMatrix)
-    return contextMatrix
+      _.isMatch(@spreadEnv, particularElement.spreadEnv)

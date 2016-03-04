@@ -215,24 +215,32 @@ module.exports = Element = Node.createVariant
     Spread.multimap [@accumulatedMatrixSpread(), @contextMatrixSpread()], (accumulatedMatrix, contextMatrix, spreadEnv) =>
       new Model.ParticularElement2(this, accumulatedMatrixSpread, contextMatrix)
 
+  allComponentGraphicsSpread: ->
+    componentGraphicSpreads = @components().map (component) -> component.graphic()
+    return Spread.product(componentGraphicSpreads)
+
+  # This fella should return a tree-spread of Graphics.
   _graphicFn: ->
-    graphic = new @graphicClass()
+    # NEXT STEP: Implement graphic in a way which works for spreads, but isn't necessarily an attribute
+    # (Then we can work on making it an attribute if we want)
 
-    spreadEnv = Dataflow.currentSpreadEnv()
-    graphic.particularElement = new Model.ParticularElement(this, spreadEnv)
+    allComponentGraphicsSpread = @allComponentGraphicsSpread()
+    childElementGraphicsSpreads = @childElements().map (childElement) -> childElement.graphic()
 
-    graphic.matrix = @accumulatedMatrix()
+    return allComponentGraphicsSpread.multimap2WithTrees(
+      childElementGraphicsSpreads,
+      (allComponentGraphics, childElementGraphics) =>
+        graphic = new @graphicClass()
 
-    graphic.components = _.map @components(), (component) ->
-      component.graphic()
+        graphic.components = allComponentGraphics
+        graphic.childGraphicSpreads = childElementGraphics
 
-    graphic.childGraphics = _.flatten(_.map(@childElements(), (element) ->
-      element.allGraphics()
-    ))
-
-    return graphic
+        return graphic
+    )
 
   allGraphics: ->
+    throw new Error('THIS METHOD IS CAPUT EXCEPT REMEMBER RECURSION STUFF')
+
     return [] if @_isBeyondMaxDepth()
     result = @graphicAsSpread()
     if result instanceof Dataflow.Spread

@@ -30,6 +30,8 @@ R.create "Picture",
     }
 
   _draw: (ctx) ->
+    return  # TEMPORARILY DISABLED
+
     project = @context.project
     hoverManager = @context.hoverManager
     element = @props.element
@@ -46,7 +48,7 @@ R.create "Picture",
 
     renderOpts = {ctx, viewMatrix, highlight}
 
-    for graphic in element.allGraphics()
+    for graphic in element.graphic().toArray()
       graphic.render(renderOpts)
 
   _viewMatrix: ->
