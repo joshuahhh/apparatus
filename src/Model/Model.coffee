@@ -9,7 +9,6 @@ module.exports = Model = {}
 # These are *classes*
 Model.Project = require "./Project"
 Model.ParticularElement = require "./ParticularElement"
-Model.ParticularElement2 = require "./ParticularElement2"
 Model.Layout = require "./Layout"
 
 # These are *variants of the Node object*

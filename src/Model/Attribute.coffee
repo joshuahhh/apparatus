@@ -202,8 +202,6 @@ class CompiledExpression
       @_setSyntaxError()
       return
 
-    compiled = @_wrapFunctionInSpreadCheck(compiled)
-
     if @referenceKeys.length == 0
       try
         value = compiled()
@@ -242,13 +240,6 @@ class CompiledExpression
 
     result   += "});"
     return result
-
-  _wrapFunctionInSpreadCheck: (fn) ->
-    return =>
-      result = fn(arguments...)
-      if result instanceof Dataflow.Spread
-        result.origin = @attribute
-      return result
 
 Attribute.CircularReferenceError = class CircularReferenceError extends Error
   constructor: (@attributePath) ->

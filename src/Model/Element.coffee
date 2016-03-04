@@ -204,10 +204,6 @@ module.exports = Element = Node.createVariant
   # Graphic
   # ===========================================================================
 
-  particularElementSpread: ->
-    Spread.multimap [@accumulatedMatrixSpread(), @contextMatrixSpread()], (accumulatedMatrix, contextMatrix, spreadEnv) =>
-      new Model.ParticularElement2(this, accumulatedMatrixSpread, contextMatrix)
-
   allComponentGraphicsSpread: ->
     componentGraphicSpreads = @components().map (component) -> component.graphic()
     return Spread.product(componentGraphicSpreads)
@@ -230,16 +226,6 @@ module.exports = Element = Node.createVariant
         graphic.particularElement = new Model.ParticularElement(this, env)
         return graphic
     )
-
-  allGraphics: ->
-    throw new Error('THIS METHOD IS CAPUT EXCEPT REMEMBER RECURSION STUFF')
-
-    return [] if @_isBeyondMaxDepth()
-    result = @graphicAsSpread()
-    if result instanceof Dataflow.Spread
-      return result.flattenToArray()
-    else
-      return [result]
 
   _isBeyondMaxDepth: ->
     # This might want to be adjustable somewhere rather than hard coded here.
