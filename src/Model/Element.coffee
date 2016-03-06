@@ -30,6 +30,8 @@ module.exports = Element = Node.createVariant
       this['__' + prop + 'Cell'] = new Dataflow.Cell(this["_" + prop + 'Fn'].bind(this), 'element ' + prop)
       this[prop] = do (prop) -> -> this['__' + prop + 'Cell'].run()
 
+    @rewireGraphicsOfChildElementsAttribute()
+
   # viewMatrix determines the pan and zoom of an Element. It is only used for
   # Elements that can be a Project.editingElement (i.e. Elements within the
   # create panel). The default is zoomed to 100 pixels per unit.
@@ -45,6 +47,24 @@ module.exports = Element = Node.createVariant
         parentAccumulatedMatrix: parent.accumulatedMatrixAttribute()
     else
       @contextMatrixAttribute().setReferences {}  # no parentAccumulatedMatrix
+
+  addChild: ->
+    # Call "super" addChild
+    Node.addChild.apply(this, arguments)
+
+    @rewireGraphicsOfChildElementsAttribute()
+
+  removeChild: ->
+    # Call "super" removeChild
+    Node.removeChild.apply(this, arguments)
+
+    @rewireGraphicsOfChildElementsAttribute()
+
+  rewireGraphicsOfChildElementsAttribute: ->
+    @graphicsOfChildElementsAttribute().setReferences(
+      @childElements().map (childElement) -> childElement.graphicAttribute(),
+      true  # they're tree-spreads!
+    )
 
   # ===========================================================================
   # Getters
@@ -204,15 +224,21 @@ module.exports = Element = Node.createVariant
   # Graphic
   # ===========================================================================
 
-  graphicsOfAllComponentsAttribute: ->
-    @childOfType(Model.GraphicsOfAllComponents)
+  graphicsOfComponentsAttribute: ->
+    @childOfType(Model.GraphicsOfComponents)
+
+  graphicsOfChildElementsAttribute: ->
+    @childOfType(Model.GraphicsOfComponents)
+
+  graphicAttribute: ->
+    @childOfType(Model.ElementGraphic)
 
   # This fella should return a tree-spread of Graphics.
   _graphicFn: ->
     # NEXT STEP: Implement graphic in a way which works for spreads, but isn't necessarily an attribute
     # (Then we can work on making it an attribute if we want)
 
-    allComponentGraphicsSpread = @graphicsOfAllComponentsAttribute().value()
+    allComponentGraphicsSpread = @graphicsOfComponentsAttribute().value()
     childElementGraphicsSpreads = @childElements().map (childElement) -> childElement.graphic()
 
     return allComponentGraphicsSpread.multimap2WithTrees(

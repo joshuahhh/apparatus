@@ -40,6 +40,8 @@ module.exports = Attribute = Node.createVariant
     referenceValues = _.mapObject @references(), (referenceAttribute) ->
       referenceAttribute.value()
 
+    # TODO: INCLUDE _env ARGUMENT!
+
     try
       return Spread
         .multimap(referenceValues, (args) => @_evaluate(args))
@@ -53,25 +55,26 @@ module.exports = Attribute = Node.createVariant
       #   # This is a user error.
       #   return error
 
-  setReferences: (references) ->
+  setReferences: (references, asTreeSpreadMap) ->
     # Remove all existing reference links
     for referenceLink in @childrenOfType(Model.ReferenceLink)
       referenceLink.deregisterFromTarget()
       @removeChild(referenceLink)
 
-    @addReferences(references)
+    @addReferences(references, asTreeSpreadMap)
 
     # Invalidate the value cell
     @valueCell().invalidate()
 
-  addReferences: (references) ->
+  addReferences: (references, asTreeSpreadMap) ->
     # Create appropriate reference links
     for own key, reference of references
-      @addReference(key, reference)
+      @addReference(key, reference, asTreeSpreadMap?[key])
 
-  addReference: (key, reference) ->
+  addReference: (key, reference, asTreeSpread) ->
     referenceLink = Model.ReferenceLink.createVariant()
     referenceLink.key = key
+    referenceLink.asTreeSpread = asTreeSpread
     referenceLink.setTarget(reference)
     @addChild(referenceLink)
 

@@ -19,12 +19,55 @@ Model.ExpressionAttribute = Model.Attribute.ExpressionAttribute
 Model.InternalAttribute = Model.Attribute.InternalAttribute
 Model.Element = require "./Element"
 
-Model.GraphicsOfAllComponents = Model.InternalAttribute.createVariant
-  label: 'Graphics Of All Components'
-  name: 'graphicsOfAllComponents'
+Model.GraphicsOfComponents = Model.InternalAttribute.createVariant
+  label: 'Graphics Of Components'
+  name: 'graphicsOfComponents'
   internalFunction: (attributeValues) ->
     _.toArray(attributeValues)
-Model.Element.addChild Model.GraphicsOfAllComponents.createVariant {}
+Model.Element.addChild Model.GraphicsOfComponents.createVariant {}
+
+Model.GraphicsOfChildElements = Model.InternalAttribute.createVariant
+  label: 'Graphics Of Child Elements'
+  name: 'graphicsOfChildElements'
+  internalFunction: (attributeValues) ->
+    # We use a Graphic.Element to wrap up the child element graphics, since it
+    # has the right tree-spread-node structure.
+    graphic = new Graphic.Element
+    graphic.childGraphicSpreads = _.toArray(attributeValues)
+    return graphic
+Model.Element.addChild Model.GraphicsOfChildElements.createVariant {}
+
+Model.ElementGraphic = Model.InternalAttribute.createVariant
+  label: 'Graphic'
+  name: 'graphic'
+  internalFunction: ({graphicsOfComponents, graphicsOfChildElements, _env}) ->
+    # TRICKY BUSINESS: This depends on @parent().graphicClass, so you can
+    # override this in Component's variants. But make sure to set its children
+    # to link to whatever other attributes it depends on! ALSO TRICKY:
+    # graphicClass is not part of the attribute system, so it's got to be
+    # static.
+    graphic = new (@parent().graphicClass)
+    graphic.components = graphicsOfComponents  # These won't be spread at all
+    graphic.childGraphicSpreads = graphicsOfChildElements
+    graphic.particularElement = new Model.ParticularElement(this, _env)
+    return graphic
+
+do ->
+  Model.Element.addChildren [
+    graphicsOfComponents = Model.GraphicsOfComponents.createVariant {}
+    graphicsOfChildElements = Model.GraphicsOfChildElements.createVariant {}
+    graphic = Model.ElementGraphic.createVariant {}
+  ]
+
+  graphic.setReferences(
+    {graphicsOfComponents, graphicsOfChildElements}
+    {graphicsOfComponents: no, graphicsOfChildElements: yes}  # asTreeSpread
+  )
+
+
+Model.Component.addChildren [
+  Model.ComponentGraphic.createVariant {}
+]
 
 Model.Editor = require "./Editor"
 
@@ -204,7 +247,7 @@ do ->
     transform = Model.Transform.createVariant()
   ]
 
-  Model.Shape.graphicsOfAllComponentsAttribute().addReferences
+  Model.Shape.graphicsOfComponentsAttribute().addReferences
     transform: transform.graphicAttribute()
 
 
@@ -250,7 +293,7 @@ do ->
     stroke = Model.Stroke.createVariant()
   ]
 
-  Model.Path.graphicsOfAllComponentsAttribute().addReferences
+  Model.Path.graphicsOfComponentsAttribute().addReferences
     path: path.graphicAttribute()
     fill: fill.graphicAttribute()
     stroke: stroke.graphicAttribute()
@@ -299,5 +342,5 @@ do ->
     text = Model.TextComponent.createVariant()
   ]
 
-  Model.Text.graphicsOfAllComponentsAttribute().addReferences
+  Model.Text.graphicsOfComponentsAttribute().addReferences
     text: text.graphicAttribute()
