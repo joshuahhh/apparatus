@@ -57,14 +57,22 @@ module.exports = Attribute = Node.createVariant
       referenceLink.deregisterFromTarget()
       @removeChild(referenceLink)
 
-    # Create appropriate reference links
-    for own key, attribute of references
-      referenceLink = Model.ReferenceLink.createVariant()
-      referenceLink.key = key
-      referenceLink.setTarget(attribute)
-      @addChild(referenceLink)
+    @addReferences(references)
 
     # Invalidate the value cell
+    @valueCell().invalidate()
+
+  addReferences: (references) ->
+    # Create appropriate reference links
+    for own key, reference of references
+      @addReference(key, reference)
+
+  addReference: (key, reference) ->
+    referenceLink = Model.ReferenceLink.createVariant()
+    referenceLink.key = key
+    referenceLink.setTarget(reference)
+    @addChild(referenceLink)
+
     @valueCell().invalidate()
 
   references: ->

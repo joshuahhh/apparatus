@@ -19,6 +19,12 @@ Model.ExpressionAttribute = Model.Attribute.ExpressionAttribute
 Model.InternalAttribute = Model.Attribute.InternalAttribute
 Model.Element = require "./Element"
 
+Model.GraphicsOfAllComponents = Model.InternalAttribute.createVariant
+  label: 'Graphics Of All Components'
+  name: 'graphicsOfAllComponents'
+  internalFunction: (attributeValues) ->
+    _.toArray(attributeValues)
+Model.Element.addChild Model.GraphicsOfAllComponents.createVariant {}
 
 Model.Editor = require "./Editor"
 
@@ -193,9 +199,13 @@ do ->
 Model.Shape = Model.Element.createVariant
   label: "Shape"
 
-Model.Shape.addChildren [
-  Model.Transform.createVariant()
-]
+do ->
+  Model.Shape.addChildren [
+    transform = Model.Transform.createVariant()
+  ]
+
+  Model.Shape.graphicsOfAllComponentsAttribute().addReferences
+    transform: transform.graphicAttribute()
 
 
 Model.Group = Model.Shape.createVariant
@@ -226,17 +236,24 @@ do ->
     closed = createAttribute("Close Path", "closed", "true")
   ]
 
-  Model.PathComponent.graphicAttribute().setReferences({closed})
+  Model.PathComponent.graphicAttribute().setReferences(
+    {closed})
 
 Model.Path = Model.Shape.createVariant
   label: "Path"
   graphicClass: Graphic.Path
 
-Model.Path.addChildren [
-  Model.PathComponent.createVariant()
-  Model.Fill.createVariant()
-  Model.Stroke.createVariant()
-]
+do ->
+  Model.Path.addChildren [
+    path = Model.PathComponent.createVariant()
+    fill = Model.Fill.createVariant()
+    stroke = Model.Stroke.createVariant()
+  ]
+
+  Model.Path.graphicsOfAllComponentsAttribute().addReferences
+    path: path.graphicAttribute()
+    fill: fill.graphicAttribute()
+    stroke: stroke.graphicAttribute()
 
 
 Model.Circle = Model.Path.createVariant
@@ -277,6 +294,10 @@ Model.Text = Model.Shape.createVariant
   label: "Text"
   graphicClass: Graphic.Text
 
-Model.Text.addChildren [
-  Model.TextComponent.createVariant()
-]
+do ->
+  Model.Text.addChildren [
+    text = Model.TextComponent.createVariant()
+  ]
+
+  Model.Text.graphicsOfAllComponentsAttribute().addReferences
+    text: text.graphicAttribute()

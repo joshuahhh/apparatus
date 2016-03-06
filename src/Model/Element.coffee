@@ -204,16 +204,15 @@ module.exports = Element = Node.createVariant
   # Graphic
   # ===========================================================================
 
-  allComponentGraphicsSpread: ->
-    componentGraphicSpreads = @components().map (component) -> component.graphic()
-    return Spread.product(componentGraphicSpreads)
+  graphicsOfAllComponentsAttribute: ->
+    @childOfType(Model.GraphicsOfAllComponents)
 
   # This fella should return a tree-spread of Graphics.
   _graphicFn: ->
     # NEXT STEP: Implement graphic in a way which works for spreads, but isn't necessarily an attribute
     # (Then we can work on making it an attribute if we want)
 
-    allComponentGraphicsSpread = @allComponentGraphicsSpread()
+    allComponentGraphicsSpread = @graphicsOfAllComponentsAttribute().value()
     childElementGraphicsSpreads = @childElements().map (childElement) -> childElement.graphic()
 
     return allComponentGraphicsSpread.multimap2WithTrees(
