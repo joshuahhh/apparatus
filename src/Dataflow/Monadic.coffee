@@ -74,12 +74,7 @@ class Spread
     _.pairs(spreadObject).reduce(reducer, Spread.fromValue({}))
 
   @multimap: (args, func) ->
-    if _.isArray(args)
-      Spread.product(args).map((tuple, spreadEnv) -> func.apply(null, tuple.concat([spreadEnv])))
-    else if _.isObject(args)
-      Spread.productObject(args).map(func)
-    else
-      raise new Error
+    Spread.productObject(args).map(func)
 
   @multibind: (args, func) ->
     Spread.multimap(args, func).join()
@@ -91,14 +86,8 @@ class Spread
     #     otherwise, multimap.
     #   (With this set-up, it's more-or-less impossible to end up with a spread of spreads.)
 
-    if _.isArray(args)
-      args = args.map (arg) -> if arg instanceof Spread then arg else Spread.fromValue(arg)
-      result = Spread.multimap(args, func)
-    else if _.isObject(args)
-      args = _.mapObject args, (arg) -> if arg instanceof Spread then arg else Spread.fromValue(arg)
-      result = Spread.multimap(args, func)
-    else
-      raise new Error
+    args = _.mapObject args, (arg) -> if arg instanceof Spread then arg else Spread.fromValue(arg)
+    result = Spread.multimap(args, func)
 
     if result.pairs.length and result.pairs[0][1] instanceof Spread
       return result.join()

@@ -57,13 +57,6 @@ test "Spread.productObject works", (t) ->
 test "Spread.multimap works", (t) ->
   a = Spread.fromArray([1, 2])
   b = Spread.fromArray([10, 20])
-  c = Spread.multimap([a, b], (a, b) -> a + b)
-  t.deepEqual(c.items(), [11, 21, 12, 22])
-  t.end()
-
-test "Spread.multimap works with an object", (t) ->
-  a = Spread.fromArray([1, 2])
-  b = Spread.fromArray([10, 20])
   c = Spread.multimap({a: a, b: b}, (obj) -> obj.a + obj.b)
   t.deepEqual(c.items(), [11, 21, 12, 22])
   t.end()
@@ -71,7 +64,7 @@ test "Spread.multimap works with an object", (t) ->
 test "Spread.multimap works on parallel spreads", (t) ->
   a = Spread.fromArray([1, 2])
   b = a.map((x) -> x * 10)
-  c = Spread.multimap([a, b], (a, b) -> a + b)
+  c = Spread.multimap({a: a, b: b}, (obj) -> obj.a + obj.b)
   t.deepEqual(c.items(), [11, 22])
   t.end()
 
@@ -410,8 +403,8 @@ test "Spread::multimap2WithTrees works", (t) ->
 
 test "Spreads work", (t) ->
   a = Spread.fromArray([0 ... 10])
-  b = Spread.multimap([a], (a) -> a * 2)
-  c = Spread.multimap([a, b], (a, b) -> a + b)
+  b = Spread.multimap({a}, ({a}) -> a * 2)
+  c = Spread.multimap({a, b}, ({a, b}) -> a + b)
   t.deepEqual(a.items(), [0 ... 10])
   t.deepEqual(b.items(), [0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
   t.deepEqual(c.items(), [0, 3, 6, 9, 12, 15, 18, 21, 24, 27])
@@ -420,22 +413,22 @@ test "Spreads work", (t) ->
 test "Spreads cross product", (t) ->
   a = Spread.fromArray([0 ... 4])
   b = Spread.fromArray([10, 20])
-  c = Spread.multimap([a, b], (a, b) -> a * b)
+  c = Spread.multimap({a, b}, ({a, b}) -> a * b)
   t.deepEqual(_.sortBy(c.items()), [0, 0, 10, 20, 20, 30, 40, 60])
   t.end()
 
 test "Spreads tree", (t) ->
   a = Spread.fromArray([0 ... 4])
-  b = Spread.multibind([a], (a) -> Spread.fromArray([0 ... a]))
-  c = Spread.multimap([a, b], (a, b) -> a * b)
+  b = Spread.multibind({a}, ({a}) -> Spread.fromArray([0 ... a]))
+  c = Spread.multimap({a, b}, ({a, b}) -> a * b)
   t.deepEqual(_.sortBy(c.items()), [0, 0, 0, 2, 3, 6])
   t.end()
 
 test "Spreads rejoin", (t) ->
   a = Spread.fromArray([0 ... 10])
-  b = Spread.multimap([a], (a) -> a * 2)
-  c = Spread.multimap([a], (a) -> a * 3)
-  d = Spread.multimap([b, c], (b, c) -> b + c)
+  b = Spread.multimap({a}, ({a}) -> a * 2)
+  c = Spread.multimap({a}, ({a}) -> a * 3)
+  d = Spread.multimap({b, c}, ({b, c}) -> b + c)
   t.deepEqual(a.items(), [0 ... 10])
   t.deepEqual(b.items(), [0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
   t.deepEqual(c.items(), [0, 3, 6, 9, 12, 15, 18, 21, 24, 27])
@@ -444,10 +437,10 @@ test "Spreads rejoin", (t) ->
 
 test "All spreads should try to resolve as deep as possible", (t) ->
   a = Spread.fromArray([0, 1])
-  b = Spread.multimap([a], (a) -> a  * 2)
-  c = Spread.multimap([a, b], (a, b) -> {a: a, b: b})
+  b = Spread.multimap({a}, ({a}) -> a  * 2)
+  c = Spread.multimap({a, b}, ({a, b}) -> {a: a, b: b})
   t.deepEqual(c.items(), [{a: 0, b: 0}, {a: 1, b: 2}])
-  d = Spread.multimap([b], (b) -> {b: b})
+  d = Spread.multimap({b}, ({b}) -> {b: b})
   t.deepEqual(d.items(), [{b: 0}, {b: 2}])
   # Keeping "b" out of the "multimap" stops the propagation of the spread upwards in the expression.
   e = {b: b}
