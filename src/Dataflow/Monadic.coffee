@@ -12,39 +12,14 @@ Util = require "../Util/Util"
 # PLEASE DON'T THINK I'M STUPID
 # (I USUALLY DON'T THINK I'M STUPID)
 class Spread
+
+  # ===========================================================================
+  # Constructors
+  # ===========================================================================
+
   constructor: (@pairs) ->
     # NOTE: @pairs is an array of [env, value] arrays
-    #   (and an env is a Map from origins to indices)
-
-  # Assuming this is a spread of spreads of Xs, turns it into a spread of Xs
-  # NOTE: for now, we assert that the origins of the top-level spread are
-  # different than the origins in the lower-level-spreads
-  join: () ->
-    valuesToReturn = []
-    for [env1, value1] in @pairs
-      # We assume value1 is a spread
-      for [env2, value2] in value1.pairs
-        valuesToReturn.push([_.extend({}, env1, env2), value2])
-    return new Spread(valuesToReturn)
-
-  # If this is a spread of arrays, and otherSpread is a spread of arrays, and
-  # then this produces Monadic.Spread.multimap([this, otherSpread], func).
-  _multimap2: (otherSpread, func) ->
-    valuesToReturn = []
-    for [env1, value1] in @pairs
-      for [env2, value2] in otherSpread.pairs
-        if mapsAgree(env1, env2)
-          valuesToReturn.push([_.extend({}, env1, env2), func(value1, value2)])
-    return new Spread(valuesToReturn)
-
-  map: (func) ->
-    return new Spread(@pairs.map(([env, value]) -> [env, func(value, env)]))
-
-  items: ->
-    return _.pluck(@pairs, 1)
-
-
-  # CONSTRUCTORS
+    #   (and an env is an object mapping string origins to indices)
 
   @fromArray: (items, returnNewOrigin = false) ->
     newOrigin = Util.generateId()
@@ -56,25 +31,68 @@ class Spread
     return new Spread([[{}, value]])
 
 
+  # ===========================================================================
+  # Basic operators
+  # ===========================================================================
 
-  # OPERATORS
+  # Assuming this is a spread of spreads of Xs, turns it into a spread of Xs
+  # NOTE: We assume that the origins of the top-level spread are different from
+  # the origins in the lower-level-spreads.
+  join: ->
+    valuesToReturn = []
+    for [env1, value1] in @pairs
+      # We assume value1 is a spread
+      for [env2, value2] in value1.pairs
+        valuesToReturn.push([_.extend({}, env1, env2), value2])
+    return new Spread(valuesToReturn)
+
+  # Joins the spread if it is a spread of spreads; otherwise does nothing
+  maybeJoin: ->
+    if @pairs.length and @pairs[0][1] instanceof Spread
+      return @join()
+    else
+      return this
+
+  # _multimap2(otherSpread, func) produces
+  #   Spread.multimap(
+  #     {first: this, second: otherSpread},
+  #     ({first, second}) -> func(first, second)).
+  # (Though _multimap2 is actually used to /implement/ Spread.multimap.)
+  _multimap2: (otherSpread, func) ->
+    valuesToReturn = []
+    for [env1, value1] in @pairs
+      for [env2, value2] in otherSpread.pairs
+        if mapsAgree(env1, env2)
+          compoundEnv = _.extend({}, env1, env2)
+          valuesToReturn.push([compoundEnv, func(value1, value2)])
+    return new Spread(valuesToReturn)
+
+  # Same as Spread.multimap({first: this}, ({first}) -> func(first)), except
+  # that func also gets the current env as a second argument.
+  map: (func) ->
+    return new Spread(@pairs.map(([env, value]) -> [env, func(value, env)]))
 
   toArray: ->
     # Throw out envs
     _.pluck(@pairs, 1)
 
-  @product: (spreads) ->
-    concat = (arraySoFar, nextValue) -> arraySoFar.concat([nextValue])
-    reducer = (spreadSoFar, nextSpread) -> spreadSoFar._multimap2(nextSpread, concat)
-    spreads.reduce(reducer, Spread.fromValue([]))
 
-  @productObject: (spreadObject) ->
-    addValue = (nextKey) -> (objectSoFar, nextValue) -> _.extend(_.object([[nextKey, nextValue]]), objectSoFar)
-    reducer = (spreadSoFar, [nextKey, nextSpread]) -> spreadSoFar._multimap2(nextSpread, addValue(nextKey))
-    _.pairs(spreadObject).reduce(reducer, Spread.fromValue({}))
+  # ===========================================================================
+  # Fancier operators
+  # ===========================================================================
+
+  # Given an object with spread values, returns the "Cartesian product" (a
+  # spread of objects)
+  @product: (spreads) ->
+    addValue = (nextKey) ->
+      (objectSoFar, nextValue) ->
+        _.extend(_.object([[nextKey, nextValue]]), objectSoFar)
+    reducer = (spreadSoFar, [nextKey, nextSpread]) ->
+      spreadSoFar._multimap2(nextSpread, addValue(nextKey))
+    _.pairs(spreads).reduce(reducer, Spread.fromValue({}))
 
   @multimap: (args, func) ->
-    Spread.productObject(args).map(func)
+    Spread.product(args).map(func)
 
   @multibind: (args, func) ->
     Spread.multimap(args, func).join()
@@ -89,10 +107,7 @@ class Spread
     args = _.mapObject args, (arg) -> if arg instanceof Spread then arg else Spread.fromValue(arg)
     result = Spread.multimap(args, func)
 
-    if result.pairs.length and result.pairs[0][1] instanceof Spread
-      return result.join()
-    else
-      return result
+    return result.maybeJoin()
 
   _applyEnv: (someEnv) ->
     matchingPairs = @pairs.filter ([env, value]) -> mapsAgree(env, someEnv)
@@ -106,6 +121,9 @@ class Spread
       return _.find(@pairs, ([env, value]) -> _.every(_.values(env), (index) -> index == 0))[1]
 
 
+  # ===========================================================================
+  # Tree-spreads
+  # ===========================================================================
 
   # This method only applies to tree-spreads. A tree-spread is a spread of
   # tree-spread-nodes. A tree-spread-node must have a method "children", which
@@ -126,6 +144,11 @@ class Spread
   # Here, otherSpreads should be an array of tree-spreads.
   multimap2WithTrees: (otherSpreads, func) ->
     return @map((value, env) -> func(value, _.invoke(otherSpreads, "_applyEnvToTree", env), env))
+
+
+# ===========================================================================
+# Utility
+# ===========================================================================
 
 mapsAgree = (map1, map2) ->
   _.pairs(map1).every ([key, value]) -> !_.has(map2, key) or map2[key] == value

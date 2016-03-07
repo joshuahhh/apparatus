@@ -4,16 +4,19 @@ Attribute = Model.Attribute
 ExpressionAttribute = Model.ExpressionAttribute
 InternalAttribute = Model.InternalAttribute
 
+
+
 test "Numbers work", (t) ->
   a = ExpressionAttribute.createVariant()
   a.setExpression("6")
-  t.equal(a.value(), 6)
+  console.log(a.value())
+  t.deepEqual(a.value().toArray(), [6])
   t.end()
 
 test "Math expressions work", (t) ->
   a = ExpressionAttribute.createVariant()
   a.setExpression("5 + 5")
-  t.equal(a.value(), 10)
+  t.deepEqual(a.value().toArray(), [10])
   t.end()
 
 test "References work", (t) ->
@@ -23,7 +26,7 @@ test "References work", (t) ->
   a.setExpression("20")
   b.setExpression("$$$a$$$ * 2", {$$$a$$$: a})
 
-  t.equal(b.value(), 40)
+  t.deepEqual(b.value().toArray(), [40])
   t.end()
 
 test "Changes recompile", (t) ->
@@ -33,33 +36,33 @@ test "Changes recompile", (t) ->
   a.setExpression("20")
   b.setExpression("$$$a$$$ * 2", {$$$a$$$: a})
 
-  t.equal(b.value(), 40)
+  t.deepEqual(b.value().toArray(), [40])
 
   a.setExpression("10")
-  t.equal(b.value(), 20)
+  t.deepEqual(b.value().toArray(), [20])
 
   b.setExpression("$$$a$$$ * 3", {$$$a$$$: a})
-  t.equal(b.value(), 30)
+  t.deepEqual(b.value().toArray(), [30])
   t.end()
 
 test "Dependencies work", (t) ->
-  a = ExpressionAttribute.createVariant({label: 'a'})
-  b = ExpressionAttribute.createVariant({label: 'b'})
-  c = ExpressionAttribute.createVariant({label: 'c'})
+  a = ExpressionAttribute.createVariant({label: "a"})
+  b = ExpressionAttribute.createVariant({label: "b"})
+  c = ExpressionAttribute.createVariant({label: "c"})
 
   a.setExpression("$$$b$$$ * 2", {$$$b$$$: b})
   b.setExpression("$$$c$$$ * 3", {$$$c$$$: c})
   c.setExpression("20")
 
-  t.equal(a.value(), 120, 'value works')
-  t.deepEqual(a.dependencies(), [b, c], 'dependencies works')
-  t.equal(a.circularReferencePath(), null, 'circularReferencePath works')
+  t.deepEqual(a.value().toArray(), [120])
+  t.deepEqual(a.dependencies(), [b, c], "dependencies works")
+  t.deepEqual(a.circularReferencePath(), null, "circularReferencePath works")
   t.end()
 
 test "Dependencies work with circular references", (t) ->
-  a = ExpressionAttribute.createVariant({label: 'a'})
-  b = ExpressionAttribute.createVariant({label: 'b'})
-  c = ExpressionAttribute.createVariant({label: 'c'})
+  a = ExpressionAttribute.createVariant({label: "a"})
+  b = ExpressionAttribute.createVariant({label: "b"})
+  c = ExpressionAttribute.createVariant({label: "c"})
 
   a.setExpression("$$$b$$$", {$$$b$$$: b})
   b.setExpression("$$$c$$$", {$$$c$$$: c})
@@ -69,9 +72,9 @@ test "Dependencies work with circular references", (t) ->
   expectedError = new Attribute.CircularReferenceError(
     expectedCircularReferencePath)
 
-  t.deepEqual(a.value(), expectedError, 'value works')
-  t.deepEqual(a.dependencies(), [b, c], 'dependencies works')
-  t.deepEqual(a.circularReferencePath(), expectedCircularReferencePath, 'circularReferencePath works')
+  t.deepEqual(a.value(), expectedError, "value works")
+  t.deepEqual(a.dependencies(), [b, c], "dependencies works")
+  t.deepEqual(a.circularReferencePath(), expectedCircularReferencePath, "circularReferencePath works")
   t.end()
 
 test "Attributes based on internal functions work", (t) ->
@@ -82,5 +85,5 @@ test "Attributes based on internal functions work", (t) ->
       internalFunction: (referenceValues) -> referenceValues.$$$a$$$ + 1
     b.setReferences({$$$a$$$: a})
 
-    t.equal(b.value(), 3)
+    t.deepEqual(b.value().toArray(), [3])
     t.end()
