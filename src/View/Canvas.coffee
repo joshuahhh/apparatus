@@ -315,7 +315,7 @@ R.create "Canvas",
         return unless startImmediately or dragManager.drag.consummated
         currentMousePixel = @_mousePosition(mouseMoveEvent)
         initialValues = for attribute in attributesToChange
-          attribute.value()
+          attribute.value().toArray()[0]
         precisions = for attribute in attributesToChange
           Util.precision(attribute.exprString)
 

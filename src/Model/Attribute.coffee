@@ -32,7 +32,7 @@ module.exports = Attribute = Node.createVariant
 
   _value: ->
     [hasEasyValue, easyValue] = @_easyEvaluate()
-    return easyValue if hasEasyValue
+    return Spread.fromValue(easyValue) if hasEasyValue
 
     if (circularReferencePath = @circularReferencePath())?
       return new CircularReferenceError(circularReferencePath)
