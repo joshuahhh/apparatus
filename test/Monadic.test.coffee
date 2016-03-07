@@ -412,7 +412,7 @@ test "Spreads cross product", (t) ->
 
 test "Spreads tree", (t) ->
   a = Spread.fromArray([0 ... 4])
-  b = Spread.multibind({a}, ({a}) -> Spread.fromArray([0 ... a]))
+  b = Spread.multimap({a}, ({a}) -> Spread.fromArray([0 ... a])).join()
   c = Spread.multimap({a, b}, ({a, b}) -> a * b)
   t.deepEqual(_.sortBy(c.toArray()), [0, 0, 0, 2, 3, 6])
   t.end()

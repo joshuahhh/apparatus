@@ -41,7 +41,9 @@ module.exports = Attribute = Node.createVariant
       referenceAttribute.value()
 
     try
-      return Spread.flexibind(referenceValues, (args) => @_evaluate(args))
+      return Spread
+        .multimap(referenceValues, (args) => @_evaluate(args))
+        .maybeJoin()
     catch error
       throw error
       # if error instanceof Dataflow.UnresolvedSpreadError

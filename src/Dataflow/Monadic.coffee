@@ -94,21 +94,6 @@ class Spread
   @multimap: (args, func) ->
     Spread.product(args).map(func)
 
-  @multibind: (args, func) ->
-    Spread.multimap(args, func).join()
-
-  @flexibind: (args, func) ->
-    # Flexible in two ways:
-    #   If some arguments are not spreads, they will automatically be wrapped in one.
-    #   If the output of the function is a spread, multibind will be used;
-    #     otherwise, multimap.
-    #   (With this set-up, it's more-or-less impossible to end up with a spread of spreads.)
-
-    args = _.mapObject args, (arg) -> if arg instanceof Spread then arg else Spread.fromValue(arg)
-    result = Spread.multimap(args, func)
-
-    return result.maybeJoin()
-
   _applyEnv: (someEnv) ->
     matchingPairs = @pairs.filter ([env, value]) -> mapsAgree(env, someEnv)
     return new Spread(matchingPairs.map ([env, value]) -> [_.omit(env, _.keys(someEnv)), value])
