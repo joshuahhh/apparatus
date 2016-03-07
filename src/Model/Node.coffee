@@ -134,6 +134,7 @@ module.exports = Node = {
 
     @_isHatched = true
 
+    console.log('master of', @devLabel(), 'is', @_master?.devLabel(), if @_master then 'FINE' else @_master)
     if @_master?
       for masterChild in @_master.children()
         myChild = masterChild._createVariantWithHead(@_head)
@@ -247,6 +248,7 @@ module.exports = Node = {
   # ===========================================================================
 
   isVariantOf: (grandMaster) ->
+    return false if not grandMaster
     return grandMaster == this or grandMaster.isPrototypeOf(this)
 
   isAncestorOf: (grandChild) ->
