@@ -55,7 +55,7 @@ R.create "SpreadValue",
     spread: "any"
   render: ->
     {spread} = @props
-    items = spread.items()
+    items = spread.toArray()
     maxSpreadItems = 5
 
     R.span {className: "SpreadValue"},
