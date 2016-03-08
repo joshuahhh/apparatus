@@ -76,14 +76,11 @@ _ = require "underscore"
 module.exports = Node = {
   label: "Node"
 
-  constructor: ->
-    @_master = null
+  constructor: (@_head, @_master) ->
     @_variants = []
 
     @_parent = null
     @_children = []
-
-    @_head = null
 
     @_isHatched = false
 
@@ -219,13 +216,10 @@ module.exports = Node = {
   _createVariantWithHead: (head=null, spec) ->
     variant = Object.create(this)
     _.extend(variant, spec) if spec?
-    variant.constructor()
 
-    if !head?
-      head = variant
+    head ?= variant
+    variant.constructor(head, this)
 
-    variant._head = head
-    variant._master = this
     @_variants.push(variant)
 
     return variant
@@ -337,4 +331,4 @@ module.exports = Node = {
     return lineage
 }
 
-Node.constructor()
+Node.constructor(null, null)
