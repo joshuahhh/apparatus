@@ -30,7 +30,7 @@ module.exports = Element = Node.createVariant
       this['__' + prop + 'Cell'] = new Dataflow.Cell(this["_" + prop + 'Fn'].bind(this), 'element ' + prop)
       this[prop] = do (prop) -> -> this['__' + prop + 'Cell'].run()
 
-    # @rewireGraphicsOfChildElementsAttribute()
+    @rewireGraphicsOfChildElementsAttribute()
 
   # viewMatrix determines the pan and zoom of an Element. It is only used for
   # Elements that can be a Project.editingElement (i.e. Elements within the

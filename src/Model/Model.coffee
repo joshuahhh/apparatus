@@ -237,11 +237,6 @@ do ->
 Model.Shape = Model.Element.createVariant
   label: "Shape"
 
-console.log('A', _.invoke(Model.Element.children(), "devLabel"))
-console.log('B', _.invoke(Model.Element.createVariant({}).children(), "devLabel"))
-console.log('B master', Model.Element.createVariant({}).master().devLabel())
-console.log('C', _.invoke(Model.Shape.children(), "devLabel"))
-
 do ->
   Model.Shape.addChildren [
     transform = Model.Transform.createVariant()
