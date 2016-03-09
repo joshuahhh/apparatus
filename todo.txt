@@ -143,7 +143,11 @@ Get rid of try-catch for dependency management
 
 
 TODO from latest rework:
-  * Speed up spread functions.
+  * Speed up spread operators.
   * Cache dependency information.
   * Fix cyclic dependencies.
   * Get recursive shapes working.
+
+
+  * Garbage collection (esp since we now have a lot of nodes)
+  * Empty spreads?
