@@ -94,6 +94,8 @@ R.create "AttributeLabel",
       onMouseDown: @_onMouseDown
       onMouseEnter: @_onMouseEnter
       onMouseLeave: @_onMouseLeave
+      style:
+        backgroundImage: if attribute.recentlyEvaluated then 'linear-gradient(to bottom, #00f400, #00e400)'
     },
       R.EditableText {
         className: "EditableTextInline Interactive"

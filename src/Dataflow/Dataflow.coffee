@@ -22,17 +22,16 @@ computationManager = new ComputationManager()
 
 class Cell
   constructor: (@fn, @dependersGetter) ->
-    @_evaluateFull = computationManager.memoize => @fn()
-
+    @cached = null
     @valid = false
 
   # run does the asSpread thing, but if the value is a spread, it reports it
   # upwards so that a higher level can distribute over the spread.
   run: ->
-    computationManager.run =>
-      value = @_evaluateFull()
+    if not @valid
+      @cached = @fn()
       @valid = true
-      return value
+    return @cached
 
   invalidate: ->
     if not @valid

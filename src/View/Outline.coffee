@@ -114,7 +114,9 @@ R.create "OutlineItem",
             }
             onClick: @_onClickTriangle,
           }
-        R.div {className: "ElementRowLabel"},
+        R.div {
+          className: "ElementRowLabel",
+          style: backgroundColor: if element.graphicAttribute().recentlyEvaluated then '#00e400'},
           R.EditableText {
             className: "EditableTextInline Interactive"
             value: element.label

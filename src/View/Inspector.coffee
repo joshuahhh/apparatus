@@ -60,7 +60,6 @@ R.create "ComponentSection",
         for attribute in component.expressionAttributes()
           R.AttributeRow {attribute, key: Util.getId(attribute)}
         for attribute in component.internalAttributes()
-          window.attribute = attribute
           R.div {style: {marginLeft: '2em'}}, attribute.label + ': ' + attribute.value()
 
 

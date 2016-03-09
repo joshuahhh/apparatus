@@ -31,6 +31,8 @@ module.exports = Attribute = Node.createVariant
     [false]
 
   _value: Util.decorate 'Attribute::_value', ->
+    @recentlyEvaluated = true
+    window.setTimeout((=> @recentlyEvaluated = false), 300)
     [hasEasyValue, easyValue] = @_easyEvaluate()
     if hasEasyValue
       return Spread.fromValue(easyValue)
@@ -200,6 +202,8 @@ Attribute.ExpressionAttribute = Attribute.createVariant
   setExpression: (exprString, references={}) ->
     @exprString = String(exprString)
     @setReferences(references)
+
+    @valueCell().invalidate()
 
 
 Attribute.InternalAttribute = Attribute.createVariant
