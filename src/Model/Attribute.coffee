@@ -16,6 +16,7 @@ module.exports = Attribute = Node.createVariant
     Node.constructor.apply(this, arguments)
 
     @__valueCell = new Dataflow.Cell(@_value.bind(this), @dependerCells.bind(this))
+    @__dependencyInfoCell = new Dataflow.Cell(@_dependencyInfo.bind(this), @dependerCells.bind(this))
 
   valueCell: ->
     @__valueCell
@@ -56,13 +57,7 @@ module.exports = Attribute = Node.createVariant
       # console.groupEnd()
       return toReturn
     catch error
-      throw error
-      # if error instanceof Dataflow.UnresolvedSpreadError
-      #   # This is legit uncool.
-      #   throw error
-      # else
-      #   # This is a user error.
-      #   return error
+      return error
 
   setReferences: (references, asTreeSpreadMap) ->
     # Remove all existing reference links
@@ -122,41 +117,31 @@ module.exports = Attribute = Node.createVariant
   #     (will be reasonable even if a circular reference exists)
   #   circularReferencePath: a chain of dependencies resulting in a circular
   #     reference, if one exists, or null
-  _analyzeDependencies: ->
+  _dependencyInfo: ->
     dependencies = []
 
-    attributePath = []
-    circularReferencePath = null
-
-    recurse = (attribute) ->
-      attributePath.push(attribute)
-      # Detect circular references, and don't get trapped
-      if attributePath.indexOf(attribute) != attributePath.length - 1
-        circularReferencePath ?= attributePath.slice()
-      else
-        for referenceAttribute in _.values(attribute.references())
-          dependencies.push(referenceAttribute)
-          recurse(referenceAttribute)
-      attributePath.pop()
-
-    recurse(this)
+    for referenceAttribute in _.values(@references())
+      dependencyInfo = referenceAttribute.dependencyInfo()
+      dependencies.concat(dependencyInfo.dependencies)
 
     dependencies = _.unique(dependencies)
 
     return {
       dependencies
-      circularReferencePath
     }
+
+  dependencyInfo: ->
+    @__dependencyInfoCell.run()
 
   # Returns all referenced attributes recursively. In other words every
   # attribute which, if it changed, would affect me.
   dependencies: ->
-    return @_analyzeDependencies().dependencies
+    return @dependencyInfo().dependencies
 
   # If there is a circular reference in the attribute's dependency graph,
   # returns a chain of dependencies representing it. Otherwise returns null.
   circularReferencePath: ->
-    return @_analyzeDependencies().circularReferencePath
+    return @dependencyInfo().circularReferencePath
 
   parentElement: ->
     result = @parent()
