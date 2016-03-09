@@ -19,17 +19,6 @@ module.exports = Element = Node.createVariant
     # the constructor for every Element.
     @expanded = false
 
-    # These methods need to be cells because we want to be able to call their
-    # asSpread version. Note that we need to keep the original method around
-    # (as the _version) so that inheritance doesn't try to make a cell out of
-    # a cell.
-    propsToCellify = [
-      "graphic"
-    ]
-    for prop in propsToCellify
-      this['__' + prop + 'Cell'] = new Dataflow.Cell(this["_" + prop + 'Fn'].bind(this), 'element ' + prop)
-      this[prop] = do (prop) -> -> this['__' + prop + 'Cell'].run()
-
     @rewireGraphicsOfChildElementsAttribute()
 
   # viewMatrix determines the pan and zoom of an Element. It is only used for
@@ -62,8 +51,8 @@ module.exports = Element = Node.createVariant
 
   rewireGraphicsOfChildElementsAttribute: ->
     @graphicsOfChildElementsAttribute()?.setReferences(
-      @childElements().map (childElement) -> childElement.graphicAttribute(),
-      true  # they're tree-spreads!
+      @childElements().map((childElement) -> childElement.graphicAttribute()),
+      @childElements().map(-> yes)  # they're tree-spreads!
     )
 
   # ===========================================================================
@@ -233,24 +222,8 @@ module.exports = Element = Node.createVariant
   graphicAttribute: ->
     @childOfType(Model.ElementGraphic)
 
-  # This fella should return a tree-spread of Graphics.
-  _graphicFn: ->
-    # NEXT STEP: Implement graphic in a way which works for spreads, but isn't necessarily an attribute
-    # (Then we can work on making it an attribute if we want)
-
-    allComponentGraphicsSpread = @graphicsOfComponentsAttribute().value()
-    childElementGraphicsSpreads = @childElements().map (childElement) -> childElement.graphic()
-
-    return allComponentGraphicsSpread.multimap2WithTrees(
-      childElementGraphicsSpreads,
-      (allComponentGraphics, childElementGraphics, env) =>
-        graphic = new @graphicClass()
-
-        graphic.components = allComponentGraphics  # These won't be spread at all
-        graphic.childGraphicSpreads = childElementGraphics
-        graphic.particularElement = new Model.ParticularElement(this, env)
-        return graphic
-    )
+  graphic: ->
+    @graphicAttribute().value()
 
   _isBeyondMaxDepth: ->
     # This might want to be adjustable somewhere rather than hard coded here.

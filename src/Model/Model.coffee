@@ -76,7 +76,7 @@ Model.Component = Model.Node.createVariant
     @graphicAttribute().value()
 
 Model.ComponentGraphic = Model.InternalAttribute.createVariant
-  label: 'Graphic'
+  label: 'Component Graphic'
   name: 'graphic'
   internalFunction: (attributeValues) ->
     # TRICKY BUSINESS: This depends on @parent().graphicClass, so you can
@@ -85,7 +85,7 @@ Model.ComponentGraphic = Model.InternalAttribute.createVariant
     # graphicClass is not part of the attribute system, so it's got to be
     # static.
     graphic = new (@parent().graphicClass)
-    graphic.attributeValues = attributeValues
+    graphic.attributeValues = _.omit(attributeValues, '_env')
     return graphic
 
 Model.Component.addChildren [
@@ -193,20 +193,20 @@ Model.GraphicsOfComponents = Model.InternalAttribute.createVariant
   label: 'Graphics Of Components'
   name: 'graphicsOfComponents'
   internalFunction: (attributeValues) ->
-    _.toArray(attributeValues)
+    _.toArray(_.omit(attributeValues, '_env'))
 
 Model.GraphicsOfChildElements = Model.InternalAttribute.createVariant
   label: 'Graphics Of Child Elements'
   name: 'graphicsOfChildElements'
-  internalFunction: (attributeValues) ->
+  internalFunction: Util.decorate 'GraphicsOfChildElements::internalFunction', (attributeValues) ->
     # We use a Graphic.Element to wrap up the child element graphics, since it
     # has the right tree-spread-node structure.
     graphic = new Graphic.Element
-    graphic.childGraphicSpreads = _.toArray(attributeValues)
+    graphic.childGraphicSpreads = _.toArray(_.omit(attributeValues, '_env'))
     return graphic
 
 Model.ElementGraphic = Model.InternalAttribute.createVariant
-  label: 'Graphic'
+  label: 'Element Graphic'
   name: 'graphic'
   internalFunction: ({graphicsOfComponents, graphicsOfChildElements, _env}) ->
     # TRICKY BUSINESS: This depends on @parent().graphicClass, so you can
@@ -216,8 +216,8 @@ Model.ElementGraphic = Model.InternalAttribute.createVariant
     # static.
     graphic = new (@parent().graphicClass)
     graphic.components = graphicsOfComponents  # These won't be spread at all
-    graphic.childGraphicSpreads = graphicsOfChildElements
-    graphic.particularElement = new Model.ParticularElement(this, _env)
+    graphic.childGraphicSpreads = graphicsOfChildElements.default().childGraphicSpreads
+    graphic.particularElement = new Model.ParticularElement(@parent(), _env)
     return graphic
 
 do ->

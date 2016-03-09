@@ -169,91 +169,6 @@ test "Spread::_applyEnvToTree works", (t) ->
   t.deepEqual(tree._applyEnvToTree({x: 1, y: 0}), expectedTreeWhenXIs1AndYIs0)
   t.end()
 
-test "Spread::multimap2WithTree works", (t) ->
-  spread = new Spread([
-    [{y: 0}, 20]
-    [{y: 1}, 21]
-  ])
-
-  tree = new Spread([
-    [
-      {x: 0}
-      new TestNode([
-        new Spread([
-          [{y: 0}, new TestNode([], 1)]
-          [{y: 1}, new TestNode([], 2)]
-        ])
-      ])
-    ]
-    [
-      {x: 1}
-      new TestNode([
-        new Spread([
-          [{y: 0}, new TestNode([], 3)]
-          [{y: 1}, new TestNode([], 4)]
-        ])
-      ])
-    ]
-  ])
-
-  func = (spreadVal, treeSpread) ->
-    new TestNode([treeSpread], spreadVal)
-
-  expectedOutput = new Spread([
-    [
-      {y: 0}
-      new TestNode([
-        new Spread([
-          [
-            {x: 0}
-            new TestNode([
-              new Spread([
-                [{}, new TestNode([], 1)]
-              ])
-            ])
-          ]
-          [
-            {x: 1}
-            new TestNode([
-              new Spread([
-                [{}, new TestNode([], 3)]
-              ])
-            ])
-          ]
-        ])
-      ], 20)
-    ]
-    [
-      {y: 1}
-      new TestNode([
-        new Spread([
-          [
-            {x: 0}
-            new TestNode([
-              new Spread([
-                [{}, new TestNode([], 2)]
-              ])
-            ])
-          ]
-          [
-            {x: 1}
-            new TestNode([
-              new Spread([
-                [{}, new TestNode([], 4)]
-              ])
-            ])
-          ]
-        ])
-      ], 21)
-    ]
-  ])
-
-  # console.log util.inspect spread.multimap2WithTree(tree, func), false, null
-  # console.log util.inspect expectedOutput, false, null
-
-  t.deepEqual(spread.multimap2WithTree(tree, func), expectedOutput)
-  t.end()
-
 test "Spread::multimap2WithTrees works", (t) ->
   spread = new Spread([
     [{y: 0}, 20]
@@ -392,6 +307,146 @@ test "Spread::multimap2WithTrees works", (t) ->
   ])
 
   t.deepEqual(spread.multimap2WithTrees([tree1, tree2], func), expectedOutput)
+  t.end()
+
+test "Spread::multimap2WithTreeObject works", (t) ->
+  spread = new Spread([
+    [{y: 0}, 20]
+    [{y: 1}, 21]
+  ])
+
+  tree1 = new Spread([
+    [
+      {x: 0}
+      new TestNode([
+        new Spread([
+          [{y: 0}, new TestNode([], 1)]
+          [{y: 1}, new TestNode([], 2)]
+        ])
+      ])
+    ]
+    [
+      {x: 1}
+      new TestNode([
+        new Spread([
+          [{y: 0}, new TestNode([], 3)]
+          [{y: 1}, new TestNode([], 4)]
+        ])
+      ])
+    ]
+  ])
+
+  tree2 = new Spread([
+    [
+      {x: 0}
+      new TestNode([
+        new Spread([
+          [{y: 0}, new TestNode([], 11)]
+          [{y: 1}, new TestNode([], 12)]
+        ])
+      ])
+    ]
+    [
+      {x: 1}
+      new TestNode([
+        new Spread([
+          [{y: 0}, new TestNode([], 13)]
+          [{y: 1}, new TestNode([], 14)]
+        ])
+      ])
+    ]
+  ])
+
+
+  func = (spreadVal, {tree1, tree2}) ->
+    new TestNode([tree1, tree2], spreadVal)
+
+  expectedOutput = new Spread([
+    [
+      {y: 0}
+      new TestNode([
+        new Spread([
+          [
+            {x: 0}
+            new TestNode([
+              new Spread([
+                [{}, new TestNode([], 1)]
+              ])
+            ])
+          ]
+          [
+            {x: 1}
+            new TestNode([
+              new Spread([
+                [{}, new TestNode([], 3)]
+              ])
+            ])
+          ]
+        ])
+        new Spread([
+          [
+            {x: 0}
+            new TestNode([
+              new Spread([
+                [{}, new TestNode([], 11)]
+              ])
+            ])
+          ]
+          [
+            {x: 1}
+            new TestNode([
+              new Spread([
+                [{}, new TestNode([], 13)]
+              ])
+            ])
+          ]
+        ])
+      ], 20)
+    ]
+    [
+      {y: 1}
+      new TestNode([
+        new Spread([
+          [
+            {x: 0}
+            new TestNode([
+              new Spread([
+                [{}, new TestNode([], 2)]
+              ])
+            ])
+          ]
+          [
+            {x: 1}
+            new TestNode([
+              new Spread([
+                [{}, new TestNode([], 4)]
+              ])
+            ])
+          ]
+        ])
+        new Spread([
+          [
+            {x: 0}
+            new TestNode([
+              new Spread([
+                [{}, new TestNode([], 12)]
+              ])
+            ])
+          ]
+          [
+            {x: 1}
+            new TestNode([
+              new Spread([
+                [{}, new TestNode([], 14)]
+              ])
+            ])
+          ]
+        ])
+      ], 21)
+    ]
+  ])
+
+  t.deepEqual(spread.multimap2WithTreeObject({tree1, tree2}, func), expectedOutput)
   t.end()
 
 test "Spreads work", (t) ->

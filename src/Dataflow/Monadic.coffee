@@ -1,7 +1,6 @@
 _ = require "underscore"
 Util = require "../Util/Util"
 
-
 # Note: The main rule that the envs in a spread must obey is that no env can be
 # a superset of another.
 
@@ -117,19 +116,53 @@ class Spread
   # children. (The tree-spread-node may store additional data beyond its
   # children; in this case, it should use setChildren as an opportunity to clone
   # that data.)
-  _applyEnvToTree: (someEnv) ->
+  _applyEnvToTree: Util.decorate 'Spread::_applyEnvToTree', (someEnv) ->
+    # window.assertPropType(someEnv, Object)
+    if @pairs.length and not @pairs[0][1].children
+      console.log(@pairs[0][1])
+      throw new Error("Spread's elements don't have children!")
     return @_applyEnv(someEnv).map((node) ->
       node.setChildren(node.children().map((spreadUnderNode) ->
         spreadUnderNode._applyEnvToTree(someEnv))))
 
-  # Here, otherSpread should be a tree-spread.
-  multimap2WithTree: (otherSpread, func) ->
-    return @map((value, env) -> func(value, otherSpread._applyEnvToTree(env), env))
+  # # Here, otherSpread should be a tree-spread.
+  # multimap2WithTree: (otherSpread, func) ->
+  #   return @map((value, env) -> func(value, otherSpread._applyEnvToTree(env), env))
 
   # Here, otherSpreads should be an array of tree-spreads.
-  multimap2WithTrees: (otherSpreads, func) ->
+  multimap2WithTrees: Util.decorate 'Spread::multimap2WithTrees', (otherSpreads, func) ->
+    # window.assertPropType(otherSpreads, [Spread])
     return @map((value, env) -> func(value, _.invoke(otherSpreads, "_applyEnvToTree", env), env))
 
+  # Here, otherSpreads should be an object of tree-spreads.
+  multimap2WithTreeObject: Util.decorate 'Spread::multimap2WithTreeObject', (otherSpreads, func) ->
+    # window.assertPropType(otherSpreads, Object)
+    # console.log("multimap2WithTreeObject", this, otherSpreads)
+    toReturn = @map((value, env) ->
+      func(value, _.mapObject(otherSpreads, (value) -> value._applyEnvToTree(env)), env)
+    )
+    # console.log(toReturn)
+    return toReturn
+
+
+  @multimapWithTrees: Util.decorate 'Spread.multimapWithTrees', (args, asTreeSpreadMap, func) ->
+    # window.assertPropType(args, Object)
+    # window.assertPropType(asTreeSpreadMap, Object)
+
+    # The plan:
+    #   * Split args into non-tree-spreads and tree-spreads
+    #   * Product the non-tree-spreads
+    #   * multimap2WithTrees them with the tree spreads
+    #   * PROFIT YEAHHHHHH
+
+    nonTreeSpreads = _.pick(args, (value, key) -> not asTreeSpreadMap[key])
+    treeSpreads = _.pick(args, (value, key) -> asTreeSpreadMap[key])
+
+
+    nonTreeSpreadProduct = Spread.product(nonTreeSpreads)
+
+    return nonTreeSpreadProduct.multimap2WithTreeObject treeSpreads, (nonTreeSpreads, treeSpreads, env) ->
+      func(_.extend({_env: env}, nonTreeSpreads, treeSpreads))
 
 # ===========================================================================
 # Utility

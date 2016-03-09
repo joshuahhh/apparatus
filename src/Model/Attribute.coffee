@@ -30,9 +30,10 @@ module.exports = Attribute = Node.createVariant
   _easyEvaluate: ->
     [false]
 
-  _value: ->
+  _value: Util.decorate 'Attribute::_value', ->
     [hasEasyValue, easyValue] = @_easyEvaluate()
-    return Spread.fromValue(easyValue) if hasEasyValue
+    if hasEasyValue
+      return Spread.fromValue(easyValue)
 
     if (circularReferencePath = @circularReferencePath())?
       return new CircularReferenceError(circularReferencePath)
@@ -40,12 +41,18 @@ module.exports = Attribute = Node.createVariant
     referenceValues = _.mapObject @references(), (referenceAttribute) ->
       referenceAttribute.value()
 
+    asTreeSpreadMap = _.mapObject @referenceLinks(), (referenceLink) ->
+      referenceLink.asTreeSpread
+
     # TODO: INCLUDE _env ARGUMENT!
 
     try
-      return Spread
-        .multimap(referenceValues, (args) => @_evaluate(args))
+      toReturn = Spread
+        .multimapWithTrees(referenceValues, asTreeSpreadMap, (args) => @_evaluate(args))
         .maybeJoin()
+      # console.log('returning', toReturn)
+      # console.groupEnd()
+      return toReturn
     catch error
       throw error
       # if error instanceof Dataflow.UnresolvedSpreadError
@@ -79,6 +86,13 @@ module.exports = Attribute = Node.createVariant
     @addChild(referenceLink)
 
     @valueCell().invalidate()
+
+  referenceLinks: ->
+    referenceLinks = {}
+    for referenceLink in @childrenOfType(Model.ReferenceLink)
+      key = referenceLink.key
+      referenceLinks[key] = referenceLink
+    return referenceLinks
 
   references: ->
     references = {}

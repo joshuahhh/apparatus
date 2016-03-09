@@ -28,7 +28,7 @@ class Cell
 
   # run does the asSpread thing, but if the value is a spread, it reports it
   # upwards so that a higher level can distribute over the spread.
-  run: Util.decorate 'Cell::run', ->
+  run: ->
     computationManager.run =>
       value = @_evaluateFull()
       @valid = true
