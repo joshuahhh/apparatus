@@ -25,6 +25,7 @@ module.exports = class Serializer
 
   jsonify: (rootValue) ->
     objects = {} # id : json
+    objectsToJsonify = []
 
     jsonifyValue = (value) =>
       if _.isArray(value)
@@ -43,7 +44,7 @@ module.exports = class Serializer
         # We'll need to jsonify the object and add it to objects. First, set a
         # placeholder value so recursive references work.
         objects[id] = "PROCESSING"
-        objects[id] = jsonifyObject(object)
+        objectsToJsonify.push(object)
       return {__ref: id}
 
     jsonifyObject = (object) =>
@@ -59,6 +60,9 @@ module.exports = class Serializer
       return result
 
     root = jsonifyValue(rootValue)
+    while objectsToJsonify.length > 0
+      nextObject = objectsToJsonify.pop()
+      objects[Util.getId(nextObject)] = jsonifyObject(nextObject)
     return {objects, root}
 
 
