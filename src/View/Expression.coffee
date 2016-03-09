@@ -1,7 +1,7 @@
 _ = require "underscore"
 R = require "./R"
 Model = require "../Model/Model"
-Dataflow = require "../Dataflow/Dataflow"
+Monadic = require "../Dataflow/Monadic"
 Util = require "../Util/Util"
 
 
@@ -12,9 +12,12 @@ R.create "Expression",
   render: ->
     attribute = @props.attribute
 
-    R.div {className: "Expression"},
+    R.div {className: "Expression", onClick: @_onClick},
       R.ExpressionCode {attribute}
       R.ExpressionValue {attribute}
+
+  _onClick: ->
+    window.attribute = @props.attribute
 
 R.create "ExpressionValue",
   propTypes:
@@ -38,7 +41,7 @@ R.create "Value",
         "(" + value + ")"
       else if _.isFunction(value)
         "(Function)"
-      else if value instanceof Dataflow.Spread
+      else if value instanceof Monadic.Spread
         R.SpreadValue {spread: value}
       else if _.isNumber(value)
         Util.toMaxPrecision(value, 3)
@@ -52,12 +55,13 @@ R.create "SpreadValue",
     spread: "any"
   render: ->
     {spread} = @props
+    items = spread.toArray()
     maxSpreadItems = 5
 
     R.span {className: "SpreadValue"},
-      for index in [0...Math.min(spread.items.length, maxSpreadItems)]
-        value = spread.items[index]
+      for index in [0...Math.min(items.length, maxSpreadItems)]
+        value = items[index]
         R.span {className: "SpreadValueItem"},
           R.Value {value: value}
-      if spread.items.length > maxSpreadItems
+      if items.length > maxSpreadItems
         "..."

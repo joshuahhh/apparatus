@@ -15,13 +15,14 @@ Model.Layout = require "./Layout"
 Model.Node = require "./Node"
 Model.Link = require "./Link"
 Model.Attribute = require "./Attribute"
+Model.ExpressionAttribute = Model.Attribute.ExpressionAttribute
+Model.InternalAttribute = Model.Attribute.InternalAttribute
 Model.Element = require "./Element"
-
 
 Model.Editor = require "./Editor"
 
 
-Model.Variable = Model.Attribute.createVariant
+Model.Variable = Model.ExpressionAttribute.createVariant
   label: "Variable"
 
 # Links an Element to the Attributes it controls.
@@ -33,7 +34,7 @@ Model.ReferenceLink = Model.Link.createVariant
   label: "ReferenceLink"
 
 createAttribute = (label, name, exprString) ->
-  attribute = Model.Attribute.createVariant
+  attribute = Model.ExpressionAttribute.createVariant
     label: label
     name: name
   attribute.setExpression(exprString)
@@ -49,6 +50,12 @@ Model.Component = Model.Node.createVariant
   attributes: ->
     @childrenOfType(Model.Attribute)
 
+  expressionAttributes: ->
+    @childrenOfType(Model.ExpressionAttribute)
+
+  internalAttributes: ->
+    @childrenOfType(Model.InternalAttribute)
+
   getAttributesByName: ->
     _.indexBy @attributes(), "name"
 
@@ -62,15 +69,33 @@ Model.Component = Model.Node.createVariant
 
   graphicClass: Graphic.Component
 
+  graphicAttribute: ->
+    @getAttributesByName().graphic
+
   graphic: ->
-    graphic = new @graphicClass()
-    _.extend graphic, @getAttributesValuesByName()
+    @graphicAttribute().value()
+
+Model.ComponentGraphic = Model.InternalAttribute.createVariant
+  label: 'Component Graphic'
+  name: 'graphic'
+  internalFunction: (attributeValues) ->
+    # TRICKY BUSINESS: This depends on @parent().graphicClass, so you can
+    # override this in Component's variants. But make sure to set its children
+    # to link to whatever other attributes it depends on! ALSO TRICKY:
+    # graphicClass is not part of the attribute system, so it's got to be
+    # static.
+    graphic = new (@parent().graphicClass)
+    graphic.attributeValues = _.omit(attributeValues, '_env')
     return graphic
 
+Model.Component.addChildren [
+  Model.ComponentGraphic.createVariant {}
+]
 
 
 Model.Transform = Model.Component.createVariant
   label: "Transform"
+  graphicClass: Graphic.Transform
 
   matrix: ->
     {x, y, sx, sy, rotate} = @getAttributesValuesByName()
@@ -89,45 +114,136 @@ Model.Transform = Model.Component.createVariant
       {point: [0, 1], attributesToChange: [sy], filled: false}
     ]
 
-Model.Transform.addChildren [
-  createAttribute("X", "x", "0.00")
-  createAttribute("Y", "y", "0.00")
-  createAttribute("Scale X", "sx", "1.00")
-  createAttribute("Scale Y", "sy", "1.00")
-  createAttribute("Rotate", "rotate", "0.00")
-]
+Model.InternalAttributeMatrix = Model.InternalAttribute.createVariant
+  label: 'Matrix'
+  name: 'matrix'
+  internalFunction: ({x, y, sx, sy, rotate}) ->
+    Util.Matrix.naturalConstruct(x, y, sx, sy, rotate)
 
+Model.InternalAttributeContextMatrix = Model.InternalAttribute.createVariant
+  label: 'Context Matrix'
+  name: 'contextMatrix'
+  internalFunction: ({parentAccumulatedMatrix}) ->
+    if parentAccumulatedMatrix
+      return parentAccumulatedMatrix
+    else
+      return new Util.Matrix()
+
+Model.InternalAttributeAccumulatedMatrix = Model.InternalAttribute.createVariant
+  label: 'Accumulated Matrix'
+  name: 'accumulatedMatrix'
+  internalFunction: ({matrix, contextMatrix}) ->
+    contextMatrix.compose(matrix)
+
+do ->
+  Model.Transform.addChildren [
+    x = createAttribute("X", "x", "0.00")
+    y = createAttribute("Y", "y", "0.00")
+    sx = createAttribute("Scale X", "sx", "1.00")
+    sy = createAttribute("Scale Y", "sy", "1.00")
+    rotate = createAttribute("Rotate", "rotate", "0.00")
+  ]
+
+  matrix = Model.InternalAttributeMatrix.createVariant {}
+  matrix.setReferences({x, y, sx, sy, rotate})
+  Model.Transform.addChild matrix
+
+  contextMatrix = Model.InternalAttributeContextMatrix.createVariant {}
+  # Only reference is to parent accumulated matrix; set by parent Element
+  Model.Transform.addChild contextMatrix
+
+  accumulatedMatrix = Model.InternalAttributeAccumulatedMatrix.createVariant {}
+  accumulatedMatrix.setReferences({matrix, contextMatrix})
+  Model.Transform.addChild accumulatedMatrix
+
+  Model.Transform.graphicAttribute().setReferences({
+    x, y, sx, sy, rotate, matrix, contextMatrix, accumulatedMatrix
+  })
 
 
 Model.Fill = Model.Component.createVariant
   label: "Fill"
   graphicClass: Graphic.Fill
 
-Model.Fill.addChildren [
-  createAttribute("Fill Color", "color", "rgba(0.93, 0.93, 0.93, 1.00)")
-]
+do ->
+  Model.Fill.addChildren [
+    color = createAttribute("Fill Color", "color", "rgba(0.93, 0.93, 0.93, 1.00)")
+  ]
 
+  Model.Fill.graphicAttribute().setReferences({color})
 
 Model.Stroke = Model.Component.createVariant
   label: "Stroke"
   graphicClass: Graphic.Stroke
 
-Model.Stroke.addChildren [
-  createAttribute("Stroke Color", "color", "rgba(0.60, 0.60, 0.60, 1.00)")
-  createAttribute("Line Width", "lineWidth", "1")
-]
+do ->
+  Model.Stroke.addChildren [
+    color = createAttribute("Stroke Color", "color", "rgba(0.60, 0.60, 0.60, 1.00)")
+    lineWidth = createAttribute("Line Width", "lineWidth", "1")
+  ]
+
+  Model.Stroke.graphicAttribute().setReferences({color, lineWidth})
 
 
 # =============================================================================
 # Elements
 # =============================================================================
 
+Model.GraphicsOfComponents = Model.InternalAttribute.createVariant
+  label: 'Graphics Of Components'
+  name: 'graphicsOfComponents'
+  internalFunction: (attributeValues) ->
+    _.toArray(_.omit(attributeValues, '_env'))
+
+Model.GraphicsOfChildElements = Model.InternalAttribute.createVariant
+  label: 'Graphics Of Child Elements'
+  name: 'graphicsOfChildElements'
+  internalFunction: Util.decorate 'GraphicsOfChildElements::internalFunction', (attributeValues) ->
+    # We use a Graphic.Element to wrap up the child element graphics, since it
+    # has the right tree-spread-node structure.
+    graphic = new Graphic.Element
+    graphic.childGraphicSpreads = _.toArray(_.omit(attributeValues, '_env'))
+    return graphic
+
+Model.ElementGraphic = Model.InternalAttribute.createVariant
+  label: 'Element Graphic'
+  name: 'graphic'
+  internalFunction: ({graphicsOfComponents, graphicsOfChildElements, _env}) ->
+    # TRICKY BUSINESS: This depends on @parent().graphicClass, so you can
+    # override this in Component's variants. But make sure to set its children
+    # to link to whatever other attributes it depends on! ALSO TRICKY:
+    # graphicClass is not part of the attribute system, so it's got to be
+    # static.
+    graphic = new (@parent().graphicClass)
+    graphic.components = graphicsOfComponents  # These won't be spread at all
+    graphic.childGraphicSpreads = graphicsOfChildElements.default().childGraphicSpreads
+    graphic.particularElement = new Model.ParticularElement(@parent(), _env)
+    return graphic
+
+do ->
+  Model.Element.addChildren [
+    graphicsOfComponents = Model.GraphicsOfComponents.createVariant {}
+    graphicsOfChildElements = Model.GraphicsOfChildElements.createVariant {}
+    graphic = Model.ElementGraphic.createVariant {}
+  ]
+
+  Model.Element.rewireGraphicsOfChildElementsAttribute()
+
+  graphic.setReferences(
+    {graphicsOfComponents, graphicsOfChildElements}
+    {graphicsOfComponents: no, graphicsOfChildElements: yes}  # asTreeSpread
+  )
+
 Model.Shape = Model.Element.createVariant
   label: "Shape"
 
-Model.Shape.addChildren [
-  Model.Transform.createVariant()
-]
+do ->
+  Model.Shape.addChildren [
+    transform = Model.Transform.createVariant()
+  ]
+
+  Model.Shape.graphicsOfComponentsAttribute().addReferences
+    transform: transform.graphicAttribute()
 
 
 Model.Group = Model.Shape.createVariant
@@ -153,19 +269,29 @@ Model.PathComponent = Model.Component.createVariant
   label: "Path"
   graphicClass: Graphic.PathComponent
 
-Model.PathComponent.addChildren [
-  createAttribute("Close Path", "closed", "true")
-]
+do ->
+  Model.PathComponent.addChildren [
+    closed = createAttribute("Close Path", "closed", "true")
+  ]
+
+  Model.PathComponent.graphicAttribute().setReferences(
+    {closed})
 
 Model.Path = Model.Shape.createVariant
   label: "Path"
   graphicClass: Graphic.Path
 
-Model.Path.addChildren [
-  Model.PathComponent.createVariant()
-  Model.Fill.createVariant()
-  Model.Stroke.createVariant()
-]
+do ->
+  Model.Path.addChildren [
+    path = Model.PathComponent.createVariant()
+    fill = Model.Fill.createVariant()
+    stroke = Model.Stroke.createVariant()
+  ]
+
+  Model.Path.graphicsOfComponentsAttribute().addReferences
+    path: path.graphicAttribute()
+    fill: fill.graphicAttribute()
+    stroke: stroke.graphicAttribute()
 
 
 Model.Circle = Model.Path.createVariant
@@ -189,18 +315,27 @@ Model.TextComponent = Model.Component.createVariant
   label: "Text"
   graphicClass: Graphic.TextComponent
 
-Model.TextComponent.addChildren [
-  createAttribute("Text", "text", '"Text"')
-  createAttribute("Font", "fontFamily", '"Lucida Grande"')
-  createAttribute("Color", "color", "rgba(0.20, 0.20, 0.20, 1.00)")
-  createAttribute("Align", "textAlign", '"start"')
-  createAttribute("Baseline", "textBaseline", '"alphabetic"')
-]
+do ->
+  Model.TextComponent.addChildren [
+    text = createAttribute("Text", "text", '"Text"')
+    fontFamily = createAttribute("Font", "fontFamily", '"Lucida Grande"')
+    color = createAttribute("Color", "color", "rgba(0.20, 0.20, 0.20, 1.00)")
+    textAlign = createAttribute("Align", "textAlign", '"start"')
+    textBaseline = createAttribute("Baseline", "textBaseline", '"alphabetic"')
+  ]
+
+  Model.TextComponent.graphicAttribute().setReferences(
+    {text, fontFamily, color, textAlign, textBaseline})
+
 
 Model.Text = Model.Shape.createVariant
   label: "Text"
   graphicClass: Graphic.Text
 
-Model.Text.addChildren [
-  Model.TextComponent.createVariant()
-]
+do ->
+  Model.Text.addChildren [
+    text = Model.TextComponent.createVariant()
+  ]
+
+  Model.Text.graphicsOfComponentsAttribute().addReferences
+    text: text.graphicAttribute()

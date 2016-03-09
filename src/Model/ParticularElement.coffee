@@ -1,24 +1,24 @@
+_ = require "underscore"
 Dataflow = require "../Dataflow/Dataflow"
 
 
+# A ParticularElement is an Element together with a spread environment to
+# specify what the index values are for its Element's spreads.
 module.exports = class ParticularElement
   constructor: (@element, @spreadEnv) ->
-    @spreadEnv ?= Dataflow.SpreadEnv.empty
+    @spreadEnv ?= {}
 
-  isEqualTo: (particularElement) ->
-    return @element == particularElement.element and
-      @spreadEnv.isEqualTo(particularElement.spreadEnv)
+  # isEqualTo: (particularElement) ->
+  #   return @element == particularElement.element and
+  #     @spreadEnv.isEqualTo(particularElement.spreadEnv)
 
+  # This is probably used!
   isAncestorOf: (particularElement) ->
     return @element.isAncestorOf(particularElement.element) and
-      @spreadEnv.contains(particularElement.spreadEnv)
+      _.isMatch(particularElement.spreadEnv, @spreadEnv)
 
   accumulatedMatrix: ->
-    accumulatedMatrix = @element.accumulatedMatrix.asSpread()
-    accumulatedMatrix = @spreadEnv.resolveWithDefault(accumulatedMatrix)
-    return accumulatedMatrix
+    @element.accumulatedMatrix()._applyEnv(@spreadEnv).default()
 
   contextMatrix: ->
-    contextMatrix = @element.contextMatrix.asSpread()
-    contextMatrix = @spreadEnv.resolveWithDefault(contextMatrix)
-    return contextMatrix
+    @element.contextMatrix()._applyEnv(@spreadEnv).default()

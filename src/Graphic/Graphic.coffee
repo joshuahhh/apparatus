@@ -16,12 +16,10 @@ class Graphic.Element
   used for "back tracing" what part of the model generated this graphic, e.g.
   to implement selection when you click a shape on the canvas.
 
-  matrix: a Util.Matrix that is the graphic's *accumulated* transformation.
-
   components: a list of Graphic.Component's representing the paint operations
   to perform.
 
-  childGraphics: a list of Graphic.Element's.
+  childGraphicSpreads: a list of spreads of Graphic.Element's.
 
   ###
 
@@ -65,11 +63,32 @@ class Graphic.Element
   # Helpers
   # ===========================================================================
 
+  accumulatedMatrix: ->
+    @componentOfType(Graphic.Transform).attributeValues.accumulatedMatrix
+
+  childGraphics: ->
+    # Turn each child graphic spread into an array and join them all together
+    _.flatten _.invoke(@childGraphicSpreads, "toArray")
+
   componentOfType: (type) ->
     _.find @components, (component) -> component instanceof type
 
   componentsOfType: (type) ->
     _.filter @components, (component) -> component instanceof type
+
+
+  # ===========================================================================
+  # Tree-Spread-Node Contract
+  # ===========================================================================
+
+  children: ->
+    @childGraphicSpreads
+
+  setChildren: (newChildren) ->
+    newGraphic = Object.create(@__proto__)  # TODO: ???
+    _.extend(newGraphic, this)
+    newGraphic.childGraphicSpreads = newChildren
+    return newGraphic
 
 
 # =============================================================================
@@ -78,13 +97,13 @@ class Graphic.Element
 
 class Graphic.Group extends Graphic.Element
   render: (opts) ->
-    for childGraphic in @childGraphics
+    for childGraphic in @childGraphics()
       childGraphic.render(opts)
 
   hitDetect: (opts) ->
     # TODO: test
     latestHit = null
-    for childGraphic in @childGraphics
+    for childGraphic in @childGraphics()
       latestHit = childGraphic.hitDetect(opts) ? latestHit
     if latestHit
       return latestHit.concat(@particularElement)
@@ -135,7 +154,7 @@ class Graphic.Path extends Graphic.Element
     ctx.beginPath()
     anchors = @collectAnchors()
     for anchor in anchors
-      [x, y] = viewMatrix.compose(anchor.matrix).origin()
+      [x, y] = viewMatrix.compose(anchor.accumulatedMatrix()).origin()
       ctx.lineTo(x, y)
 
     if @isClosed()
@@ -149,21 +168,21 @@ class Graphic.Path extends Graphic.Element
       else if graphic instanceof Graphic.Group
         collectChildrenOf(graphic)
     collectChildrenOf = (graphic) ->
-      for childGraphic in graphic.childGraphics
+      for childGraphic in graphic.childGraphics()
         collect(childGraphic)
     collectChildrenOf(this)
     return anchors
 
   isClosed: ->
     pathComponent = @componentOfType(Graphic.PathComponent)
-    return pathComponent.closed
+    return pathComponent.attributeValues.closed
 
 
 class Graphic.Circle extends Graphic.Path
   buildPath: ({ctx, viewMatrix}) ->
     ctx.beginPath()
     ctx.save()
-    matrix = viewMatrix.compose(@matrix)
+    matrix = viewMatrix.compose(@accumulatedMatrix())
     matrix.canvasTransform(ctx)
     ctx.arc(0, 0, 1, 0, 2 * Math.PI, false)
     ctx.restore()
@@ -184,7 +203,7 @@ class Graphic.Text extends Graphic.Path
     @componentOfType(Graphic.TextComponent)
 
   renderText: ({ctx}) ->
-    {text} = @textComponent()
+    {text} = @textComponent().attributeValues
     ctx.fillText(text, 0, 0)
 
   textMultiplier: 100
@@ -192,8 +211,8 @@ class Graphic.Text extends Graphic.Path
   # setupText will set the appropriate font styles, color, and transformation
   # matrix so that text is ready to be rendered (fillText) at 0,0.
   setupText: ({ctx, viewMatrix}) ->
-    {text, fontFamily, textAlign, textBaseline, color} = @textComponent()
-    matrix = viewMatrix.compose(@matrix)
+    {text, fontFamily, textAlign, textBaseline, color} = @textComponent().attributeValues
+    matrix = viewMatrix.compose(@accumulatedMatrix())
     matrix = matrix.scale(1 / @textMultiplier, -1 / @textMultiplier)
     matrix.canvasTransform(ctx)
     ctx.font = "#{@textMultiplier}px #{fontFamily}"
@@ -208,7 +227,7 @@ class Graphic.Text extends Graphic.Path
     ctx.save()
     @setupText(opts)
 
-    {text, fontFamily, textAlign, textBaseline, color} = @textComponent()
+    {text, fontFamily, textAlign, textBaseline, color} = @textComponent().attributeValues
 
     width = ctx.measureText(text).width / @textMultiplier
     height = 1
@@ -243,7 +262,7 @@ class Graphic.Text extends Graphic.Path
 
     # Draw the text bounding rectangle.
     ctx.save()
-    matrix = viewMatrix.compose(@matrix)
+    matrix = viewMatrix.compose(@accumulatedMatrix())
     matrix.canvasTransform(ctx)
     ctx.beginPath()
     ctx.moveTo(minX, minY)
@@ -260,21 +279,23 @@ class Graphic.Text extends Graphic.Path
 
 class Graphic.Component
 
+class Graphic.Transform extends Graphic.Component
+
 class Graphic.PaintOp extends Graphic.Component
 
 class Graphic.Fill extends Graphic.PaintOp
   paint: (ctx) ->
     ctx.save()
-    ctx.fillStyle = @color
+    ctx.fillStyle = @attributeValues.color
     ctx.fill()
     ctx.restore()
 
 class Graphic.Stroke extends Graphic.PaintOp
   paint: (ctx) ->
-    return if @lineWidth <= 0
+    return if @attributeValues.lineWidth <= 0
     ctx.save()
-    ctx.strokeStyle = @color
-    ctx.lineWidth = @lineWidth
+    ctx.strokeStyle = @attributeValues.color
+    ctx.lineWidth = @attributeValues.lineWidth
     ctx.stroke()
     ctx.restore()
 

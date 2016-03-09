@@ -3,6 +3,8 @@ Node = require "./Node"
 Link = require "./Link"
 Model = require "./Model"
 Dataflow = require "../Dataflow/Dataflow"
+Monadic = require "../Dataflow/Monadic"
+Spread = Monadic.Spread
 Util = require "../Util/Util"
 
 
@@ -17,23 +19,41 @@ module.exports = Element = Node.createVariant
     # the constructor for every Element.
     @expanded = false
 
-    # These methods need to be cells because we want to be able to call their
-    # asSpread version. Note that we need to keep the original method around
-    # (as the _version) so that inheritance doesn't try to make a cell out of
-    # a cell.
-    propsToCellify = [
-      "graphic"
-      "contextMatrix"
-      "accumulatedMatrix"
-    ]
-    for prop in propsToCellify
-      this[prop] = Dataflow.cell(this["_" + prop].bind(this))
+    @rewireGraphicsOfChildElementsAttribute()
 
   # viewMatrix determines the pan and zoom of an Element. It is only used for
   # Elements that can be a Project.editingElement (i.e. Elements within the
   # create panel). The default is zoomed to 100 pixels per unit.
   viewMatrix: new Util.Matrix(100, 0, 0, 100, 0, 0)
 
+  _setParent: (parent) ->
+    # Call "super" _setParent
+    Node._setParent.apply(this, arguments)
+
+    # Rewire contextMatrix to depend on the right parent matrix
+    if parent and parent.isVariantOf(Element)
+      @contextMatrixAttribute().setReferences
+        parentAccumulatedMatrix: parent.accumulatedMatrixAttribute()
+    else
+      @contextMatrixAttribute().setReferences {}  # no parentAccumulatedMatrix
+
+  addChild: ->
+    # Call "super" addChild
+    Node.addChild.apply(this, arguments)
+
+    @rewireGraphicsOfChildElementsAttribute()
+
+  removeChild: ->
+    # Call "super" removeChild
+    Node.removeChild.apply(this, arguments)
+
+    @rewireGraphicsOfChildElementsAttribute()
+
+  rewireGraphicsOfChildElementsAttribute: ->
+    @graphicsOfChildElementsAttribute()?.setReferences(
+      @childElements().map((childElement) -> childElement.graphicAttribute()),
+      @childElements().map(-> yes)  # they're tree-spreads!
+    )
 
   # ===========================================================================
   # Getters
@@ -170,51 +190,40 @@ module.exports = Element = Node.createVariant
   # Geometry
   # ===========================================================================
 
+  matrixAttribute: ->
+    @childOfType(Model.Transform).getAttributesByName().matrix
+
   matrix: ->
-    matrix = new Util.Matrix()
-    for transform in @childrenOfType(Model.Transform)
-      matrix = matrix.compose(transform.matrix())
-    return matrix
+    @matrixAttribute().value()
 
-  _contextMatrix: ->
-    parent = @parent()
-    if parent and parent.isVariantOf(Element)
-      return parent.accumulatedMatrix()
-    else
-      return new Util.Matrix()
+  contextMatrixAttribute: ->
+    @childOfType(Model.Transform).getAttributesByName().contextMatrix
 
-  _accumulatedMatrix: ->
-    return @contextMatrix().compose(@matrix())
+  contextMatrix: ->
+    @contextMatrixAttribute().value()
+
+  accumulatedMatrixAttribute: ->
+    @childOfType(Model.Transform).getAttributesByName().accumulatedMatrix
+
+  accumulatedMatrix: ->
+    @accumulatedMatrixAttribute().value()
 
 
   # ===========================================================================
   # Graphic
   # ===========================================================================
 
-  _graphic: ->
-    graphic = new @graphicClass()
+  graphicsOfComponentsAttribute: ->
+    @childOfType(Model.GraphicsOfComponents)
 
-    spreadEnv = Dataflow.currentSpreadEnv()
-    graphic.particularElement = new Model.ParticularElement(this, spreadEnv)
+  graphicsOfChildElementsAttribute: ->
+    @childOfType(Model.GraphicsOfChildElements)
 
-    graphic.matrix = @accumulatedMatrix()
+  graphicAttribute: ->
+    @childOfType(Model.ElementGraphic)
 
-    graphic.components = _.map @components(), (component) ->
-      component.graphic()
-
-    graphic.childGraphics = _.flatten(_.map(@childElements(), (element) ->
-      element.allGraphics()
-    ))
-
-    return graphic
-
-  allGraphics: ->
-    return [] if @_isBeyondMaxDepth()
-    result = @graphic.asSpread()
-    if result instanceof Dataflow.Spread
-      return result.flattenToArray()
-    else
-      return [result]
+  graphic: ->
+    @graphicAttribute().value()
 
   _isBeyondMaxDepth: ->
     # This might want to be adjustable somewhere rather than hard coded here.

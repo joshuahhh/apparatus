@@ -1,9 +1,10 @@
 _ = require "underscore"
 Util = require "../Util/Util"
 Dataflow = require "../Dataflow/Dataflow"
+Monadic = require "../Dataflow/Monadic"
+Spread = Monadic.Spread
 Evaluator = require "../Evaluator/Evaluator"
 Node = require "./Node"
-Link = require "./Link"
 Model = require "./Model"
 
 
@@ -14,15 +15,25 @@ module.exports = Attribute = Node.createVariant
     # Call "super" constructor
     Node.constructor.apply(this, arguments)
 
-    @value = Dataflow.cell(@_value.bind(this))
+    @__valueCell = new Dataflow.Cell(@_value.bind(this), @dependerCells.bind(this))
 
-  _value: ->
-    # Optimization
-    if @isNumber()
-      return parseFloat(@exprString)
+  valueCell: ->
+    @__valueCell
 
-    if @_isDirty()
-      @_updateCompiledExpression()
+  value: ->
+    @valueCell().run()
+
+  _evaluate: (referenceValues) ->
+    throw new Error("Not implemented")
+
+  # Returns [false] if there's no quick evaluation, or [true, easyValue].
+  _easyEvaluate: ->
+    [false]
+
+  _value: Util.decorate 'Attribute::_value', ->
+    [hasEasyValue, easyValue] = @_easyEvaluate()
+    if hasEasyValue
+      return Spread.fromValue(easyValue)
 
     if (circularReferencePath = @circularReferencePath())?
       return new CircularReferenceError(circularReferencePath)
@@ -30,38 +41,58 @@ module.exports = Attribute = Node.createVariant
     referenceValues = _.mapObject @references(), (referenceAttribute) ->
       referenceAttribute.value()
 
+    asTreeSpreadMap = _.mapObject @referenceLinks(), (referenceLink) ->
+      referenceLink.asTreeSpread
+
+    # TODO: INCLUDE _env ARGUMENT!
+
     try
-      return @__compiledExpression.evaluate(referenceValues)
+      toReturn = Spread
+        .multimapWithTrees(referenceValues, asTreeSpreadMap, (args) => @_evaluate(args))
+        .maybeJoin()
+      # console.log('returning', toReturn)
+      # console.groupEnd()
+      return toReturn
     catch error
-      if error instanceof Dataflow.UnresolvedSpreadError
-        throw error
-      else
-        return error
+      throw error
+      # if error instanceof Dataflow.UnresolvedSpreadError
+      #   # This is legit uncool.
+      #   throw error
+      # else
+      #   # This is a user error.
+      #   return error
 
-  _isDirty: ->
-    return true if !@hasOwnProperty("__compiledExpression")
-    return true if @__compiledExpression.exprString != @exprString
-    return false
-
-  _updateCompiledExpression: ->
-    compiledExpression = new CompiledExpression(this)
-    if compiledExpression.isSyntaxError
-      compiledExpression.fn = @__compiledExpression?.fn ? -> new Error("Syntax error")
-    @__compiledExpression = compiledExpression
-
-  setExpression: (exprString, references={}) ->
-    @exprString = String(exprString)
-
+  setReferences: (references, asTreeSpreadMap) ->
     # Remove all existing reference links
     for referenceLink in @childrenOfType(Model.ReferenceLink)
+      referenceLink.deregisterFromTarget()
       @removeChild(referenceLink)
 
+    @addReferences(references, asTreeSpreadMap)
+
+    # Invalidate the value cell
+    @valueCell().invalidate()
+
+  addReferences: (references, asTreeSpreadMap) ->
     # Create appropriate reference links
-    for own key, attribute of references
-      referenceLink = Model.ReferenceLink.createVariant()
-      referenceLink.key = key
-      referenceLink.setTarget(attribute)
-      @addChild(referenceLink)
+    for own key, reference of references
+      @addReference(key, reference, asTreeSpreadMap?[key])
+
+  addReference: (key, reference, asTreeSpread) ->
+    referenceLink = Model.ReferenceLink.createVariant()
+    referenceLink.key = key
+    referenceLink.asTreeSpread = asTreeSpread
+    referenceLink.setTarget(reference)
+    @addChild(referenceLink)
+
+    @valueCell().invalidate()
+
+  referenceLinks: ->
+    referenceLinks = {}
+    for referenceLink in @childrenOfType(Model.ReferenceLink)
+      key = referenceLink.key
+      referenceLinks[key] = referenceLink
+    return referenceLinks
 
   references: ->
     references = {}
@@ -74,14 +105,14 @@ module.exports = Attribute = Node.createVariant
   hasReferences: -> _.any(@references(), -> true)
 
   isNumber: ->
-    return Util.isNumberString(@exprString)
+    false
 
   isTrivial: ->
     # TODO
     return @isNumber()
 
   isNovel: ->
-    @hasOwnProperty("exprString")
+    false
 
   # Descends through all recursively referenced attributes. An object is
   # returned with two properties:
@@ -131,8 +162,51 @@ module.exports = Attribute = Node.createVariant
       result = result.parent()
     return result
 
+  dependerCells: ->
+    incomingReferenceLinks = @incomingLinksOfType(Model.ReferenceLink)
+    return incomingReferenceLinks.map((link) -> link.parent().valueCell())
+
+Attribute.ExpressionAttribute = Attribute.createVariant
+  label: "ExpressionAttribute"
+
+  _easyEvaluate: ->
+    if @isNumber()
+      return [true, parseFloat(@exprString)]
+    return [false]
+
+  _evaluate: (referenceValues) ->
+    if @_isDirty()
+      @_updateCompiledExpression()
+
+    @__compiledExpression.evaluate(referenceValues)
+
+  _isDirty: ->
+    return true if !@hasOwnProperty("__compiledExpression")
+    return true if @__compiledExpression.exprString != @exprString
+    return false
+
+  _updateCompiledExpression: ->
+    compiledExpression = new CompiledExpression(this)
+    if compiledExpression.isSyntaxError
+      compiledExpression.fn = @__compiledExpression?.fn ? -> new Error("Syntax error")
+    @__compiledExpression = compiledExpression
+
+  isNumber: ->
+    return Util.isNumberString(@exprString)
+
+  isNovel: ->
+    @hasOwnProperty("exprString")
+
+  setExpression: (exprString, references={}) ->
+    @exprString = String(exprString)
+    @setReferences(references)
 
 
+Attribute.InternalAttribute = Attribute.createVariant
+  label: "InternalAttribute"
+
+  _evaluate: (referenceValues) ->
+    @internalFunction(referenceValues)
 
 class CompiledExpression
   constructor: (@attribute) ->
@@ -154,8 +228,6 @@ class CompiledExpression
     catch error
       @_setSyntaxError()
       return
-
-    compiled = @_wrapFunctionInSpreadCheck(compiled)
 
     if @referenceKeys.length == 0
       try
@@ -195,13 +267,6 @@ class CompiledExpression
 
     result   += "});"
     return result
-
-  _wrapFunctionInSpreadCheck: (fn) ->
-    return =>
-      result = fn(arguments...)
-      if result instanceof Dataflow.Spread
-        result.origin = @attribute
-      return result
 
 Attribute.CircularReferenceError = class CircularReferenceError extends Error
   constructor: (@attributePath) ->

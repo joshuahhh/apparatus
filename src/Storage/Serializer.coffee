@@ -16,6 +16,8 @@ module.exports = class Serializer
 
   shouldSerializeProperty: (key, value) ->
     # Won't serialize functions.
+    # TODO: Right now, this is only used for functions implemented as Dataflow cells
+    #       After we attributize all dataflow, this should be removed.
     return false if _.isFunction(value)
     # Won't serialize a key starting with __
     return false if key.slice(0, 2) == "__"

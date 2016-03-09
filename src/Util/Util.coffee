@@ -6,6 +6,23 @@ module.exports = Util = {}
 Util.Matrix = require "./Matrix"
 
 
+active = false
+Util.activate = -> active = true
+Util.deactivate = -> active = false
+Util.decorate = (label, fn) ->
+  return (args...) ->
+    try
+      if active then console.group(label, args...)
+      toReturn = fn.apply(this, args)
+      Util.log 'RETURNS', toReturn
+    finally
+      if active then console.groupEnd()
+    return toReturn
+Util.log = (args...) ->
+  if active then console.log args...
+
+
+
 # =============================================================================
 # DOM
 # =============================================================================

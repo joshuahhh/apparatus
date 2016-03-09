@@ -46,7 +46,7 @@ R.create "Picture",
 
     renderOpts = {ctx, viewMatrix, highlight}
 
-    for graphic in element.allGraphics()
+    for graphic in element.graphic().toArray()
       graphic.render(renderOpts)
 
   _viewMatrix: ->
