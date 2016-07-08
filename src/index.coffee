@@ -4,6 +4,7 @@ Model = require "./Model/Model"
 Dataflow = require "./Dataflow/Dataflow"
 Storage = require "./Storage/Storage"
 Util = require "./Util/Util"
+NewSystem = require "./NewSystem/NewSystem"
 
 
 # For debugging
@@ -14,7 +15,7 @@ Apparatus.Storage = Storage
 Apparatus.R = R
 Apparatus.Util = Util
 
-
+window.NewSystem = NewSystem
 
 
 editor = new Model.Editor()
