@@ -24,7 +24,10 @@ makeAttribute = (tree, attributeId) ->
   return (new NewSystem.NodeRef_Pointer("#{attributeId}/root")).resolve(tree)
 
 setExpression = (tree, attribute, exprString, references) ->
-  changes = attribute.bundle.changesForSetExpression(exprString, references)
+  changes = BuiltinEnvironment.change_SetAttributeExpression(
+    new NewSystem.NodeRef_Node(attribute.id),
+    exprString
+    references)
   for change in changes
     change.apply(tree, BuiltinEnvironment)
 
