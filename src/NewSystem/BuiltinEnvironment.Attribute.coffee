@@ -122,19 +122,13 @@ module.exports = (BuiltinEnvironment) ->
     ]
 
   BuiltinEnvironment.changes_SetAttributeExpression = (attributeRef, exprString, references = {}) ->
-    changes = []
+    # references should be a map from reference name to NodeRef
 
-    changes.push(new NewSystem.Change_ExtendNodeWithLiteral(attributeRef, {exprString: String(exprString)}))
-
-    # Remove all existing reference links
-    changes.push(new NewSystem.Change_RemoveAllLinks(attributeRef))
-
-    # Create appropriate reference links
-    for own linkKey, attribute of references
-      # console.log('REFERENCE RECEIVED:', linkKey, 'TO', attribute.id)
-      changes.push(new NewSystem.Change_SetNodeLinkTarget(attributeRef, linkKey, new NewSystem.NodeRef_Node(attribute.id)))
-
-    return changes
+    [
+      new NewSystem.Change_ExtendNodeWithLiteral(attributeRef, {exprString: String(exprString)})
+      new NewSystem.Change_RemoveAllLinks(attributeRef)
+      (new NewSystem.Change_SetNodeLinkTarget(attributeRef, linkKey, linkRef) for own linkKey, linkRef of references)...
+    ]
 
   class CompiledExpression
     constructor: (@attribute) ->
