@@ -6,7 +6,7 @@ TreeLayout = require "./TreeLayout"
 
 R.create "TreeDiagram",
   render: ->
-    {tree, environment} = this.props
+    {tree} = this.props
     style = {verticalAlign: 'top'}
 
     before = +(new Date())
@@ -30,6 +30,7 @@ R.create "TreeDiagram",
             key: "#{nodeShape.id} - #{childId}",
             x1: childShape.outerBox.centerX.value, y1: childShape.outerBox.top.value,
             x2: nodeShape.outerBox.centerX.value, y2: nodeShape.outerBox.bottom.value,
+            yZag: nodeShape.childConnectorZagY.value
             stroke: "#888888", strokeWidth: "2"
           }
       # nodes
@@ -37,17 +38,17 @@ R.create "TreeDiagram",
         R.TreeDiagramNode {key: nodeShape.id, nodeShape: nodeShape}
       # clones
       layout.cloneShapes.map (cloneShape) =>
-        R.TreeDiagramClone {key: cloneShape.id, cloneShape: cloneShape}
+        R.TreeDiagramClone {key: cloneShape.id, cloneShape: cloneShape, cloneOrigin: _.find(tree.cloneOrigins, {id: cloneShape.id})}
 
 R.create "WigglyLine",
   render: ->
-    {x1, y1, x2, y2} = this.props
+    {x1, y1, x2, y2, yZag} = this.props
     otherProps = _.omit this.props, 'x1', 'y1', 'x2', 'y2'
 
-    R.g {},
-      R.line _.extend({x1: x1, y1: y1, x2: x1, y2: y2 + 20}, otherProps)
-      R.line _.extend({x1: x1, y1: y2 + 20, x2: x2, y2: y2 + 20}, otherProps)
-      R.line _.extend({x1: x2, y1: y2 + 20, x2: x2, y2: y2}, otherProps)
+    R.g {style: {shapeRendering: "crispEdges"}},
+      R.line _.extend({x1: x1, y1: y1, x2: x1, y2: yZag}, otherProps)
+      R.line _.extend({x1: x1, y1: yZag, x2: x2, y2: yZag}, otherProps)
+      R.line _.extend({x1: x2, y1: yZag, x2: x2, y2: y2}, otherProps)
 
 R.create "TreeDiagramNode",
   render: ->
@@ -58,7 +59,8 @@ R.create "TreeDiagramNode",
           x: nodeShape.outerBox.left.value, y: nodeShape.outerBox.top.value,
           width: nodeShape.outerBox.width.value, height: nodeShape.outerBox.height.value,
           fill: "#F2F2F2",
-          stroke: "black"
+          stroke: "black",
+          style: {shapeRendering: "crispEdges"}
         }
       R.text {
           x: nodeShape.outerBox.centerX.value, y: nodeShape.outerBox.top.value + 2,
@@ -67,7 +69,7 @@ R.create "TreeDiagramNode",
 
 R.create "TreeDiagramClone",
   render: ->
-    {cloneShape, environment} = this.props;
+    {cloneShape, cloneOrigin} = this.props;
 
     R.g {},
       R.rect {
@@ -77,9 +79,10 @@ R.create "TreeDiagramClone",
           stroke: "gray"
           strokeDasharray: 4
           strokeWidth: 1
+          style: {shapeRendering: "crispEdges"}
         }
       R.g {transform: "translate(#{cloneShape.innerBox.right.value + 5}, #{cloneShape.innerBox.top.value + 2})"},
         R.text {style: {dominantBaseline: "hanging", fontSize: 8}},
           cloneShape.localId
-        # R.text {style: {dominantBaseline: "hanging", fontSize: 8}, y: 10},
-        #   cloning.symbolId
+        R.text {style: {dominantBaseline: "hanging", fontSize: 8}, y: 10},
+          cloneOrigin.symbolId

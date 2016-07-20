@@ -1,13 +1,13 @@
-_ = require 'underscore'
+_ = require "underscore"
 
-Constraints = require './Constraints'
+Constraints = require "./Constraints"
 {Box, addPseudoQuadraticToObjective} = Constraints
 
 
 byType = (funcForEachType) -> (obj) -> funcForEachType[obj.type](obj)
 
 splitPath = (path) ->
-  lastSlashIdx = path.lastIndexOf('/')
+  lastSlashIdx = path.lastIndexOf("/")
   if lastSlashIdx != -1
     [path.slice(0, lastSlashIdx), path.slice(lastSlashIdx + 1)]
   else
@@ -17,12 +17,12 @@ defaultOptions =
   nodeWidth: 60
   nodeHeight: 30
   cloneLabelWidth: 150
-  verticalSpacing: 40
+  verticalSpacing: 20
   paddingBetweenclones: 10
-  cloneLabelExtractor: (clone) -> clone.localId # + '\n' + clone.symbolId
+  cloneLabelExtractor: (clone) -> clone.localId + "\n" + clone.symbolId
 
 textWidth = (text) ->
-  maxChar = _.max(_.pluck(text.split('\n'), 'length'))
+  maxChar = _.max(_.pluck(text.split("\n"), "length"))
   return 10 + maxChar * 4
 
 module.exports = class TreeLayout
@@ -41,9 +41,10 @@ module.exports = class TreeLayout
         id: node.id
         localId: localId
         parentCloneId: parentCloneId
-        outerBox: new Box(node.id + '.outer')
-        subtreeLeft: new c.Variable(node.id + '.subtreeLeft')
-        subtreeRight: new c.Variable(node.id + '.subtreeRight')
+        outerBox: new Box(node.id + ".outer")
+        childConnectorZagY: new c.Variable({name: node.id + '.' + 'zag'})
+        # subtreeLeft: new c.Variable(node.id + ".subtreeLeft")
+        # subtreeRight: new c.Variable(node.id + ".subtreeRight")
       }
 
   getNodeShapeById: (id) ->
@@ -51,6 +52,27 @@ module.exports = class TreeLayout
 
   getCloneShapeById: (id) ->
     _.find @cloneShapes, {id: id}
+
+  shapesOfDeparture: (id1, id2) ->
+    id1Path = id1.split("/")
+    id2Path = id2.split("/")
+
+    numCommonComponents = 0
+    while true
+      if id1Path[numCommonComponents] == id2Path[numCommonComponents]
+        numCommonComponents++
+      else
+        if numCommonComponents == id1Path.length - 1
+          shape1 = @getNodeShapeById(id1)
+        else
+          shape1 = @getCloneShapeById(id1Path.slice(0, numCommonComponents + 1).join("/"))
+
+        if numCommonComponents == id2Path.length - 1
+          shape2 = @getNodeShapeById(id2)
+        else
+          shape2 = @getCloneShapeById(id2Path.slice(0, numCommonComponents + 1).join("/"))
+
+        return [shape1, shape2]
 
   addClone: (id) ->
     if @getCloneShapeById(id)
@@ -62,8 +84,9 @@ module.exports = class TreeLayout
       id: id
       localId: localId
       parentCloneId: parentCloneId
-      innerBox: new Box(id + '.inner')
-      outerBox: new Box(id + '.outer')
+      symbolId: _.find(@tree.cloneOrigins, {id: id}).symbolId
+      innerBox: new Box(id + ".inner")
+      outerBox: new Box(id + ".outer")
 
     if parentCloneId
       @addClone(parentCloneId)
@@ -87,16 +110,27 @@ module.exports = class TreeLayout
       ineq box.left, c.GEQ, 1
       ineq box.top, c.GEQ, 1
 
-      lastChild = null
+      lastChildShape = null
       node.childIds.forEach (childId) =>
-        child = @getNodeShapeById(childId)
+        childShape = @getNodeShapeById(childId)
 
-        ineq c.plus(box.bottom, 2 * @options.verticalSpacing), c.LEQ, child.outerBox.top
-        objectiveExpression = objectiveExpression.plus(c.minus(child.outerBox.top, box.bottom))
+        [nodeDepartShape, childDepartShape] = @shapesOfDeparture(node.id, childShape.id)
+        ineq c.plus(nodeDepartShape.outerBox.bottom, 2 * @options.verticalSpacing), c.LEQ, childDepartShape.outerBox.top
+
+        # eq c.minus(nodeDepartShape.outerBox.bottom, childShape.childConnectorZagY), c.minus(childShape.childConnectorZagY, childDepartShape.outerBox.top)
+        ineq nodeShape.childConnectorZagY, c.LEQ, c.divide(c.plus(nodeDepartShape.outerBox.bottom, childDepartShape.outerBox.top), 2)
+
+        objectiveExpression = objectiveExpression.plus(c.minus(childDepartShape.outerBox.top, nodeDepartShape.outerBox.bottom))
 
         objectiveExpression = addPseudoQuadraticToObjective(
           objectiveExpression,
-          box.centerX, child.outerBox.centerX, solver, 600, 50)
+          box.centerX, childShape.outerBox.centerX, solver, 600, 50)
+
+        if lastChildShape
+          [lastChildDepartShape, nodeDepartShape1] = @shapesOfDeparture(lastChildShape.id, nodeShape.id)
+          [childDepartShape, nodeDepartShape2] = @shapesOfDeparture(childShape.id, nodeShape.id)
+          ineq childDepartShape.outerBox.left, c.GEQ, c.plus(lastChildDepartShape.outerBox.right, 10)
+        lastChildShape = childShape
 
         # HEURISTIC: When you have a parent/child node/node relationship, this
         # establishes a corresponding vertical relationship between any

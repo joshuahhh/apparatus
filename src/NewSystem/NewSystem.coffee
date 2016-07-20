@@ -23,7 +23,7 @@ module.exports = NewSystem = {}
 buildId = (cloneId, id) -> cloneId + "/" + id
 
 class NewSystem.Tree
-  constructor: (@nodes = [], @pointers = []) ->
+  constructor: (@nodes = [], @pointers = [], @cloneOrigins = []) ->
     # NOTE: A Tree takes ownership of its nodes and pointers – they cannot be
     # shared between trees.
 
@@ -62,10 +62,12 @@ class NewSystem.Tree
       @pointersById[pointer.id] = pointer
     @redundanciesUpToDate = false
 
-  makeClone: (cloneId) ->
+  makeClone: (cloneId, symbolId) ->
     toReturn = new NewSystem.Tree(
       @nodes.map((node) -> node.clone(cloneId)),
-      @pointers.map((pointer) -> pointer.clone(cloneId))
+      @pointers.map((pointer) -> pointer.clone(cloneId)),
+      @cloneOrigins.map((cloneOrigin) -> cloneOrigin.clone(cloneId))
+        .concat([new NewSystem.TreeCloneOrigin(cloneId, symbolId)])
     )
     return toReturn
 
@@ -74,6 +76,7 @@ class NewSystem.Tree
       @addNode(node)
     for pointer in tree.pointers
       @setPointerDestination(pointer.id, pointer.destinationNodeId)
+    @cloneOrigins.push(tree.cloneOrigins...)
     @redundanciesUpToDate = false
 
   deparentNode: (nodeId) ->
@@ -260,6 +263,15 @@ class NewSystem.TreePointer
       buildId(cloneId, @destinationNodeId)
     )
 
+class NewSystem.TreeCloneOrigin
+  constructor: (@id, @symbolId) ->
+
+  clone: (cloneId) ->
+    return new NewSystem.TreeCloneOrigin(
+      buildId(cloneId, @id),
+      @symbolId
+    )
+
 
 # NodeRefs are used in changes. They are either node IDs or pointer IDs.
 
@@ -339,7 +351,7 @@ class NewSystem.Change_CloneSymbol extends NewSystem.Change
   apply: (tree, environment) ->
     # Fails if symbol doesn't exist
     symbolTree = environment.getTreeForSymbol(@symbolId)
-    clonedTree = symbolTree.makeClone(@newCloneId)
+    clonedTree = symbolTree.makeClone(@newCloneId, @symbolId)
     tree.mergeTree(clonedTree)
     return
 
