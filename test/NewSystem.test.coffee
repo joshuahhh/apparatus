@@ -1,3 +1,4 @@
+_ = require("underscore")
 test = require("tape")
 
 NewSystem = require("../src/NewSystem/NewSystem")
@@ -83,7 +84,7 @@ test "Change_CloneSymbol basically works", (t) ->
   t.end()
 
 
-test "GroupInGroup integration test", (t) ->
+test "'Group' integration test", (t) ->
   environment = new NewSystem.Environment
     Transform: new NewSystem.Symbol(
       new NewSystem.ChangeList([
@@ -106,18 +107,26 @@ test "GroupInGroup integration test", (t) ->
   tree = new NewSystem.Tree()
   change = new NewSystem.Change_CloneSymbol("Group", "group1")
   change.apply(tree, environment)
-  tree.stripRedundancies()
-  t.deepEqual tree,
-    new NewSystem.Tree(
-      [
-        new NewSystem.TreeNode("group1/groupNode", ["group1/transform/transformNode"], {}),
-        new NewSystem.TreeNode("group1/transform/transformNode", [], {}),
-      ],
-      [
-        new NewSystem.TreePointer("group1/root", "group1/groupNode"),
-        new NewSystem.TreePointer("group1/transform/root", "group1/transform/transformNode"),
-      ]
-    )
+  t.deepEqual(
+    tree.nodes.map((node) -> _.pick(node, 'id', 'childIds')),
+    [
+      id: "group1/groupNode"
+      childIds: ["group1/transform/transformNode"]
+    ,
+      id: "group1/transform/transformNode"
+      childIds: []
+    ]
+  )
+  t.deepEqual(
+    tree.pointers.map((node) -> _.pick(node, 'id', 'destinationNodeId')),
+    [
+      id: "group1/root"
+      destinationNodeId: "group1/groupNode"
+    ,
+      id: "group1/transform/root"
+      destinationNodeId: "group1/transform/transformNode"
+    ]
+  )
   t.end()
 
 
