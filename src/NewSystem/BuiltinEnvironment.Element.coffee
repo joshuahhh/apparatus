@@ -217,15 +217,14 @@ module.exports = (BuiltinEnvironment) ->
         "setUpElement")
     ]
 
-  BuiltinEnvironment.change_AddVariableToElement = (elementRef, variableCloneId) ->
-    changes = []
-
-    changes.push(new NewSystem.Change_CloneSymbol("Variable", variableCloneId))
+  BuiltinEnvironment.changes_AddVariableToElement = (elementRef, variableCloneId) ->
     variableRef = new NewSystem.NodeRef_Pointer(variableCloneId + "/root")
-    changes.push(BuiltinEnvironment.change_SetAttributeExpression(variableRef, "0.00")...)
-    changes.push(new NewSystem.Change_AddChild(elementRef, variableRef))
 
-    return changes
+    [
+      new NewSystem.Change_CloneSymbol("Variable", variableCloneId)
+      BuiltinEnvironment.changes_SetAttributeExpression(variableRef, "0.00")...
+      new NewSystem.Change_AddChild(elementRef, variableRef)
+    ]
 
   # Shape Interpretation Contexts
   RENDERING = 'renderingContext'

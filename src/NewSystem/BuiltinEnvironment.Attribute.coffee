@@ -121,7 +121,7 @@ module.exports = (BuiltinEnvironment) ->
         "setUpAttribute")
     ]
 
-  BuiltinEnvironment.change_SetAttributeExpression = (attributeRef, exprString, references = {}) ->
+  BuiltinEnvironment.changes_SetAttributeExpression = (attributeRef, exprString, references = {}) ->
     changes = []
 
     changes.push(new NewSystem.Change_ExtendNodeWithLiteral(attributeRef, {exprString: String(exprString)}))

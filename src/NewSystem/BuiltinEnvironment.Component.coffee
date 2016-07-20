@@ -4,14 +4,13 @@ Graphic = require "../Graphic/Graphic"
 
 
 changes_AddAttribute = (parentRef, label, name, exprString) ->
-  changes = []
-
-  changes.push(new NewSystem.Change_CloneSymbol("Attribute", name))
   attributeRef = new NewSystem.NodeRef_Pointer(name + "/root")
-  changes.push(new NewSystem.Change_ExtendNodeWithLiteral(attributeRef, {label: label, name: name}))
-  changes.push(new NewSystem.Change_AddChild(parentRef, attributeRef))
 
-  return changes
+  [
+    new NewSystem.Change_CloneSymbol("Attribute", name)
+    new NewSystem.Change_ExtendNodeWithLiteral(attributeRef, {label: label, name: name})
+    new NewSystem.Change_AddChild(parentRef, attributeRef)
+  ]
 
 
 module.exports = (BuiltinEnvironment) ->

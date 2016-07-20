@@ -24,7 +24,7 @@ makeAttribute = (tree, attributeId) ->
   return (new NewSystem.NodeRef_Pointer("#{attributeId}/root")).resolve(tree)
 
 setExpression = (tree, attribute, exprString, references) ->
-  changes = BuiltinEnvironment.change_SetAttributeExpression(
+  changes = BuiltinEnvironment.changes_SetAttributeExpression(
     new NewSystem.NodeRef_Node(attribute.id),
     exprString
     references)
