@@ -81,3 +81,46 @@ test "Change_CloneSymbol basically works", (t) ->
   t.deepEqual(tree.nodes.map((node) => node.id), ['a', 'myCloneId/a', 'myCloneId/b'], 'We have the right nodeIds')
   t.deepEqual(tree.getNodeById('myCloneId/a').childIds, ['myCloneId/b'], 'Child relationships are preserved')
   t.end()
+
+
+test "GroupInGroup integration test", (t) ->
+  environment = new NewSystem.Environment
+    Transform: new NewSystem.Symbol(
+      new NewSystem.ChangeList([
+        new NewSystem.Change_AddNode("transformNode"),
+        new NewSystem.Change_SetPointerDestination("root", new NewSystem.NodeRef_Node("transformNode")),
+      ])
+    )
+    Group: new NewSystem.Symbol(
+      new NewSystem.ChangeList([
+        new NewSystem.Change_AddNode("groupNode"),
+        new NewSystem.Change_SetPointerDestination("root", new NewSystem.NodeRef_Node("groupNode")),
+        new NewSystem.Change_CloneSymbol("Transform", "transform"),
+        new NewSystem.Change_AddChild(
+          new NewSystem.NodeRef_Node("groupNode"),
+          new NewSystem.NodeRef_Pointer("transform/root"),
+          Infinity
+        ),
+      ])
+    )
+  tree = new NewSystem.Tree()
+  change = new NewSystem.Change_CloneSymbol("Group", "group1")
+  change.apply(tree, environment)
+  tree.stripRedundancies()
+  t.deepEqual tree,
+    new NewSystem.Tree(
+      [
+        new NewSystem.TreeNode("group1/groupNode", ["group1/transform/transformNode"], {}),
+        new NewSystem.TreeNode("group1/transform/transformNode", [], {}),
+      ],
+      [
+        new NewSystem.TreePointer("group1/root", "group1/groupNode"),
+        new NewSystem.TreePointer("group1/transform/root", "group1/transform/transformNode"),
+      ]
+    )
+  t.end()
+
+
+# TODO: Test that constructing trees, merging in new trees, adding nodes,
+# setting pointers, etc. all set nodes/pointers to have the right .tree
+# reference! Or just get rid of that fucking reference already.

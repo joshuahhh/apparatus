@@ -8,12 +8,13 @@
     "email": "tqs@alum.mit.edu",
     "url": "http://tobyschachman.com"
   },
-  "repository" : {
-   "type" : "git",
-   "url" : "http://github.com/cdglabs/apparatus.git"
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/cdglabs/apparatus.git"
   },
   "dependencies": {
     "autoprefixer": "^6.3.6",
+    "cassowary": "0.0.2",
     "codemirror": "^5.4.0",
     "firebase": "^2.3.2",
     "keymaster": "^1.6.2",

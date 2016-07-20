@@ -1,78 +1,48 @@
 _ = require "underscore"
 R = require "./View/R"
-Model = require "./Model/Model"
-Dataflow = require "./Dataflow/Dataflow"
-Storage = require "./Storage/Storage"
-Util = require "./Util/Util"
+
 NewSystem = require "./NewSystem/NewSystem"
+BuiltinEnvironment = require "./NewSystem/BuiltinEnvironment"
+require "./NewSystem/TreeDiagram"
 
 
-# For debugging
-Apparatus = window.Apparatus = {}
-Apparatus.Dataflow = Dataflow
-Apparatus.Model = Model
-Apparatus.Storage = Storage
-Apparatus.R = R
-Apparatus.Util = Util
+tree = new NewSystem.Tree(
+  [
+    new NewSystem.TreeNode(
+      'group1/groupNode'
+      [ 'group1/transform/transformNode' ],
+      {}
+    ),
+    new NewSystem.TreeNode(
+      'group1/transform/transformNode',
+      [],
+      {}
+    ),
+    new NewSystem.TreeNode(
+      'group1/transform/otherTransformNode',
+      [],
+      {}
+    ),
+  ]
+  [
+    new NewSystem.TreePointer(
+      'group1/root',
+      'group1/groupNode'
+    ),
+    new NewSystem.TreePointer(
+      'group1/transform/root',
+      'group1/transform/transformNode',
+    ),
+  ]
+)
 
-window.NewSystem = NewSystem
-
-
-editor = new Model.Editor()
-
-
-
-
-# For debugging
-Apparatus.editor = editor
-
-
-
-
-render = ->
-  Dataflow.run ->
-    R.render(R.Editor({editor}), document.getElementById("apparatus-container"))
-
-render()
-
-
-
-shouldCheckpoint = false
-
-document.addEventListener "mouseup", ->
-  shouldCheckpoint = true
-
-debouncedShouldCheckpoint = _.debounce(->
-  shouldCheckpoint = true
-, 500)
-document.addEventListener "keydown", ->
-  debouncedShouldCheckpoint()
+# tree = new NewSystem.Tree()
+#
+# (new NewSystem.Change_CloneSymbol("Group", "myElement")).apply(tree, BuiltinEnvironment)
 
 
-
-
-willRefreshNextFrame = false
-refresh = Apparatus.refresh = ->
-  return if willRefreshNextFrame
-  willRefreshNextFrame = true
-  requestAnimationFrame ->
-    render()
-    if shouldCheckpoint
-      editor.checkpoint()
-      shouldCheckpoint = false
-    willRefreshNextFrame = false
-
-refreshEventNames = [
-  "mousedown"
-  "mousemove"
-  "mouseup"
-  "keydown"
-  "keyup"
-  "scroll"
-  "change"
-  "wheel"
-  "mousewheel"
-]
-
-for eventName in refreshEventNames
-  window.addEventListener(eventName, refresh)
+R.render(
+  R.div {style: {marginTop: 20, marginLeft: 20}},
+    R.TreeDiagram {tree}
+  document.getElementById("apparatus-container")
+)
