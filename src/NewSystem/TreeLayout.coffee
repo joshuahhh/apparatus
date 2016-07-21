@@ -4,6 +4,10 @@ Constraints = require "./Constraints"
 {Box, addPseudoQuadraticToObjective} = Constraints
 
 
+# With parent node wanting to be over middle of children: 11.4 sec
+# With parent node wanting to be over first child: 1.1 sec
+
+
 byType = (funcForEachType) -> (obj) -> funcForEachType[obj.type](obj)
 
 splitPath = (path) ->
@@ -14,7 +18,7 @@ splitPath = (path) ->
     [null, path]
 
 defaultOptions =
-  nodeWidth: 60
+  nodeWidth: 40
   nodeHeight: 30
   cloneLabelWidth: 150
   verticalSpacing: 20
@@ -122,9 +126,11 @@ module.exports = class TreeLayout
 
         objectiveExpression = objectiveExpression.plus(c.minus(childDepartShape.outerBox.top, nodeDepartShape.outerBox.bottom))
 
-        objectiveExpression = addPseudoQuadraticToObjective(
-          objectiveExpression,
-          box.centerX, childShape.outerBox.centerX, solver, 600, 50)
+        # objectiveExpression = addPseudoQuadraticToObjective(
+        #   objectiveExpression,
+        #   box.centerX, childShape.outerBox.centerX, solver, 600, 50)
+        if not lastChildShape
+          eq box.centerX, childShape.outerBox.centerX
 
         if lastChildShape
           [lastChildDepartShape, nodeDepartShape1] = @shapesOfDeparture(lastChildShape.id, nodeShape.id)
@@ -137,9 +143,6 @@ module.exports = class TreeLayout
         # clonings/nodes which differ between the parent and child. This
         # heuristic will FAIL if following children ever pops you out of a
         # cloning and then back into it. Meh. Heuristics were made to be broken.
-
-
-
 
       if nodeShape.parentCloneId
         parentCloneShape = @getCloneShapeById(nodeShape.parentCloneId)
@@ -158,12 +161,14 @@ module.exports = class TreeLayout
       objectiveExpression = objectiveExpression.plus(innerBox.height)
 
 
-      eq innerBox.left, outerBox.left
+      # eq innerBox.left, outerBox.left
+      eq innerBox.right, outerBox.right
       eq innerBox.top, outerBox.top
       eq innerBox.bottom, outerBox.bottom
       # TODO: hacky text width calculation follows:
       cloneLabelWidth = textWidth(@options.cloneLabelExtractor(cloneShape))
-      eq c.plus(innerBox.right, cloneLabelWidth), outerBox.right
+      # eq c.plus(innerBox.right, cloneLabelWidth), outerBox.right
+      eq c.minus(innerBox.left, cloneLabelWidth), outerBox.left
 
       if cloneShape.parentCloneId
         parentCloneShape = @getCloneShapeById(cloneShape.parentCloneId)

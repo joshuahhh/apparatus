@@ -3,6 +3,15 @@ _ = require "underscore"
 
 TreeLayout = require "./TreeLayout"
 
+FOR_CAIRO = false
+if FOR_CAIRO
+  TEXT_ALIGN_MIDDLE = "middle"
+  TEXT_ALIGN_BELOW = "top"  # or "hanging"
+else
+  TEXT_ALIGN_MIDDLE = "middle"
+  TEXT_ALIGN_BELOW = "hanging"
+
+FONT_FAMILY = "helvetica"
 
 R.create "TreeDiagram",
   render: ->
@@ -17,7 +26,8 @@ R.create "TreeDiagram",
     svgWidth = Math.max(
       _.max(layout.nodeShapes.map (nodeShape) => nodeShape.outerBox.right.value),
       _.max(layout.cloneShapes.map (cloneShape) => cloneShape.outerBox.right.value)) + 2
-    svgHeight = Math.max(
+    heightMultiplier = 1  # TODO: 1.5 is hack to stick arcs in; not too cool
+    svgHeight = heightMultiplier * Math.max(
       _.max(layout.nodeShapes.map (nodeShape) => nodeShape.outerBox.bottom.value),
       _.max(layout.cloneShapes.map (cloneShape) => cloneShape.outerBox.bottom.value)) + 2
 
@@ -33,12 +43,46 @@ R.create "TreeDiagram",
             yZag: nodeShape.childConnectorZagY.value
             stroke: "#888888", strokeWidth: "2"
           }
+      layout.nodeShapes.map (nodeShape) =>
+        for own linkKey, linkTargetId of nodeShape.node.linkTargetIds
+          targetShape = layout.getNodeShapeById(linkTargetId)
+          horOffset = targetShape.outerBox.centerX.value - nodeShape.outerBox.centerX.value
+          d = "M #{nodeShape.outerBox.centerX.value} #{nodeShape.outerBox.centerY.value}
+               C #{nodeShape.outerBox.centerX.value} #{nodeShape.outerBox.centerY.value + Math.abs(horOffset) / 2}
+                 #{targetShape.outerBox.centerX.value} #{targetShape.outerBox.centerY.value + Math.abs(horOffset) / 2}
+                 #{targetShape.outerBox.centerX.value} #{targetShape.outerBox.centerY.value}"
+          fakePath = document.createElementNS("http://www.w3.org/2000/svg", "path")
+          fakePath.setAttributeNS(null, "d", d)
+          fakePathLength = fakePath.getTotalLength()
+          midpoint = fakePath.getPointAtLength(fakePathLength / 2)
+          R.g {},
+            R.path {
+              key: "#{nodeShape.id} - #{linkTargetId}",
+              d: d
+              fill: "none"
+              stroke: "#882222", strokeWidth: "2"
+            }
+            R.text {
+              x: midpoint.x
+              y: midpoint.y - 3
+              fill: "#882222"
+              style: {textAnchor: "middle", alignmentBaseline: TEXT_ALIGN_MIDDLE, fontSize: "30", fontFamily: FONT_FAMILY}
+            },
+              if horOffset > 0 then ">" else "<"
+            R.text {
+              x: midpoint.x
+              y: midpoint.y + 15
+              fill: "#882222"
+              style: {textAnchor: "middle", alignmentBaseline: TEXT_ALIGN_MIDDLE, fontSize: "10", fontFamily: FONT_FAMILY}
+            },
+              linkKey
+
       # nodes
       layout.nodeShapes.map (nodeShape) =>
         R.TreeDiagramNode {key: nodeShape.id, nodeShape: nodeShape}
       # clones
       layout.cloneShapes.map (cloneShape) =>
-        R.TreeDiagramClone {key: cloneShape.id, cloneShape: cloneShape, cloneOrigin: _.find(tree.cloneOrigins, {id: cloneShape.id})}
+        R.TreeDiagramClone {key: cloneShape.id, cloneShape: cloneShape}
 
 R.create "WigglyLine",
   render: ->
@@ -54,7 +98,7 @@ R.create "TreeDiagramNode",
   render: ->
     {nodeShape} = this.props
 
-    R.g {},
+    R.g {onClick: -> console.log nodeShape.node},
       R.rect {
           x: nodeShape.outerBox.left.value, y: nodeShape.outerBox.top.value,
           width: nodeShape.outerBox.width.value, height: nodeShape.outerBox.height.value,
@@ -64,12 +108,12 @@ R.create "TreeDiagramNode",
         }
       R.text {
           x: nodeShape.outerBox.centerX.value, y: nodeShape.outerBox.top.value + 2,
-          style: {dominantBaseline: 'hanging', textAnchor: 'middle', fontSize: 8}
+          style: {alignmentBaseline: TEXT_ALIGN_BELOW, textAnchor: 'middle', fontSize: 8, fontFamily: FONT_FAMILY}
         }, nodeShape.localId
 
 R.create "TreeDiagramClone",
   render: ->
-    {cloneShape, cloneOrigin} = this.props;
+    {cloneShape} = this.props;
 
     R.g {},
       R.rect {
@@ -81,8 +125,18 @@ R.create "TreeDiagramClone",
           strokeWidth: 1
           style: {shapeRendering: "crispEdges"}
         }
-      R.g {transform: "translate(#{cloneShape.innerBox.right.value + 5}, #{cloneShape.innerBox.top.value + 2})"},
-        R.text {style: {dominantBaseline: "hanging", fontSize: 8}},
+      # R.g {transform: "translate(#{cloneShape.innerBox.right.value + 5}, #{cloneShape.innerBox.top.value + 2})"},
+      #   R.text {style: {alignmentBaseline: TEXT_ALIGN_BELOW, fontSize: 8}},
+      #     cloneShape.localId
+      #   R.text {style: {alignmentBaseline: TEXT_ALIGN_BELOW, fontSize: 8}, y: 10},
+      #     cloneShape.symbolId
+      R.g {transform: "translate(#{cloneShape.innerBox.left.value - 5}, #{cloneShape.innerBox.top.value + 2})"},
+        R.text {
+            style: {alignmentBaseline: TEXT_ALIGN_BELOW, textAnchor: 'end', fontSize: 8, fontFamily: FONT_FAMILY}
+          },
+          cloneShape.symbolId
+        R.text {
+            style: {alignmentBaseline: TEXT_ALIGN_BELOW, textAnchor: 'end', fontSize: 8, fontStyle: 'italic', fontFamily: FONT_FAMILY}
+            y: 10
+          },
           cloneShape.localId
-        R.text {style: {dominantBaseline: "hanging", fontSize: 8}, y: 10},
-          cloneOrigin.symbolId
