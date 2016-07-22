@@ -37,12 +37,21 @@ require "./NewSystem/TreeDiagram"
 
 tree = new NewSystem.Tree()
 changeList = new NewSystem.ChangeList([
-  new NewSystem.Change_CloneSymbol("Group", "group1")
-  new NewSystem.Change_CloneSymbol("Group", "group2")
+  new NewSystem.Change_CloneSymbol("Group", "myGroup")
+  new NewSystem.Change_CloneSymbol("Rectangle", "myRectangle")
   new NewSystem.Change_AddChild(
-    new NewSystem.NodeRef_Pointer("group1/root"),
-    new NewSystem.NodeRef_Pointer("group2/root"),
-    Infinity)])
+    new NewSystem.NodeRef_Pointer("myGroup/root"),
+    new NewSystem.NodeRef_Pointer("myRectangle/root"),
+    Infinity)
+  # BuiltinEnvironment.changes_SetAttributeExpression(
+  #   # it's really interesting that this id path sucks so much...
+  #   new NewSystem.NodeRef_Pointer("group/master/transform/x/root"),
+  #   "ref1 * 2 + ref2",
+  #   {
+  #     ref1: new NewSystem.NodeRef_Pointer("group/master/transform/y/root")
+  #     # ref2: new NewSystem.NodeRef_Pointer("group2/master/transform/y/root")
+  #   })...
+])
 
 changeList.apply(tree, BuiltinEnvironment)
 

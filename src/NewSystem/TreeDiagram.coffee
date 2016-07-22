@@ -3,7 +3,7 @@ _ = require "underscore"
 
 TreeLayout = require "./TreeLayout"
 
-FOR_CAIRO = true
+FOR_CAIRO = false
 if FOR_CAIRO
   TEXT_ALIGN_MIDDLE = "middle"
   TEXT_ALIGN_BELOW = "top"  # or "hanging"
