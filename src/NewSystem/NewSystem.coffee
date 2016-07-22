@@ -82,7 +82,7 @@ class NewSystem.Tree
   deparentNode: (nodeId) ->
     parentId = @getNodeById(nodeId).parentId
     if parentId
-      @getNodeById(parentId).removeChild(child)
+      @getNodeById(parentId).removeChild(nodeId)
     @redundanciesUpToDate = false
 
   addChildToNode: (parentId, childId, insertionIndex) ->
@@ -117,10 +117,6 @@ class NewSystem.Tree
   stripRedundancies: ->
     delete @nodesById
     delete @pointersById
-
-    # Clear parents
-    for node in @nodes
-      delete node.parentId
 
     # Clear parents
     for node in @nodes
@@ -163,6 +159,8 @@ class NewSystem.Environment
 
   getTreeForSymbol: (symbolId) ->
     symbol = @getSymbolById(symbolId)
+    if not symbol
+      throw "Symbol #{symbolId} not found in environment!"
     tree = new NewSystem.Tree()
     symbol.changeList.apply(tree, this)
     return tree
@@ -178,10 +176,21 @@ class NewSystem.Environment
     mixinId = symbolId
     @addMixin(mixinId, mixin)
 
+    if masterSymbolId
+      rootChange = new NewSystem.Change_CloneSymbol(masterSymbolId, "master")
+      rootRef = new NewSystem.NodeRef_Pointer(buildId("master", "root"))
+    else
+      # If "masterSymbolId" is undefined, then we're starting from a bare node,
+      # instead of making a variant of an existing symbol. (This is used for
+      # defining the traditional Apparatus "Node".)
+
+      rootChange = new NewSystem.Change_AddNode("root")
+      rootRef = new NewSystem.NodeRef_Node("root")
+
     allChanges = [
-      new NewSystem.Change_CloneSymbol(masterSymbolId, "master")
-      new NewSystem.Change_SetPointerDestination("root", new NewSystem.NodeRef_Pointer(buildId("master", "root")))
-      new NewSystem.Change_ExtendNodeWithMixin(new NewSystem.NodeRef_Pointer("root"), mixinId),
+      rootChange
+      new NewSystem.Change_SetPointerDestination("root", rootRef)
+      new NewSystem.Change_ExtendNodeWithMixin(new NewSystem.NodeRef_Pointer("root"), mixinId)
       changes...
     ]
     changeList = new NewSystem.ChangeList(allChanges)
@@ -359,6 +368,8 @@ class NewSystem.Change_CloneSymbol extends NewSystem.Change
 
 class NewSystem.Change_AddChild extends NewSystem.Change
   constructor: (@parentRef, @childRef, @insertionIndex) ->
+    if not _.isNumber(@insertionIndex)
+      throw "Change_AddChild needs a numeric insertionIndex! (Can be `Infinity`.)"
 
   apply: (tree, environment) ->
     # Fails if either parent or child doesn't exist
@@ -459,15 +470,11 @@ class NewSystem.ChangeList
 
   apply: (tree, environment) ->
     for change, i in @changes
-      # console.log(indent("change #{i}: #{util.inspect(change, false, null)}", indentLevel))
-      # console.log(indent("before:", indentLevel))
-      # console.log(indent(tree.toString(), indentLevel))
-      # indentLevel += 2
+      if _.isArray(change)
+        console.error(change)
+        throw "ChangeLists should contain Changes, not arrays!"
       tree.recomputeRedundancies()
       change.apply(tree, environment)
-      # indentLevel -= 2
-      # console.log(indent("after:", indentLevel))
-      # console.log(indent(tree.toString(), indentLevel))
     tree.recomputeRedundancies()
 
   addChange: (change) ->
