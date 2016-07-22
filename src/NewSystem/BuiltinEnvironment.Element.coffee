@@ -2,6 +2,7 @@ _ = require "underscore"
 NewSystem = require "./NewSystem"
 Util = require "../Util/Util"
 Dataflow = require "../Dataflow/Dataflow"
+Model = require "../Model/Model"  # for non-nodes, like ParticularElement
 Graphic = require "../Graphic/Graphic"
 
 
@@ -223,7 +224,7 @@ module.exports = (BuiltinEnvironment) ->
     [
       new NewSystem.Change_CloneSymbol("Variable", variableCloneId)
       BuiltinEnvironment.changes_SetAttributeExpression(variableRef, "0.00")...
-      new NewSystem.Change_AddChild(elementRef, variableRef)
+      new NewSystem.Change_AddChild(elementRef, variableRef, Infinity)
     ]
 
   # Shape Interpretation Contexts
@@ -242,8 +243,7 @@ module.exports = (BuiltinEnvironment) ->
         return [RENDERING]
     }
     [
-      new NewSystem.Change_CloneSymbol("Transform", "transform")
-      new NewSystem.Change_AddChild(new NewSystem.NodeRef_Pointer("root"), new NewSystem.NodeRef_Pointer("transform/root"))
+      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("TransformComponent", "transform")...
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Group", "Shape",
@@ -269,3 +269,93 @@ module.exports = (BuiltinEnvironment) ->
 
       graphicClass: Graphic.Group
     }
+
+  BuiltinEnvironment.createVariantOfBuiltinSymbol "Anchor", "Shape",
+    label: "Anchor"
+
+    getAllowedShapeInterpretationContext: () ->
+      return [ANCHOR_COLLECTION]
+
+    getAllowedShapeInterpretationContextForChildren: () ->
+      return [NONE]
+
+    graphicClass: Graphic.Anchor
+
+  BuiltinEnvironment.changes_AddAnchorToParent = (parentRef, anchorCloneId, x, y) ->
+    anchorRef = new NewSystem.NodeRef_Pointer(anchorCloneId + "/root")
+    xRef = new NewSystem.NodeRef_Pointer(anchorCloneId + "/master/transform/x/root")
+    yRef = new NewSystem.NodeRef_Pointer(anchorCloneId + "/master/transform/y/root")
+
+    [
+      new NewSystem.Change_CloneSymbol("Anchor", anchorCloneId)
+      BuiltinEnvironment.changes_SetAttributeExpression(xRef, x)...
+      BuiltinEnvironment.changes_SetAttributeExpression(yRef, y)...
+      new NewSystem.Change_AddChild(parentRef, anchorRef, Infinity)
+    ]
+
+  BuiltinEnvironment.createVariantOfBuiltinSymbol "PathComponent", "Component",
+    {
+      _devLabel: "PathComponent"
+      label: "Path"
+      graphicClass: Graphic.PathComponent
+    }
+    [
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Close Path", "closed", "true")...
+    ]
+
+  BuiltinEnvironment.createVariantOfBuiltinSymbol "Path", "Shape",
+    {
+      label: "Path"
+      graphicClass: Graphic.Path
+    }
+    [
+      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("PathComponent", "path")...
+      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("FillComponent", "fill")...
+      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("StrokeComponent", "stroke")...
+    ]
+
+  BuiltinEnvironment.createVariantOfBuiltinSymbol "Circle", "Path",
+    {
+      label: "Circle"
+      getAllowedShapeInterpretationContextForChildren: () ->
+        return [NONE]
+      graphicClass: Graphic.Circle
+    }
+
+  BuiltinEnvironment.createVariantOfBuiltinSymbol "Rectangle", "Path",
+    {
+      label: "Rectangle"
+      getAllowedShapeInterpretationContextForChildren: () ->
+        return [ANCHOR_COLLECTION]
+    }
+    [
+      BuiltinEnvironment.changes_AddAnchorToParent(new NewSystem.NodeRef_Pointer("root"), "1", "0.00", "0.00")...
+      BuiltinEnvironment.changes_AddAnchorToParent(new NewSystem.NodeRef_Pointer("root"), "2", "0.00", "1.00")...
+      BuiltinEnvironment.changes_AddAnchorToParent(new NewSystem.NodeRef_Pointer("root"), "3", "1.00", "1.00")...
+      BuiltinEnvironment.changes_AddAnchorToParent(new NewSystem.NodeRef_Pointer("root"), "4", "1.00", "0.00")...
+    ]
+
+  #
+  # Model.TextComponent = Model.Component.createVariant
+  #   _devLabel: "TextComponent"
+  #   label: "Text"
+  #   getAllowedShapeInterpretationContextForChildren: () ->
+  #     return [NONE]
+  #
+  #   graphicClass: Graphic.TextComponent
+  #
+  # Model.TextComponent.addChildren [
+  #   createAttribute("Text", "text", '"Text"')
+  #   createAttribute("Font", "fontFamily", '"Lucida Grande"')
+  #   createAttribute("Color", "color", "rgba(0.20, 0.20, 0.20, 1.00)")
+  #   createAttribute("Align", "textAlign", '"start"')
+  #   createAttribute("Baseline", "textBaseline", '"alphabetic"')
+  # ]
+  #
+  # Model.Text = Model.Shape.createVariant
+  #   label: "Text"
+  #   graphicClass: Graphic.Text
+  #
+  # Model.Text.addChildren [
+  #   Model.TextComponent.createVariant()
+  # ]

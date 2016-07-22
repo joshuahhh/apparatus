@@ -28,7 +28,7 @@ module.exports = (BuiltinEnvironment) ->
           return new CircularReferenceError(circularReferencePath)
 
         referenceValues = _.mapObject @references(), (referenceAttribute) ->
-          referenceAttribute.bundle.value()
+          referenceAttribute.value()
 
         try
           return @__compiledExpression.evaluate(referenceValues)
@@ -50,8 +50,7 @@ module.exports = (BuiltinEnvironment) ->
         @__compiledExpression = compiledExpression
 
       references: ->
-        # console.log('references is', @node.linkTargetNodes())
-        @node.linkTargetNodes()
+        @linkTargetBundles()
 
       hasReferences: ->
         _.any(@references(), -> true)
@@ -85,12 +84,12 @@ module.exports = (BuiltinEnvironment) ->
           if attributePath.indexOf(attribute) != attributePath.length - 1
             circularReferencePath ?= attributePath.slice()
           else
-            for referenceAttribute in _.values(attribute.bundle.references())
+            for referenceAttribute in _.values(attribute.references())
               dependencies.push(referenceAttribute)
               recurse(referenceAttribute)
           attributePath.pop()
 
-        recurse(this.node)
+        recurse(this)
 
         dependencies = _.unique(dependencies)
 
@@ -203,3 +202,11 @@ module.exports = (BuiltinEnvironment) ->
     constructor: (@attributePath) ->
       labels = _.pluck(@attributePath, 'label')
       @message = "Circular reference: #{labels.join(' -> ')}"
+
+  BuiltinEnvironment.changes_AddAttributeToParent = (parentRef, label, name, exprString) ->
+    attributeRef = new NewSystem.NodeRef_Pointer(name + "/root")
+
+    [
+      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("Attribute", name)...
+      new NewSystem.Change_ExtendNodeWithLiteral(attributeRef, {label: label, name: name})
+    ]

@@ -3,17 +3,8 @@ NewSystem = require "./NewSystem"
 Graphic = require "../Graphic/Graphic"
 
 
-changes_AddAttribute = (parentRef, label, name, exprString) ->
-  attributeRef = new NewSystem.NodeRef_Pointer(name + "/root")
-
-  [
-    new NewSystem.Change_CloneSymbol("Attribute", name)
-    new NewSystem.Change_ExtendNodeWithLiteral(attributeRef, {label: label, name: name})
-    new NewSystem.Change_AddChild(parentRef, attributeRef)
-  ]
-
-
 module.exports = (BuiltinEnvironment) ->
+
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Component", "NodeWithAttributes",
     {
       label: "Component"
@@ -26,8 +17,9 @@ module.exports = (BuiltinEnvironment) ->
         return graphic
     }
 
-  BuiltinEnvironment.createVariantOfBuiltinSymbol "Transform", "Component",
+  BuiltinEnvironment.createVariantOfBuiltinSymbol "TransformComponent", "Component",
     {
+      _devLabel: "TransformComponent"
       label: "Transform"
 
       matrix: ->
@@ -48,28 +40,30 @@ module.exports = (BuiltinEnvironment) ->
         ]
     }
     [
-      changes_AddAttribute(new NewSystem.NodeRef_Pointer("root"), "X", "x", "0.00")...
-      changes_AddAttribute(new NewSystem.NodeRef_Pointer("root"), "Y", "y", "0.00")...
-      changes_AddAttribute(new NewSystem.NodeRef_Pointer("root"), "Scale X", "sx", "1.00")...
-      changes_AddAttribute(new NewSystem.NodeRef_Pointer("root"), "Scale Y", "sy", "1.00")...
-      changes_AddAttribute(new NewSystem.NodeRef_Pointer("root"), "Rotate", "rotate", "0.00")...
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "X", "x", "0.00")...
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Y", "y", "0.00")...
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Scale X", "sx", "1.00")...
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Scale Y", "sy", "1.00")...
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Rotate", "rotate", "0.00")...
     ]
 
-  BuiltinEnvironment.createVariantOfBuiltinSymbol "Fill", "Component",
+  BuiltinEnvironment.createVariantOfBuiltinSymbol "FillComponent", "Component",
     {
+      _devLabel: "FillComponent"
       label: "Fill"
       graphicClass: Graphic.Fill
     }
     [
-      changes_AddAttribute(new NewSystem.NodeRef_Pointer("root"), "Fill Color", "color", "rgba(0.93, 0.93, 0.93, 1.00)")...
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Fill Color", "color", "rgba(0.93, 0.93, 0.93, 1.00)")...
     ]
 
-  BuiltinEnvironment.createVariantOfBuiltinSymbol "Stroke", "Component",
+  BuiltinEnvironment.createVariantOfBuiltinSymbol "StrokeComponent", "Component",
     {
+      _devLabel: "StrokeComponent"
       label: "Stroke"
       graphicClass: Graphic.Stroke
     }
     [
-      changes_AddAttribute(new NewSystem.NodeRef_Pointer("root"), "Stroke Color", "color", "rgba(0.60, 0.60, 0.60, 1.00)")...
-      changes_AddAttribute(new NewSystem.NodeRef_Pointer("root"), "Line Width", "lineWidth", "1")...
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Stroke Color", "color", "rgba(0.60, 0.60, 0.60, 1.00)")...
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Line Width", "lineWidth", "1")...
     ]

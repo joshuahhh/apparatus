@@ -105,7 +105,7 @@ test "Ported: 'Dependencies work'", (t) ->
   setExpression(tree, c, "20")
 
   t.equal(a.bundle.value(), 120, 'value works')
-  t.deepEqual(a.bundle.dependencies(), [b, c], 'dependencies works')
+  t.deepEqual(a.bundle.dependencies(), [b.bundle, c.bundle], 'dependencies works')
   t.equal(a.bundle.circularReferencePath(), null, 'circularReferencePath works')
 
   t.end()
@@ -120,11 +120,11 @@ test "Ported: 'Dependencies work with circular references'", (t) ->
   setExpression(tree, b, "$$$c$$$", {$$$c$$$: c.nodeRefTo()})
   setExpression(tree, c, "$$$b$$$", {$$$b$$$: b.nodeRefTo()})
 
-  expectedCircularReferencePath = [a, b, c, b]
+  expectedCircularReferencePath = [a.bundle, b.bundle, c.bundle, b.bundle]
   expectedError = new BuiltinEnvironment.CircularReferenceError(
     expectedCircularReferencePath)
 
   t.deepEqual(a.bundle.value(), expectedError, 'value works')
-  t.deepEqual(a.bundle.dependencies(), [b, c], 'dependencies works')
+  t.deepEqual(a.bundle.dependencies(), [b.bundle, c.bundle], 'dependencies works')
   t.deepEqual(a.bundle.circularReferencePath(), expectedCircularReferencePath, 'circularReferencePath works')
   t.end()

@@ -19,16 +19,19 @@ module.exports = BuiltinEnvironment = new NewSystem.Environment()
 
 
 
-# Root "Node" of the Apparatus object model.
-Node = new NewSystem.Symbol(new NewSystem.ChangeList([
-  new NewSystem.Change_AddNode("root"),
-  new NewSystem.Change_SetPointerDestination("root", new NewSystem.NodeRef_Node("root")),
-]))
-BuiltinEnvironment.addSymbol("Node", Node)
+# Root "Node" of the Apparatus object model:
 
+# IDEA: This should be the only bundle which refers to @node. All other bundles
+# should only indirectly refer to @node, through calls to methods defined here.
 
+BuiltinEnvironment.createVariantOfBuiltinSymbol "Node", undefined,
+  {
+    label: "Node"
 
-# Helper methods for nodes which have attributes attached.
+    linkTargetBundles: ->
+      _.mapObject @node.linkTargetNodes(), (node) -> node.bundle
+  }
+
 BuiltinEnvironment.createVariantOfBuiltinSymbol "NodeWithAttributes", "Node",
   {
     label: "Node With Attributes"
@@ -43,6 +46,14 @@ BuiltinEnvironment.createVariantOfBuiltinSymbol "NodeWithAttributes", "Node",
       _.mapObject @getAttributesByName(), (attr) -> attr.value()
   }
 
+BuiltinEnvironment.changes_CloneSymbolAndAddToRoot = (symbolId, cloneId) ->
+  [
+    new NewSystem.Change_CloneSymbol(symbolId, cloneId)
+    new NewSystem.Change_AddChild(
+      new NewSystem.NodeRef_Pointer("root"),
+      new NewSystem.NodeRef_Pointer(cloneId + "/root"),
+      Infinity)
+  ]
 
 (require "./BuiltinEnvironment.Attribute")(BuiltinEnvironment)
 
