@@ -161,14 +161,14 @@ module.exports = class TreeLayout
       objectiveExpression = objectiveExpression.plus(innerBox.height)
 
 
-      # eq innerBox.left, outerBox.left
+      eq innerBox.left, outerBox.left
       eq innerBox.right, outerBox.right
-      eq innerBox.top, outerBox.top
+      eq innerBox.top, c.plus(outerBox.top, 20)
       eq innerBox.bottom, outerBox.bottom
       # TODO: hacky text width calculation follows:
-      cloneLabelWidth = textWidth(@options.cloneLabelExtractor(cloneShape))
-      # eq c.plus(innerBox.right, cloneLabelWidth), outerBox.right
-      eq c.minus(innerBox.left, cloneLabelWidth), outerBox.left
+      # cloneLabelWidth = textWidth(@options.cloneLabelExtractor(cloneShape))
+      # # eq c.plus(innerBox.right, cloneLabelWidth), outerBox.right
+      # eq c.minus(innerBox.left, cloneLabelWidth), outerBox.left
 
       if cloneShape.parentCloneId
         parentCloneShape = @getCloneShapeById(cloneShape.parentCloneId)

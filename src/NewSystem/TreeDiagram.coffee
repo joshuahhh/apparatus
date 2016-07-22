@@ -3,7 +3,7 @@ _ = require "underscore"
 
 TreeLayout = require "./TreeLayout"
 
-FOR_CAIRO = false
+FOR_CAIRO = true
 if FOR_CAIRO
   TEXT_ALIGN_MIDDLE = "middle"
   TEXT_ALIGN_BELOW = "top"  # or "hanging"
@@ -130,13 +130,13 @@ R.create "TreeDiagramClone",
       #     cloneShape.localId
       #   R.text {style: {alignmentBaseline: TEXT_ALIGN_BELOW, fontSize: 8}, y: 10},
       #     cloneShape.symbolId
-      R.g {transform: "translate(#{cloneShape.innerBox.left.value - 5}, #{cloneShape.innerBox.top.value + 2})"},
+      R.g {transform: "translate(#{cloneShape.outerBox.left.value + 1}, #{cloneShape.outerBox.top.value + 1})"},
         R.text {
-            style: {alignmentBaseline: TEXT_ALIGN_BELOW, textAnchor: 'end', fontSize: 8, fontFamily: FONT_FAMILY}
+            style: {alignmentBaseline: TEXT_ALIGN_BELOW, textAnchor: 'start', fontSize: 8, fontFamily: FONT_FAMILY}
           },
           cloneShape.symbolId
         R.text {
-            style: {alignmentBaseline: TEXT_ALIGN_BELOW, textAnchor: 'end', fontSize: 8, fontStyle: 'italic', fontFamily: FONT_FAMILY}
+            style: {alignmentBaseline: TEXT_ALIGN_BELOW, textAnchor: 'start', fontSize: 8, fontStyle: 'italic', fontFamily: FONT_FAMILY}
             y: 10
           },
           cloneShape.localId
