@@ -17,34 +17,8 @@ module.exports = BuiltinEnvironment = new NewSystem.Environment()
 # would, like, invalidate attribute values (in a future validation-based
 # attribute system), unless you're really careful and stuff.
 
+# CURRENT SOLUTION: Bundles! I guess?
 
-
-# Root "Node" of the Apparatus object model:
-
-# IDEA: This should be the only bundle which refers to @node. All other bundles
-# should only indirectly refer to @node, through calls to methods defined here.
-
-BuiltinEnvironment.createVariantOfBuiltinSymbol "Node", undefined,
-  {
-    label: "Node"
-
-    linkTargetBundles: ->
-      _.mapObject @node.linkTargetNodes(), (node) -> node.bundle
-  }
-
-BuiltinEnvironment.createVariantOfBuiltinSymbol "NodeWithAttributes", "Node",
-  {
-    label: "Node With Attributes"
-
-    attributes: ->
-      @childNodesOfType("isAttribute")
-
-    getAttributesByName: ->
-      _.indexBy @attributes(), "name"
-
-    getAttributesValuesByName: ->
-      _.mapObject @getAttributesByName(), (attr) -> attr.value()
-  }
 
 BuiltinEnvironment.changes_CloneSymbolAndAddToRoot = (symbolId, cloneId) ->
   [
@@ -54,6 +28,8 @@ BuiltinEnvironment.changes_CloneSymbolAndAddToRoot = (symbolId, cloneId) ->
       new NewSystem.NodeRef_Pointer(cloneId + "/root"),
       Infinity)
   ]
+
+(require "./BuiltinEnvironment.Node")(BuiltinEnvironment)
 
 (require "./BuiltinEnvironment.Attribute")(BuiltinEnvironment)
 

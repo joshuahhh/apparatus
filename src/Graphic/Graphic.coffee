@@ -110,7 +110,8 @@ class Graphic.Path extends Graphic.Element
     @buildPath(opts)
     ctx.save()
     ctx.lineWidth = 5;
-    hit = ctx.isPointInPath(x, y) or ctx.isPointInStroke(x, y)
+    # TODO: isPointInStroke is not supported in node's canvas
+    hit = ctx.isPointInPath(x, y) or ctx.isPointInStroke?(x, y)
     ctx.restore()
     if hit
       return [@particularElement]
@@ -291,5 +292,9 @@ class Graphic.TextComponent extends Graphic.Component
 dummyCanvasCtx = null
 getDummyCanvasCtx = ->
   return dummyCanvasCtx if dummyCanvasCtx
-  dummyCanvas = document.createElement("canvas")
+  if document?
+    dummyCanvas = document.createElement("canvas")
+  else
+    Canvas = require("canvas")
+    dummyCanvas = new Canvas(500, 500)
   return dummyCanvasCtx = dummyCanvas.getContext("2d")

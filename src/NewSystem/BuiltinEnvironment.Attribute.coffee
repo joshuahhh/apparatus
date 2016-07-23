@@ -78,7 +78,6 @@ module.exports = (BuiltinEnvironment) ->
         circularReferencePath = null
 
         recurse = (attribute) ->
-          # console.log('recurse', attribute)
           attributePath.push(attribute)
           # Detect circular references, and don't get trapped
           if attributePath.indexOf(attribute) != attributePath.length - 1
@@ -127,6 +126,15 @@ module.exports = (BuiltinEnvironment) ->
       new NewSystem.Change_ExtendNodeWithLiteral(attributeRef, {exprString: String(exprString)})
       new NewSystem.Change_RemoveAllLinks(attributeRef)
       (new NewSystem.Change_SetNodeLinkTarget(attributeRef, linkKey, linkRef) for own linkKey, linkRef of references)...
+    ]
+
+  BuiltinEnvironment.changes_AddAttributeToParent = (parentRef, label, name, exprString) ->
+    attributeRef = new NewSystem.NodeRef_Pointer(name + "/root")
+
+    [
+      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("Attribute", name)...
+      new NewSystem.Change_ExtendNodeWithLiteral(attributeRef, {label: label, name: name})
+      BuiltinEnvironment.changes_SetAttributeExpression(attributeRef, exprString)...
     ]
 
   class CompiledExpression
@@ -203,10 +211,10 @@ module.exports = (BuiltinEnvironment) ->
       labels = _.pluck(@attributePath, 'label')
       @message = "Circular reference: #{labels.join(' -> ')}"
 
-  BuiltinEnvironment.changes_AddAttributeToParent = (parentRef, label, name, exprString) ->
-    attributeRef = new NewSystem.NodeRef_Pointer(name + "/root")
+  BuiltinEnvironment.createVariantOfBuiltinSymbol "Variable", "Attribute",
+    {
+      label: "Attribute"
 
-    [
-      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("Attribute", name)...
-      new NewSystem.Change_ExtendNodeWithLiteral(attributeRef, {label: label, name: name})
-    ]
+      isVariable: ->
+        true
+    }

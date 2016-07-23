@@ -4,7 +4,7 @@ _ = require("underscore")
 
 NewSystem = require("../src/NewSystem/NewSystem")
 BuiltinEnvironment = require("../src/NewSystem/BuiltinEnvironment")
-
+Util = require("../src/Util/Util")
 
 test "Make a rectangle", (t) ->
   tree = new NewSystem.Tree()
@@ -17,11 +17,12 @@ test "Make a rectangle", (t) ->
 
   myRect = (new NewSystem.NodeRef_Pointer("myRect/root")).resolve(tree)
 
-  console.log(myRect)
-
   graphic = myRect.bundle.graphic()
 
-  console.log(graphic)
+  for x in [0...8]
+    for y in [0...8]
+      console.log(x, y, graphic.hitDetect({x: x, y: y, viewMatrix: new Util.Matrix()})?.length)
+  # TODO WEIRD: it's 4x4???
 
   # t.equal(attribute1.bundle.exprString, "testing", "exprString set correctly")
   # t.equal(attribute1.linkTargetIds['a'], attribute2.id, "link target set correctly")

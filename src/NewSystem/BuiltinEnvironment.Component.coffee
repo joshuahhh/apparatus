@@ -1,6 +1,7 @@
 _ = require "underscore"
 NewSystem = require "./NewSystem"
 Graphic = require "../Graphic/Graphic"
+Util = require "../Util/Util"
 
 
 module.exports = (BuiltinEnvironment) ->
@@ -8,6 +9,9 @@ module.exports = (BuiltinEnvironment) ->
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Component", "NodeWithAttributes",
     {
       label: "Component"
+
+      isComponent: ->
+        true
 
       graphicClass: Graphic.Component
 
@@ -21,6 +25,9 @@ module.exports = (BuiltinEnvironment) ->
     {
       _devLabel: "TransformComponent"
       label: "Transform"
+
+      isTransformComponent: ->
+        true
 
       matrix: ->
         {x, y, sx, sy, rotate} = @getAttributesValuesByName()

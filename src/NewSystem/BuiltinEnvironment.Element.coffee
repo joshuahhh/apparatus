@@ -41,11 +41,12 @@ module.exports = (BuiltinEnvironment) ->
       # Getters
       # ===========================================================================
 
-      childElements: -> @node.childNodesOfType('isElement')
+      childElements: -> @childBundlesOfType('isElement')
 
-      variables: -> @node.childNodesOfType('isVariable')
+      variables: -> @childBundlesOfType('isVariable')
 
-      components: -> @node.childNodesOfType('isComponent')
+      components: ->
+        @childBundlesOfType('isComponent')
 
       # Includes attributes of components!
       allAttributes: ->
@@ -53,7 +54,7 @@ module.exports = (BuiltinEnvironment) ->
         for variable in @variables()
           result.push(variable)
         for component in @components()
-          for attribute in component.bundle.attributes()
+          for attribute in component.attributes()
             result.push(attribute)
         return result
 
@@ -164,7 +165,7 @@ module.exports = (BuiltinEnvironment) ->
 
       matrix: ->
         matrix = new Util.Matrix()
-        for transform in @childrenOfType(Model.Transform)
+        for transform in @childBundlesOfType("isTransformComponent")
           matrix = matrix.compose(transform.matrix())
         return matrix
 

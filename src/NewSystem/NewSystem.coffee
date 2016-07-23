@@ -249,19 +249,24 @@ class NewSystem.TreeNode
     method = @bundle[methodName]
     method.apply(@bundle, methodArguments)
 
-  # These require knowing @tree:
+  ################################
+  # These require knowing @tree: #
+  ################################
 
   childNodes: ->
     @tree.getNodeById(childId) for childId in @childIds
 
   childNodesOfType: (predicateName) ->
     _.filter @childNodes(), (childNode) ->
-      predicateProp = childNode[predicateName]
+      predicateProp = childNode.bundle[predicateName]
       predicateProp && predicateProp()
 
   linkTargetNodes: ->
     # console.log('Node::linkTargetNodes', @linkTargetIds, @tree)
     _.mapObject @linkTargetIds, (targetId) => @tree.getNodeById(targetId)
+
+  parentNode: ->
+    @tree.getNodeById()
 
 class NewSystem.TreePointer
   constructor: (@id, @destinationNodeId) ->
