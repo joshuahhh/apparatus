@@ -58,7 +58,7 @@ module.exports = (BuiltinEnvironment) ->
     {
       _devLabel: "FillComponent"
       label: "Fill"
-      graphicClass: Graphic.Fill
+      graphicClass: Graphic.FillComponent
     }
     [
       BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Fill Color", "color", "rgba(0.93, 0.93, 0.93, 1.00)")...
@@ -68,9 +68,33 @@ module.exports = (BuiltinEnvironment) ->
     {
       _devLabel: "StrokeComponent"
       label: "Stroke"
-      graphicClass: Graphic.Stroke
+      graphicClass: Graphic.StrokeComponent
     }
     [
       BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Stroke Color", "color", "rgba(0.60, 0.60, 0.60, 1.00)")...
       BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Line Width", "lineWidth", "1")...
+    ]
+
+  BuiltinEnvironment.createVariantOfBuiltinSymbol "PathComponent", "Component",
+    {
+      _devLabel: "PathComponent"
+      label: "Path"
+      graphicClass: Graphic.PathComponent
+    }
+    [
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Close Path", "closed", "true")...
+    ]
+
+  BuiltinEnvironment.createVariantOfBuiltinSymbol "TextComponent", "Component",
+    {
+      _devLabel: "TextComponent"
+      label: "Text"
+      graphicClass: Graphic.TextComponent
+    }
+    [
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Text", "text", '"Text"')...
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Font", "fontFamily", '"Lucida Grande"')...
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Color", "color", "rgba(0.20, 0.20, 0.20, 1.00)")...
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Align", "textAlign", '"start"')...
+      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Baseline", "textBaseline", '"alphabetic"')...
     ]

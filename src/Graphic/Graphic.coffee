@@ -119,6 +119,7 @@ class Graphic.Path extends Graphic.Element
       return null
 
   performPaintOps: ({ctx}) ->
+    console.log("components:", @components)
     for component in @componentsOfType(Graphic.PaintOp)
       component.paint(ctx)
 
@@ -263,14 +264,14 @@ class Graphic.Component
 
 class Graphic.PaintOp extends Graphic.Component
 
-class Graphic.Fill extends Graphic.PaintOp
+class Graphic.FillComponent extends Graphic.PaintOp
   paint: (ctx) ->
     ctx.save()
     ctx.fillStyle = @color
     ctx.fill()
     ctx.restore()
 
-class Graphic.Stroke extends Graphic.PaintOp
+class Graphic.StrokeComponent extends Graphic.PaintOp
   paint: (ctx) ->
     return if @lineWidth <= 0
     ctx.save()

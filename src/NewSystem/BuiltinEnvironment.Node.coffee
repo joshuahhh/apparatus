@@ -21,8 +21,8 @@ module.exports = (BuiltinEnvironment) ->
       linkTargetBundles: ->
         _.mapObject @node.linkTargetNodes(), (node) -> node.bundle
 
-      parent: ->
-        @node.tree.getNodeById(this.parentId)
+      parentBundle: ->
+        @node.tree.getNodeById(@node.parentId)?.bundle
 
       childBundlesOfType: (predicate) ->
         # UGH: this is gonna get mad tiresome

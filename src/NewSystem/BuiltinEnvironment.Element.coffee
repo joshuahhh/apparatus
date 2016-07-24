@@ -101,8 +101,8 @@ module.exports = (BuiltinEnvironment) ->
           for attribute in component.controllableAttributes()
             result.push(attribute)
             result.push(attribute.dependencies()...)
-        if @parent()
-          result.push(@parent()._controllableAttributes()...)
+        if @parentBundle()
+          result.push(@parentBundle()._controllableAttributes()...)
         return result
 
 
@@ -170,8 +170,8 @@ module.exports = (BuiltinEnvironment) ->
         return matrix
 
       _contextMatrix: ->
-        parent = @parent()
-        if parent and parent.isVariantOf(Element)
+        parent = @parentBundle()
+        if parent?.isElement?()
           return parent.accumulatedMatrix()
         else
           return new Util.Matrix()
@@ -294,16 +294,6 @@ module.exports = (BuiltinEnvironment) ->
       new NewSystem.Change_AddChild(parentRef, anchorRef, Infinity)
     ]
 
-  BuiltinEnvironment.createVariantOfBuiltinSymbol "PathComponent", "Component",
-    {
-      _devLabel: "PathComponent"
-      label: "Path"
-      graphicClass: Graphic.PathComponent
-    }
-    [
-      BuiltinEnvironment.changes_AddAttributeToParent(new NewSystem.NodeRef_Pointer("root"), "Close Path", "closed", "true")...
-    ]
-
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Path", "Shape",
     {
       label: "Path"
@@ -336,27 +326,13 @@ module.exports = (BuiltinEnvironment) ->
       BuiltinEnvironment.changes_AddAnchorToParent(new NewSystem.NodeRef_Pointer("root"), "4", "1.00", "0.00")...
     ]
 
-  #
-  # Model.TextComponent = Model.Component.createVariant
-  #   _devLabel: "TextComponent"
-  #   label: "Text"
-  #   getAllowedShapeInterpretationContextForChildren: () ->
-  #     return [NONE]
-  #
-  #   graphicClass: Graphic.TextComponent
-  #
-  # Model.TextComponent.addChildren [
-  #   createAttribute("Text", "text", '"Text"')
-  #   createAttribute("Font", "fontFamily", '"Lucida Grande"')
-  #   createAttribute("Color", "color", "rgba(0.20, 0.20, 0.20, 1.00)")
-  #   createAttribute("Align", "textAlign", '"start"')
-  #   createAttribute("Baseline", "textBaseline", '"alphabetic"')
-  # ]
-  #
-  # Model.Text = Model.Shape.createVariant
-  #   label: "Text"
-  #   graphicClass: Graphic.Text
-  #
-  # Model.Text.addChildren [
-  #   Model.TextComponent.createVariant()
-  # ]
+  BuiltinEnvironment.createVariantOfBuiltinSymbol "Text", "Shape",
+    {
+      label: "Text"
+      getAllowedShapeInterpretationContextForChildren: () ->
+        return [NONE]
+      graphicClass: Graphic.Text
+    }
+    [
+      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("TextComponent", "text")...
+    ]
