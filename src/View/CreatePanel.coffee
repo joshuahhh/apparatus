@@ -20,9 +20,9 @@ R.create "CreatePanel",
       R.div { className: "CreatePanelContainer" },
         R.div {className: "Header"}, "Symbols"
         R.div {className: "Scroller"},
-          for element in project.createPanelElements
-            R.CreatePanelItem {element, key: Util.getId(element)}
-  
+          for symbolId in project.createPanelSymbolIds
+            R.CreatePanelItem {symbolId, key: symbolId}
+
           R.div {className: "CreatePanelAddItem"},
             R.button {
               className: "AddButton",
@@ -42,10 +42,10 @@ R.create "CreatePanelItem",
     dragManager: R.DragManager
 
   propTypes:
-    element: Model.Element
+    symbolId: String
 
   render: ->
-    element = @props.element
+    symbolId = @props.symbolId
     R.div {
       className: R.cx {
         "CreatePanelItem": true
@@ -56,7 +56,7 @@ R.create "CreatePanelItem",
         className: "CreatePanelThumbnail"
         onMouseDown: @_onMouseDown
       },
-        R.Thumbnail {element}
+        R.Thumbnail {symbolId}
 
       if @_isEditable()
         R.span {},

@@ -2,20 +2,25 @@ _ = require "underscore"
 Model = require "./Model"
 Dataflow = require "../Dataflow/Dataflow"
 NodeVisitor = require "../Util/NodeVisitor"
-
+NewSystem = require "../NewSystem/NewSystem"
+BuiltinEnvironment = require "../NewSystem/BuiltinEnvironment"
+Util = require "../Util/Util"
 
 module.exports = class Project
   constructor: ->
-    initialElement = @createNewElement()
+    @userEnvironment = new NewSystem.Environment()
+    @fullEnvironment = new NewSystem.CompoundEnvironment([BuiltinEnvironment, @userEnvironment])
 
-    @editingElement = initialElement
+    initialSymbolId = @createNewSymbol()
+
+    @editingSymbolId = initialSymbolId
     @selectedParticularElement = null
 
-    @createPanelElements = [
-      Model.Rectangle
-      Model.Circle
-      Model.Text
-      initialElement
+    @createPanelSymbolIds = [
+      "Rectangle"
+      "Circle"
+      "Text"
+      initialSymbolId
     ]
 
     propsToMemoize = [
@@ -31,8 +36,8 @@ module.exports = class Project
   # Selection
   # ===========================================================================
 
-  setEditing: (element) ->
-    @editingElement = element
+  setEditing: (symbolId) ->
+    @editingSymbolId = symbolId
     @selectedParticularElement = null
 
   select: (particularElement) ->
@@ -43,7 +48,7 @@ module.exports = class Project
     @_expandToElement(particularElement.element)
 
   _expandToElement: (element) ->
-    while element = element.parent()
+    while element = element.parentBundle()
       element.expanded = true
 
 
@@ -51,12 +56,25 @@ module.exports = class Project
   # Actions
   # ===========================================================================
 
-  createNewElement: ->
-    element = Model.Group.createVariant()
-    element.expanded = true
-    return element
+  createNewSymbol: ->
+    symbolId = Util.generateId()
+
+    rootRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId("master", "root"))
+
+    changes = [
+      new NewSystem.Change_CloneSymbol("Group", "master")
+      new NewSystem.Change_SetPointerDestination("root", rootRef)
+      new NewSystem.Change_ExtendNodeWithLiteral(rootRef, {label: "New Symbol", expanded: true})
+    ]
+    changeList = new NewSystem.ChangeList(changes)
+    symbol = new NewSystem.Symbol(changeList)
+
+    @userEnvironment.addSymbol(symbolId, symbol)
+
+    return symbolId
 
   removeSelectedElement: ->
+    throw "NOT IMPLEMENTED YET"
     return unless @selectedParticularElement
     selectedElement = @selectedParticularElement.element
     parent = selectedElement.parent()
@@ -65,6 +83,7 @@ module.exports = class Project
     @select(null)
 
   groupSelectedElement: ->
+    throw "NOT IMPLEMENTED YET"
     return unless @selectedParticularElement
     selectedElement = @selectedParticularElement.element
     parent = selectedElement.parent()
@@ -76,6 +95,7 @@ module.exports = class Project
     @select(new Model.ParticularElement(group))
 
   duplicateSelectedElement: ->
+    throw "NOT IMPLEMENTED YET"
     # This implementation is a little kooky in that it creates a master that
     # is not in createPanelElements. This leads to weirdness with showing
     # novel attributes in the right sidebar.
@@ -91,6 +111,7 @@ module.exports = class Project
     @select(new Model.ParticularElement(secondClone))
 
   createSymbolFromSelectedElement: ->
+    throw "NOT IMPLEMENTED YET"
     return unless @selectedParticularElement
     selectedElement = @selectedParticularElement.element
     parent = selectedElement.parent()
@@ -104,6 +125,8 @@ module.exports = class Project
     @createPanelElements.splice(index, 0, master)
 
   findUnnecessaryNodes: ->
+    throw "NOT IMPLEMENTED YET"
+
     # These nodes are necessary per se.
     rootNodes = @createPanelElements.slice()
     for name, obj of Model
@@ -136,10 +159,13 @@ module.exports = class Project
   # ===========================================================================
 
   controlledAttributes: ->
+    throw "NOT IMPLEMENTED YET"
     return @selectedParticularElement?.element.controlledAttributes() ? []
 
   implicitlyControlledAttributes: ->
+    throw "NOT IMPLEMENTED YET"
     return @selectedParticularElement?.element.implicitlyControlledAttributes() ? []
 
   controllableAttributes: ->
+    throw "NOT IMPLEMENTED YET"
     return @selectedParticularElement?.element.controllableAttributes() ? []

@@ -129,7 +129,7 @@ module.exports = (BuiltinEnvironment) ->
     ]
 
   BuiltinEnvironment.changes_AddAttributeToParent = (parentRef, label, name, exprString) ->
-    attributeRef = new NewSystem.NodeRef_Pointer(name + "/root")
+    attributeRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId(name, "root"))
 
     [
       BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("Attribute", name)...

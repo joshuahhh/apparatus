@@ -10,6 +10,8 @@ stylePlugin = new ExtractTextPlugin("apparatus.css", {
   allChunks: true
 })
 
+ignorePlugin = new webpack.IgnorePlugin(/^canvas$/)
+
 module.exports = {
   devtool: PROD ? "source-map" : "eval",
   entry: ["./src/index", "./style/index.styl"],
@@ -32,12 +34,14 @@ module.exports = {
             warnings: false
           }
         }),
-        stylePlugin
+        stylePlugin,
+        ignorePlugin
       ]
     : [
         new webpack.optimize.OccurenceOrderPlugin(),
         new webpack.NoErrorsPlugin(),
-        stylePlugin
+        stylePlugin,
+        ignorePlugin
       ],
   resolve: {
     extensions: ["", ".js", ".coffee"]

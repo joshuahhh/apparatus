@@ -20,7 +20,7 @@ module.exports = NewSystem = {}
 # copy over properties. (That would be easiest if we had mixed-in properties
 # stored in a special property object.)
 
-buildId = (cloneId, id) -> cloneId + "/" + id
+NewSystem.buildId = (args...) -> args.join("/")
 
 class NewSystem.Tree
   constructor: (@nodes = [], @pointers = [], @cloneOrigins = []) ->
@@ -134,6 +134,7 @@ class NewSystem.Tree
       for linkKey, targetId of node.linkTargetIds
         toReturn += "        #{linkKey}: #{targetId}\n"
       toReturn += "      bundle: [#{_.allKeys(node.bundle).join(", ")}]\n"
+      toReturn += "      constructors: #{JSON.stringify(node.constructors)}\n"
     toReturn += "  pointers:\n"
     for pointer in @pointers
       toReturn += "    #{pointer.id}: #{pointer.destinationNodeId}\n"
@@ -158,12 +159,13 @@ class NewSystem.Environment
     @mixins[mixinId] = mixin
 
   getTreeForSymbol: (symbolId) ->
+    # IMPORTANT: Do not mutate the result of this method! It's a tree which
+    # belongs to the symbol itself! You should view it, or clone it.
+
     symbol = @getSymbolById(symbolId)
     if not symbol
       throw "Symbol #{symbolId} not found in environment!"
-    tree = new NewSystem.Tree()
-    symbol.changeList.apply(tree, this)
-    return tree
+    return symbol.getTree(this)
 
   # Emulates Apparatus's old Node::createVariant
   createVariantOfBuiltinSymbol: (symbolId, masterSymbolId, mixin, changes = []) ->
@@ -178,7 +180,7 @@ class NewSystem.Environment
 
     if masterSymbolId
       rootChange = new NewSystem.Change_CloneSymbol(masterSymbolId, "master")
-      rootRef = new NewSystem.NodeRef_Pointer(buildId("master", "root"))
+      rootRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId("master", "root"))
     else
       # If "masterSymbolId" is undefined, then we're starting from a bare node,
       # instead of making a variant of an existing symbol. (This is used for
@@ -198,8 +200,39 @@ class NewSystem.Environment
     @addSymbol(symbolId, symbol)
 
 
+class NewSystem.CompoundEnvironment extends NewSystem.Environment
+  constructor: (@childEnvironments = []) ->
+
+  getSymbolById: (symbolId) ->
+    for childEnvironment in childEnvironments
+      maybeSymbol = childEnvironment.getSymbolById(symbolId)
+      if maybeSymbol then return maybeSymbol
+
+  addSymbol: (symbolId, symbol) ->
+    throw "Not implemented: CompoundEnvironment is read-only"
+
+  getMixinById: (mixinId) ->
+    for childEnvironment in childEnvironments
+      maybeMixin = childEnvironment.getMixinById(symbolId)
+      if maybeMixin then return maybeMixin
+
+  addMixin: (mixinId, mixin) ->
+    throw "Not implemented: CompoundEnvironment is read-only"
+
+
 class NewSystem.Symbol
   constructor: (@changeList) ->
+    @__numChangesApplied = 0
+    @__tree = new NewSystem.Tree()
+
+  getTree: (environment) ->
+    # IMPORTANT: Do not mutate the result of this method! It's a tree which
+    # belongs to the symbol itself! You should view it, or clone it.
+
+    # TODO: assumes the change-list is append only
+    @changeList.apply(@__tree, environment, @__numChangesApplied)
+    @__numChangesApplied = @changeList.numChanges()
+    return @__tree
 
 
 class NewSystem.TreeNode
@@ -222,15 +255,14 @@ class NewSystem.TreeNode
 
   clone: (cloneId) ->
     newNode = new NewSystem.TreeNode(
-      buildId(cloneId, @id)
-      @childIds.map (childId) -> buildId(cloneId, childId)
-      _.mapObject @linkTargetIds, (targetId) -> buildId(cloneId, targetId)
+      NewSystem.buildId(cloneId, @id)
+      @childIds.map (childId) -> NewSystem.buildId(cloneId, childId)
+      _.mapObject @linkTargetIds, (targetId) -> NewSystem.buildId(cloneId, targetId)
       Object.create(@bundle),  # We use prototypes only for efficiency, not dynamics!
-      @constructors
+      @constructors.slice(0)  # UGH WHAT A BUG; where are my immutable data structures...
     )
 
     for [methodName, methodArguments] in @constructors
-      # console.log("running constructor #{methodName} to turn #{@id} into #{newNode.id}")
       newNode.runConstructor(methodName, methodArguments)
 
     return newNode
@@ -247,6 +279,8 @@ class NewSystem.TreeNode
 
   runConstructor: (methodName, methodArguments=[]) ->
     method = @bundle[methodName]
+    if not method
+      throw "Cannot find method #{methodName} in node #{@id}!"
     method.apply(@bundle, methodArguments)
 
   ################################
@@ -273,8 +307,8 @@ class NewSystem.TreePointer
 
   clone: (cloneId) ->
     return new NewSystem.TreePointer(
-      buildId(cloneId, @id),
-      buildId(cloneId, @destinationNodeId)
+      NewSystem.buildId(cloneId, @id),
+      NewSystem.buildId(cloneId, @destinationNodeId)
     )
 
 class NewSystem.TreeCloneOrigin
@@ -282,7 +316,7 @@ class NewSystem.TreeCloneOrigin
 
   clone: (cloneId) ->
     return new NewSystem.TreeCloneOrigin(
-      buildId(cloneId, @id),
+      NewSystem.buildId(cloneId, @id),
       @symbolId
     )
 
@@ -309,6 +343,9 @@ class NewSystem.NodeRef_Node extends NewSystem.NodeRef
       throw "Node #{@id} does not exist in tree!"
     return node
 
+  toString: ->
+    return "Node<#{@id}>"
+
 class NewSystem.NodeRef_Pointer extends NewSystem.NodeRef
   resolve: (tree) ->
     pointer = tree.getPointerById(@id)
@@ -318,6 +355,9 @@ class NewSystem.NodeRef_Pointer extends NewSystem.NodeRef
     if not node
       throw "Node #{pointer.destinationNodeId} does not exist in tree!"
     return node
+
+  toString: ->
+    return "Pointer<#{@id}>"
 
 
 # A "Change" is a description of a change which can be performed to a tree.
@@ -341,6 +381,15 @@ class NewSystem.Change
 
   apply: (tree, environment) ->
     throw ["Not implemented!", this]
+
+  toString: ->
+    propStrings = for own propName, propValue of this
+      "#{propName} = #{@propValueToString(propName, propValue)}"
+    return @constructor.name.slice(7) + ": " + propStrings.join(", ")
+
+  propValueToString: (propName, propValue) ->
+    # to be overridden in special cases
+    return propValue.toString()
 
 class NewSystem.Change_AddNode extends NewSystem.Change
   constructor: (@newNodeId) ->
@@ -445,6 +494,12 @@ class NewSystem.Change_ExtendNodeWithLiteral extends NewSystem.Change
     node.extendBundle(@literal)
     return
 
+  propValueToString: (propName, propValue) ->
+    if propName == "literal"
+      return JSON.stringify(propValue)
+    else
+      return propValue.toString()
+
 class NewSystem.Change_RunConstructor extends NewSystem.Change
   constructor: (@nodeRef, @methodName, @methodArguments = []) ->
 
@@ -473,8 +528,17 @@ indentLevel = 0
 class NewSystem.ChangeList
   constructor: (@changes = []) ->
 
-  apply: (tree, environment) ->
+  toString: ->
+    toReturn = ""
+    numberStringWidth = Math.ceil(Math.log10((@numChanges() - 1) or 1))
     for change, i in @changes
+      numberString = "#{i}"
+      numberString = new Array((numberStringWidth - numberString.length) + 1).join(" ") + numberString
+      toReturn += "#{numberString}. #{change.toString()}\n"
+    return toReturn
+
+  apply: (tree, environment, from=0) ->
+    for change, i in @changes.slice(from)
       if _.isArray(change)
         console.error(change)
         throw "ChangeLists should contain Changes, not arrays!"
@@ -484,6 +548,9 @@ class NewSystem.ChangeList
 
   addChange: (change) ->
     @changes.push(change)
+
+  numChanges: ->
+    @changes.length
 
 # 2016-07-18
 #
@@ -580,3 +647,47 @@ class NewSystem.ChangeList
 # non-determinism, and these functions are used to set up the built-in
 # environment. Util.generateId() should only really be called by the UI, in
 # response to user interactions.
+
+
+# 2016-07-25
+#
+# Recent thoughts:
+#
+# 1. createVariantOfBuiltinSymbol should probably make shortcuts for ALL
+# pointers on the master, not just "root". So when you define Shape, you make a
+# pointer "transform" to the TransformComponent, and then that pointer persists
+# even as you define different nth-order clones of Shape. This way, you don't
+# need to count out "master"s when you want to refer to some Shape's transform.
+# Not sure how this fits with the desire to have createVariantOfBuiltinSymbol be
+# "static" (not depend on rendered trees) – how do we know what pointers exist
+# and should be cloned? One way to keep it static: explicitly list which
+# pointers should be rewritten. Another way to keep it static: make rewriting
+# pointers part of a Change. For instance, there could be an argument to
+# Change_CloneSymbol called "copyPointers".
+#
+# 2. I am troubled by the fragility of node IDs, as determined by the cloning
+# hierarchy. For instance, if I want to change how Attributes work, by adding a
+# new "superclass", then this will change the node-IDs of all attributes. My
+# hope, that existing user-change-lists would be compatible with the new
+# BuiltinEnvironment, would fail, if the user changes refer to attributes using
+# their whole node ID.
+#
+# 3. OH WAIT the above two issues (really one issue) can be resolved if we have
+# a concept of a "primary" cloning operation (of a symbol which could be called
+# a "master"), which, rather than just preserving pointers, actually preserves
+# node IDs. When you perform a primary-clone, you don't prepend a clone-id to
+# the node IDs; you keep them as they are. I think this makes a lot of sense. My
+# one concern is, what happens to our ability to apply new changes in the
+# definitions of cloned symbols "in place"? (This isn't something we support
+# now, and it might never be, but I was happy that I was keeping the door open
+# to this feature, or ones like it.) Well, let's think this out: If we wanted to
+# have a feature like this, we'd need to keep track of what clones exist in our
+# tree (no matter what). So we have some list of cloning-ids, together with
+# their origins and relevant metadata. This list would necessarily NOT be
+# affected by the node-id compression: it would use paths with "master". (We
+# need to distinguish from "master" and "master/master" clonings!) So then, if
+# we wanted to apply a change to, say, the "master/master/transform/master"
+# cloning, we would take the local node ids in the change and prepend
+# "transform" to put them in context. I guess the "master"s don't really matter
+# here? OK this is confusing but my intuition is that everything still works.
+# Let's do this!

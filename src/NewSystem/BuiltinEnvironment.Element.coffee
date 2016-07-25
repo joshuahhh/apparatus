@@ -9,7 +9,7 @@ Graphic = require "../Graphic/Graphic"
 module.exports = (BuiltinEnvironment) ->
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Element", "NodeWithAttributes",
     {
-      label: "Attribute"
+      label: "Element"
 
       isElement: ->
         true
@@ -220,7 +220,7 @@ module.exports = (BuiltinEnvironment) ->
     ]
 
   BuiltinEnvironment.changes_AddVariableToElement = (elementRef, variableCloneId) ->
-    variableRef = new NewSystem.NodeRef_Pointer(variableCloneId + "/root")
+    variableRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId(variableCloneId, "root"))
 
     [
       new NewSystem.Change_CloneSymbol("Variable", variableCloneId)
@@ -283,9 +283,9 @@ module.exports = (BuiltinEnvironment) ->
     graphicClass: Graphic.Anchor
 
   BuiltinEnvironment.changes_AddAnchorToParent = (parentRef, anchorCloneId, x, y) ->
-    anchorRef = new NewSystem.NodeRef_Pointer(anchorCloneId + "/root")
-    xRef = new NewSystem.NodeRef_Pointer(anchorCloneId + "/master/transform/x/root")
-    yRef = new NewSystem.NodeRef_Pointer(anchorCloneId + "/master/transform/y/root")
+    anchorRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId(anchorCloneId, "root"))
+    xRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId(anchorCloneId, "master", "transform", "x", "root"))
+    yRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId(anchorCloneId, "master", "transform", "y", "root"))
 
     [
       new NewSystem.Change_CloneSymbol("Anchor", anchorCloneId)

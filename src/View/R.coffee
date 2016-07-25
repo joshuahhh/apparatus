@@ -53,6 +53,10 @@ desugarPropTypes = (propTypes) ->
   return _.mapObject propTypes, desugarPropType
 
 desugarPropType = (propType) ->
+  # TODO: temporary hack because Model.* is broken
+  if not propType
+    return React.PropTypes.any
+
   if propType == Number
     return React.PropTypes.number.isRequired
   else if propType == String

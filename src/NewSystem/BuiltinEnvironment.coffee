@@ -3,6 +3,7 @@ NewSystem = require "./NewSystem"
 
 
 module.exports = BuiltinEnvironment = new NewSystem.Environment()
+global.BuiltinEnvironment = BuiltinEnvironment  # TODO: temp
 
 # IDEA: Compiled tree goes through one ADDITIONAL step, to produce a tree
 # structure which is totally separated from the whole change-log system (and
@@ -25,7 +26,7 @@ BuiltinEnvironment.changes_CloneSymbolAndAddToRoot = (symbolId, cloneId) ->
     new NewSystem.Change_CloneSymbol(symbolId, cloneId)
     new NewSystem.Change_AddChild(
       new NewSystem.NodeRef_Pointer("root"),
-      new NewSystem.NodeRef_Pointer(cloneId + "/root"),
+      new NewSystem.NodeRef_Pointer(NewSystem.buildId(cloneId, "root")),
       Infinity)
   ]
 
