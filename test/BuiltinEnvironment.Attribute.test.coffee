@@ -21,11 +21,11 @@ BuiltinEnvironment = require("../src/NewSystem/BuiltinEnvironment")
 
 makeAttribute = (tree, attributeId) ->
   (new NewSystem.Change_CloneSymbol("Attribute", attributeId)).apply(tree, BuiltinEnvironment)
-  return (new NewSystem.NodeRef_Pointer("#{attributeId}/root")).resolve(tree)
+  return tree.getNodeById("#{attributeId}/root")
 
 setExpression = (tree, attribute, exprString, references) ->
   changes = BuiltinEnvironment.changes_SetAttributeExpression(
-    new NewSystem.NodeRef_Node(attribute.id),
+    attribute.id,
     exprString
     references)
   for change in changes
@@ -38,7 +38,7 @@ test "Simple attribute test", (t) ->
   attribute1 = makeAttribute(tree, "attribute1")
   attribute2 = makeAttribute(tree, "attribute2")
 
-  setExpression(tree, attribute1, "testing", {a: attribute2.nodeRefTo()})
+  setExpression(tree, attribute1, "testing", {a: attribute2.id})
   t.equal(attribute1.bundle.exprString, "testing", "exprString set correctly")
   t.equal(attribute1.linkTargetIds['a'], attribute2.id, "link target set correctly")
 
@@ -70,7 +70,7 @@ test "Ported: 'Math expressions work'", (t) ->
   b = makeAttribute(tree, "b")
 
   setExpression(tree, a, "20")
-  setExpression(tree, b, "$$$a$$$ * 2", {$$$a$$$: a.nodeRefTo()})
+  setExpression(tree, b, "$$$a$$$ * 2", {$$$a$$$: a.id})
   t.equal(a.tree, tree, "a has the right .tree reference")
   t.equal(b.tree, tree, "b has the right .tree reference")
   t.equal(b.bundle.value(), 40, "attribute evaluates correctly")
@@ -83,13 +83,13 @@ test "Ported: 'Changes recompile'", (t) ->
   b = makeAttribute(tree, "b")
 
   setExpression(tree, a, "20")
-  setExpression(tree, b, "$$$a$$$ * 2", {$$$a$$$: a.nodeRefTo()})
+  setExpression(tree, b, "$$$a$$$ * 2", {$$$a$$$: a.id})
   t.equal(b.bundle.value(), 40)
 
   setExpression(tree, a, "10")
   t.equal(b.bundle.value(), 20)
 
-  setExpression(tree, b, "$$$a$$$ * 3", {$$$a$$$: a.nodeRefTo()})
+  setExpression(tree, b, "$$$a$$$ * 3", {$$$a$$$: a.id})
   t.equal(b.bundle.value(), 30)
 
   t.end()
@@ -100,8 +100,8 @@ test "Ported: 'Dependencies work'", (t) ->
   b = makeAttribute(tree, "b")
   c = makeAttribute(tree, "c")
 
-  setExpression(tree, a, "$$$b$$$ * 2", {$$$b$$$: b.nodeRefTo()})
-  setExpression(tree, b, "$$$c$$$ * 3", {$$$c$$$: c.nodeRefTo()})
+  setExpression(tree, a, "$$$b$$$ * 2", {$$$b$$$: b.id})
+  setExpression(tree, b, "$$$c$$$ * 3", {$$$c$$$: c.id})
   setExpression(tree, c, "20")
 
   t.equal(a.bundle.value(), 120, 'value works')
@@ -116,9 +116,9 @@ test "Ported: 'Dependencies work with circular references'", (t) ->
   b = makeAttribute(tree, "b")
   c = makeAttribute(tree, "c")
 
-  setExpression(tree, a, "$$$b$$$", {$$$b$$$: b.nodeRefTo()})
-  setExpression(tree, b, "$$$c$$$", {$$$c$$$: c.nodeRefTo()})
-  setExpression(tree, c, "$$$b$$$", {$$$b$$$: b.nodeRefTo()})
+  setExpression(tree, a, "$$$b$$$", {$$$b$$$: b.id})
+  setExpression(tree, b, "$$$c$$$", {$$$c$$$: c.id})
+  setExpression(tree, c, "$$$b$$$", {$$$b$$$: b.id})
 
   expectedCircularReferencePath = [a.bundle, b.bundle, c.bundle, b.bundle]
   expectedError = new BuiltinEnvironment.CircularReferenceError(

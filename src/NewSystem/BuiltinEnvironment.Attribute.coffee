@@ -114,27 +114,25 @@ module.exports = (BuiltinEnvironment) ->
         return result
     }
     [
-      new NewSystem.Change_RunConstructor(
-        new NewSystem.NodeRef_Pointer("root"),
-        "setUpAttribute")
+      new NewSystem.Change_RunConstructor("root", "setUpAttribute")
     ]
 
-  BuiltinEnvironment.changes_SetAttributeExpression = (attributeRef, exprString, references = {}) ->
-    # references should be a map from reference name to NodeRef
+  BuiltinEnvironment.changes_SetAttributeExpression = (attributeId, exprString, references = {}) ->
+    # references should be a map from reference name to node id
 
     [
-      new NewSystem.Change_ExtendNodeWithLiteral(attributeRef, {exprString: String(exprString)})
-      new NewSystem.Change_RemoveAllLinks(attributeRef)
-      (new NewSystem.Change_SetNodeLinkTarget(attributeRef, linkKey, linkRef) for own linkKey, linkRef of references)...
+      new NewSystem.Change_ExtendNodeWithLiteral(attributeId, {exprString: String(exprString)})
+      new NewSystem.Change_RemoveAllLinks(attributeId)
+      (new NewSystem.Change_SetNodeLinkTarget(attributeId, linkKey, linkRef) for own linkKey, linkRef of references)...
     ]
 
-  BuiltinEnvironment.changes_AddAttributeToParent = (parentRef, label, name, exprString) ->
-    attributeRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId(name, "root"))
+  BuiltinEnvironment.changes_AddAttributeToParent = (parentId, label, name, exprString) ->
+    attributeId = NewSystem.buildId(name, "root")
 
     [
-      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("Attribute", name)...
-      new NewSystem.Change_ExtendNodeWithLiteral(attributeRef, {label: label, name: name})
-      BuiltinEnvironment.changes_SetAttributeExpression(attributeRef, exprString)...
+      BuiltinEnvironment.changes_CloneSymbolAndAddToParent(parentId, "Attribute", name)...
+      new NewSystem.Change_ExtendNodeWithLiteral(attributeId, {label: label, name: name})
+      BuiltinEnvironment.changes_SetAttributeExpression(attributeId, exprString)...
     ]
 
   class CompiledExpression

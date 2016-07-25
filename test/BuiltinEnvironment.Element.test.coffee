@@ -19,7 +19,7 @@ test "Make a rectangle", (t) ->
   ])
   changes.apply(tree, BuiltinEnvironment)
 
-  myRect = (new NewSystem.NodeRef_Pointer("myRect/root")).resolve(tree)
+  myRect = tree.getNodeById("myRect/root")
   graphic = myRect.bundle.graphic()
   viewMatrix = new Util.Matrix(100, 0, 0, 100, 0, 0)
   t.true(graphic.hitDetect({x: 50, y: 50, viewMatrix: viewMatrix}))
@@ -34,13 +34,13 @@ test "Make a wide rectangle", (t) ->
   changes = new NewSystem.ChangeList([
     new NewSystem.Change_CloneSymbol("Rectangle", "myRect")
     BuiltinEnvironment.changes_SetAttributeExpression(
-      new NewSystem.NodeRef_Pointer("myRect/master/master/transform/sx/root")
+      "myRect/transform/sx/root"
       "2"
     )...
   ])
   changes.apply(tree, BuiltinEnvironment)
 
-  myRect = (new NewSystem.NodeRef_Pointer("myRect/root")).resolve(tree)
+  myRect = tree.getNodeById("myRect/root")
   graphic = myRect.bundle.graphic()
   viewMatrix = new Util.Matrix(100, 0, 0, 100, 0, 0)
   t.true(graphic.hitDetect({x: 100, y: 50, viewMatrix: viewMatrix}))
@@ -56,18 +56,18 @@ test "Make a rectangle in a transformed group", (t) ->
     new NewSystem.Change_CloneSymbol("Rectangle", "myRect")
     new NewSystem.Change_CloneSymbol("Group", "myGroup")
     new NewSystem.Change_AddChild(
-      new NewSystem.NodeRef_Pointer("myGroup/root")
-      new NewSystem.NodeRef_Pointer("myRect/root")
+      "myGroup/root"
+      "myRect/root"
       Infinity
     )
     BuiltinEnvironment.changes_SetAttributeExpression(
-      new NewSystem.NodeRef_Pointer("myGroup/master/transform/sx/root")
+      "myGroup/transform/sx/root"
       "2"
     )...
   ])
   changes.apply(tree, BuiltinEnvironment)
 
-  myGroup = (new NewSystem.NodeRef_Pointer("myGroup/root")).resolve(tree)
+  myGroup = tree.getNodeById("myGroup/root")
   graphic = myGroup.bundle.graphic()
   viewMatrix = new Util.Matrix(100, 0, 0, 100, 0, 0)
   t.true(graphic.hitDetect({x: 100, y: 50, viewMatrix: viewMatrix}))
@@ -82,21 +82,21 @@ test "Make some text", (t) ->
   changes = new NewSystem.ChangeList([
     new NewSystem.Change_CloneSymbol("Text", "myText")
     BuiltinEnvironment.changes_SetAttributeExpression(
-      new NewSystem.NodeRef_Pointer("myText/text/text/root")
+      "myText/text/text/root"
       '"Testing"'
     )...
     BuiltinEnvironment.changes_SetAttributeExpression(
-      new NewSystem.NodeRef_Pointer("myText/master/transform/sx/root")
+      "myText/transform/sx/root"
       '0.2'
     )...
     BuiltinEnvironment.changes_SetAttributeExpression(
-      new NewSystem.NodeRef_Pointer("myText/master/transform/sy/root")
+      "myText/transform/sy/root"
       '0.2'
     )...
   ])
   changes.apply(tree, BuiltinEnvironment)
 
-  myText = (new NewSystem.NodeRef_Pointer("myText/root")).resolve(tree)
+  myText = tree.getNodeById("myText/root")
   graphic = myText.bundle.graphic()
   viewMatrix = new Util.Matrix(100, 0, 0, -100, 0, 100)
 

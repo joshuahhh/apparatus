@@ -23,9 +23,9 @@ module.exports = NewSystem = {}
 NewSystem.buildId = (args...) -> args.join("/")
 
 class NewSystem.Tree
-  constructor: (@nodes = [], @pointers = [], @cloneOrigins = []) ->
-    # NOTE: A Tree takes ownership of its nodes and pointers – they cannot be
-    # shared between trees.
+  constructor: (@nodes = [], @cloneOrigins = []) ->
+    # NOTE: A Tree takes ownership of its nodes – they cannot be shared between
+    # trees.
 
     @redundanciesUpToDate = false
 
@@ -34,16 +34,14 @@ class NewSystem.Tree
     for node in @nodes
       node.tree = this
 
-    for pointer in @pointers
-      pointer.tree = this
-
-  getNodeById: (nodeId) ->
+  getNodeById: (nodeId, okIfNotExists) ->
     @recomputeRedundancies()
-    return @nodesById[nodeId]
-
-  getPointerById: (pointerId) ->
-    @recomputeRedundancies()
-    return @pointersById[pointerId]
+    toReturn = @nodesById[nodeId]
+    if not okIfNotExists and not toReturn
+      console.log(_.pluck(@nodes, "id"))
+      console.trace()
+      throw "Node #{nodeId} does not exist in tree!"
+    return toReturn
 
   addNode: (node) ->
     # We assume a node with the same ID doesn't exist yet.
@@ -51,21 +49,9 @@ class NewSystem.Tree
     node.tree = this
     @redundanciesUpToDate = false
 
-  setPointerDestination: (pointerId, destinationNodeId) ->
-    maybeExistingPointer = @getPointerById(pointerId)
-    if maybeExistingPointer
-      maybeExistingPointer.destinationNodeId = destinationNodeId
-    else
-      pointer = new NewSystem.TreePointer(pointerId, destinationNodeId)
-      pointer.tree = this
-      @pointers.push(pointer)
-      @pointersById[pointer.id] = pointer
-    @redundanciesUpToDate = false
-
-  makeClone: (cloneId, symbolId) ->
+  makeClone: (symbolId, cloneId) ->
     toReturn = new NewSystem.Tree(
       @nodes.map((node) -> node.clone(cloneId)),
-      @pointers.map((pointer) -> pointer.clone(cloneId)),
       @cloneOrigins.map((cloneOrigin) -> cloneOrigin.clone(cloneId))
         .concat([new NewSystem.TreeCloneOrigin(cloneId, symbolId)])
     )
@@ -74,8 +60,6 @@ class NewSystem.Tree
   mergeTree: (tree) ->
     for node in tree.nodes
       @addNode(node)
-    for pointer in tree.pointers
-      @setPointerDestination(pointer.id, pointer.destinationNodeId)
     @cloneOrigins.push(tree.cloneOrigins...)
     @redundanciesUpToDate = false
 
@@ -99,7 +83,6 @@ class NewSystem.Tree
     @redundanciesUpToDate = true
 
     @nodesById = _.indexBy(@nodes, "id")
-    @pointersById = _.indexBy(@pointers, "id")
 
     # Clear parents
     for node in @nodes
@@ -116,7 +99,6 @@ class NewSystem.Tree
 
   stripRedundancies: ->
     delete @nodesById
-    delete @pointersById
 
     # Clear parents
     for node in @nodes
@@ -135,9 +117,6 @@ class NewSystem.Tree
         toReturn += "        #{linkKey}: #{targetId}\n"
       toReturn += "      bundle: [#{_.allKeys(node.bundle).join(", ")}]\n"
       toReturn += "      constructors: #{JSON.stringify(node.constructors)}\n"
-    toReturn += "  pointers:\n"
-    for pointer in @pointers
-      toReturn += "    #{pointer.id}: #{pointer.destinationNodeId}\n"
     toReturn += "}\n"
     return toReturn
 
@@ -169,9 +148,8 @@ class NewSystem.Environment
 
   # Emulates Apparatus's old Node::createVariant
   createVariantOfBuiltinSymbol: (symbolId, masterSymbolId, mixin, changes = []) ->
-    # We assume every builtin symbol has a pointer called 'root' which points at
-    # the root node. Our plan:
-    # 1. Clone the original node and set its root as the new root.
+    # We assume every builtin symbol has a node called 'root'.
+    # 1. Clone the original node as master.
     # 2. Apply the mixin, to extend the root node.
     # 3. Add on the changes included.
 
@@ -179,20 +157,17 @@ class NewSystem.Environment
     @addMixin(mixinId, mixin)
 
     if masterSymbolId
-      rootChange = new NewSystem.Change_CloneSymbol(masterSymbolId, "master")
-      rootRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId("master", "root"))
+      rootChange = new NewSystem.Change_CloneSymbol(masterSymbolId, "")
     else
       # If "masterSymbolId" is undefined, then we're starting from a bare node,
       # instead of making a variant of an existing symbol. (This is used for
       # defining the traditional Apparatus "Node".)
 
       rootChange = new NewSystem.Change_AddNode("root")
-      rootRef = new NewSystem.NodeRef_Node("root")
 
     allChanges = [
       rootChange
-      new NewSystem.Change_SetPointerDestination("root", rootRef)
-      new NewSystem.Change_ExtendNodeWithMixin(new NewSystem.NodeRef_Pointer("root"), mixinId)
+      new NewSystem.Change_ExtendNodeWithMixin("root", mixinId)
       changes...
     ]
     changeList = new NewSystem.ChangeList(allChanges)
@@ -254,10 +229,16 @@ class NewSystem.TreeNode
     @linkTargetIds = {}
 
   clone: (cloneId) ->
+    maybeBuildId = (id) ->
+      if cloneId
+        NewSystem.buildId(cloneId, id)
+      else
+        id
+
     newNode = new NewSystem.TreeNode(
-      NewSystem.buildId(cloneId, @id)
-      @childIds.map (childId) -> NewSystem.buildId(cloneId, childId)
-      _.mapObject @linkTargetIds, (targetId) -> NewSystem.buildId(cloneId, targetId)
+      maybeBuildId(@id)
+      @childIds.map maybeBuildId
+      _.mapObject @linkTargetIds, maybeBuildId
       Object.create(@bundle),  # We use prototypes only for efficiency, not dynamics!
       @constructors.slice(0)  # UGH WHAT A BUG; where are my immutable data structures...
     )
@@ -269,9 +250,6 @@ class NewSystem.TreeNode
 
   extendBundle: (obj) ->
     _.extend @bundle, obj
-
-  nodeRefTo: ->
-    new NewSystem.NodeRef_Node(@id)
 
   runConstructorAndRemember: (methodName, methodArguments=[]) ->
     @runConstructor(methodName, methodArguments)
@@ -302,15 +280,6 @@ class NewSystem.TreeNode
   parentNode: ->
     @tree.getNodeById()
 
-class NewSystem.TreePointer
-  constructor: (@id, @destinationNodeId) ->
-
-  clone: (cloneId) ->
-    return new NewSystem.TreePointer(
-      NewSystem.buildId(cloneId, @id),
-      NewSystem.buildId(cloneId, @destinationNodeId)
-    )
-
 class NewSystem.TreeCloneOrigin
   constructor: (@id, @symbolId) ->
 
@@ -319,46 +288,6 @@ class NewSystem.TreeCloneOrigin
       NewSystem.buildId(cloneId, @id),
       @symbolId
     )
-
-
-# NodeRefs are used in changes. They are either node IDs or pointer IDs.
-
-# NodeRefs should not exist in the tree. For instance, a node's children should
-# be recorded as good-ol'-fashioned node IDs, not NodeRefs.
-
-# (On the other hand, pointers DO exist in the tree. It's just that they're not
-# referred to by other parts of the tree; they exist so that future changes can
-# refer to them.)
-
-class NewSystem.NodeRef
-  constructor: (@id) ->
-
-  resolve: (tree) ->
-    throw "Not implemented"
-
-class NewSystem.NodeRef_Node extends NewSystem.NodeRef
-  resolve: (tree) ->
-    node = tree.getNodeById(@id)
-    if not node
-      throw "Node #{@id} does not exist in tree!"
-    return node
-
-  toString: ->
-    return "Node<#{@id}>"
-
-class NewSystem.NodeRef_Pointer extends NewSystem.NodeRef
-  resolve: (tree) ->
-    pointer = tree.getPointerById(@id)
-    if not pointer
-      throw "Pointer #{@id} does not exist in tree!"
-    node = tree.getNodeById(pointer.destinationNodeId)
-    if not node
-      throw "Node #{pointer.destinationNodeId} does not exist in tree!"
-    return node
-
-  toString: ->
-    return "Pointer<#{@id}>"
-
 
 # A "Change" is a description of a change which can be performed to a tree.
 # Changes are a static, syntactic sort of thing, except for the "apply" method.
@@ -399,99 +328,81 @@ class NewSystem.Change_AddNode extends NewSystem.Change
     tree.addNode(new NewSystem.TreeNode(@newNodeId))
     return
 
-class NewSystem.Change_SetPointerDestination extends NewSystem.Change
-  constructor: (@pointerId, @targetRef) ->
-
-  apply: (tree, environment) ->
-    tree.setPointerDestination(@pointerId, @targetRef.resolve(tree).id)
-    return
-
 class NewSystem.Change_CloneSymbol extends NewSystem.Change
   constructor: (@symbolId, @newCloneId) ->
-    if not @newCloneId
-      throw "Change_CloneSymbol needs a newCloneId!"
+    # An empty-string @newCloneId stands for cloning-as-master
+    if not _.isString(@newCloneId)
+      throw "Change_CloneSymbol needs a string-valued newCloneId!"
 
   apply: (tree, environment) ->
     # Fails if symbol doesn't exist
     symbolTree = environment.getTreeForSymbol(@symbolId)
-    clonedTree = symbolTree.makeClone(@newCloneId, @symbolId)
+    clonedTree = symbolTree.makeClone(@symbolId, @newCloneId)
     tree.mergeTree(clonedTree)
     return
 
 # PARENTS AND CHILDREN
 
 class NewSystem.Change_AddChild extends NewSystem.Change
-  constructor: (@parentRef, @childRef, @insertionIndex) ->
+  constructor: (@parentId, @childId, @insertionIndex) ->
     if not _.isNumber(@insertionIndex)
       throw "Change_AddChild needs a numeric insertionIndex! (Can be `Infinity`.)"
 
   apply: (tree, environment) ->
     # Fails if either parent or child doesn't exist
-    parent = @parentRef.resolve(tree)
-    child = @childRef.resolve(tree)
-    tree.addChildToNode(parent.id, child.id, @insertionIndex)
+    tree.addChildToNode(@parentId, @childId, @insertionIndex)
     return
 
 class NewSystem.Change_DeparentNode extends NewSystem.Change
-  constructor: (@nodeRef) ->
+  constructor: (@nodeId) ->
 
   apply: (tree, environment) ->
     # Fails if child doesn't exist
-    node = @nodeRef.resolve(tree)
-    tree.deparentNode(node.id)
+    tree.deparentNode(@nodeId)
     return
 
 # LINKS
 
 class NewSystem.Change_SetNodeLinkTarget extends NewSystem.Change
-  constructor: (@nodeRef, @linkKey, @targetRef) ->
+  constructor: (@nodeId, @linkKey, @targetId) ->
 
   apply: (tree, environment) ->
     # Fails if node or target don't exist
-
-    node = @nodeRef.resolve(tree)
-    target = @targetRef.resolve(tree)
-    node.setLinkTarget(@linkKey, target.id)
+    tree.getNodeById(@nodeId).setLinkTarget(@linkKey, @targetId)
     return
 
 class NewSystem.Change_RemoveNodeLink extends NewSystem.Change
-  constructor: (@nodeRef, @linkKey) ->
+  constructor: (@nodeId, @linkKey) ->
 
   apply: (tree, environment) ->
     # Fails if node doesn't exist
-
-    node = @nodeRef.resolve(tree)
-    node.setLinkTarget(@linkKey, undefined)
+    tree.getNodeById(@nodeId).setLinkTarget(@linkKey, undefined)
     return
 
 class NewSystem.Change_RemoveAllLinks extends NewSystem.Change
-  constructor: (@nodeRef) ->
+  constructor: (@nodeId) ->
 
   apply: (tree, environment) ->
     # Fails if node doesn't exist
-
-    node = @nodeRef.resolve(tree)
-    node.removeAllLinks()
+    tree.getNodeById(@nodeId).removeAllLinks()
     return
 
 # IN THE BUNDLE
 
 class NewSystem.Change_ExtendNodeWithMixin extends NewSystem.Change
-  constructor: (@nodeRef, @mixinId) ->
+  constructor: (@nodeId, @mixinId) ->
 
   apply: (tree, environment) ->
     # Fails if node doesn't exist or mixin doesn't exist
-    node = @nodeRef.resolve(tree)
-    node.extendBundle(environment.getMixinById(@mixinId))
+    tree.getNodeById(@nodeId).extendBundle(environment.getMixinById(@mixinId))
     return
 
 class NewSystem.Change_ExtendNodeWithLiteral extends NewSystem.Change
-  constructor: (@nodeRef, @literal) ->
+  constructor: (@nodeId, @literal) ->
 
   apply: (tree, environment) ->
     # Fails if node doesn't exist
-    node = @nodeRef.resolve(tree)
-    node.extendBundle(@literal)
+    tree.getNodeById(@nodeId).extendBundle(@literal)
     return
 
   propValueToString: (propName, propValue) ->
@@ -501,13 +412,11 @@ class NewSystem.Change_ExtendNodeWithLiteral extends NewSystem.Change
       return propValue.toString()
 
 class NewSystem.Change_RunConstructor extends NewSystem.Change
-  constructor: (@nodeRef, @methodName, @methodArguments = []) ->
+  constructor: (@nodeId, @methodName, @methodArguments = []) ->
 
   apply: (tree, environment) ->
     # Fails if node or method don't exist
-
-    node = @nodeRef.resolve(tree)
-    node.runConstructorAndRemember(@methodName, @methodArguments)
+    tree.getNodeById(@nodeId).runConstructorAndRemember(@methodName, @methodArguments)
     return
 
 class NewSystem.Change_Log extends NewSystem.Change
@@ -543,6 +452,7 @@ class NewSystem.ChangeList
         console.error(change)
         throw "ChangeLists should contain Changes, not arrays!"
       tree.recomputeRedundancies()
+      # console.log("Running change #{i + 1}/#{@changes.length} in ChangeList: ", change.toString())
       change.apply(tree, environment)
     tree.recomputeRedundancies()
 

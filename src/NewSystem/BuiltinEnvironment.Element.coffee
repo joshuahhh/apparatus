@@ -214,18 +214,16 @@ module.exports = (BuiltinEnvironment) ->
         return @depth() > 20
     }
     [
-      new NewSystem.Change_RunConstructor(
-        new NewSystem.NodeRef_Pointer("root"),
-        "setUpElement")
+      new NewSystem.Change_RunConstructor("root", "setUpElement")
     ]
 
-  BuiltinEnvironment.changes_AddVariableToElement = (elementRef, variableCloneId) ->
-    variableRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId(variableCloneId, "root"))
+  BuiltinEnvironment.changes_AddVariableToElement = (elementId, variableCloneId) ->
+    variableId = NewSystem.buildId(variableCloneId, "root")
 
     [
       new NewSystem.Change_CloneSymbol("Variable", variableCloneId)
-      BuiltinEnvironment.changes_SetAttributeExpression(variableRef, "0.00")...
-      new NewSystem.Change_AddChild(elementRef, variableRef, Infinity)
+      BuiltinEnvironment.changes_SetAttributeExpression(variableId, "0.00")...
+      new NewSystem.Change_AddChild(elementId, variableId, Infinity)
     ]
 
   # Shape Interpretation Contexts
@@ -244,7 +242,7 @@ module.exports = (BuiltinEnvironment) ->
         return [RENDERING]
     }
     [
-      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("TransformComponent", "transform")...
+      BuiltinEnvironment.changes_CloneSymbolAndAddToParent("root", "TransformComponent", "transform")...
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Group", "Shape",
@@ -282,16 +280,16 @@ module.exports = (BuiltinEnvironment) ->
 
     graphicClass: Graphic.Anchor
 
-  BuiltinEnvironment.changes_AddAnchorToParent = (parentRef, anchorCloneId, x, y) ->
-    anchorRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId(anchorCloneId, "root"))
-    xRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId(anchorCloneId, "master", "transform", "x", "root"))
-    yRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId(anchorCloneId, "master", "transform", "y", "root"))
+  BuiltinEnvironment.changes_AddAnchorToParent = (parentId, anchorCloneId, x, y) ->
+    anchorId = NewSystem.buildId(anchorCloneId, "root")
+    xId = NewSystem.buildId(anchorCloneId, "transform", "x", "root")
+    yId = NewSystem.buildId(anchorCloneId, "transform", "y", "root")
 
     [
       new NewSystem.Change_CloneSymbol("Anchor", anchorCloneId)
-      BuiltinEnvironment.changes_SetAttributeExpression(xRef, x)...
-      BuiltinEnvironment.changes_SetAttributeExpression(yRef, y)...
-      new NewSystem.Change_AddChild(parentRef, anchorRef, Infinity)
+      BuiltinEnvironment.changes_SetAttributeExpression(xId, x)...
+      BuiltinEnvironment.changes_SetAttributeExpression(yId, y)...
+      new NewSystem.Change_AddChild(parentId, anchorId, Infinity)
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Path", "Shape",
@@ -300,9 +298,9 @@ module.exports = (BuiltinEnvironment) ->
       graphicClass: Graphic.Path
     }
     [
-      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("PathComponent", "path")...
-      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("FillComponent", "fill")...
-      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("StrokeComponent", "stroke")...
+      BuiltinEnvironment.changes_CloneSymbolAndAddToParent("root", "PathComponent", "path")...
+      BuiltinEnvironment.changes_CloneSymbolAndAddToParent("root", "FillComponent", "fill")...
+      BuiltinEnvironment.changes_CloneSymbolAndAddToParent("root", "StrokeComponent", "stroke")...
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Circle", "Path",
@@ -320,10 +318,10 @@ module.exports = (BuiltinEnvironment) ->
         return [ANCHOR_COLLECTION]
     }
     [
-      BuiltinEnvironment.changes_AddAnchorToParent(new NewSystem.NodeRef_Pointer("root"), "1", "0.00", "0.00")...
-      BuiltinEnvironment.changes_AddAnchorToParent(new NewSystem.NodeRef_Pointer("root"), "2", "0.00", "1.00")...
-      BuiltinEnvironment.changes_AddAnchorToParent(new NewSystem.NodeRef_Pointer("root"), "3", "1.00", "1.00")...
-      BuiltinEnvironment.changes_AddAnchorToParent(new NewSystem.NodeRef_Pointer("root"), "4", "1.00", "0.00")...
+      BuiltinEnvironment.changes_AddAnchorToParent("root", "1", "0.00", "0.00")...
+      BuiltinEnvironment.changes_AddAnchorToParent("root", "2", "0.00", "1.00")...
+      BuiltinEnvironment.changes_AddAnchorToParent("root", "3", "1.00", "1.00")...
+      BuiltinEnvironment.changes_AddAnchorToParent("root", "4", "1.00", "0.00")...
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Text", "Shape",
@@ -334,5 +332,5 @@ module.exports = (BuiltinEnvironment) ->
       graphicClass: Graphic.Text
     }
     [
-      BuiltinEnvironment.changes_CloneSymbolAndAddToRoot("TextComponent", "text")...
+      BuiltinEnvironment.changes_CloneSymbolAndAddToParent("root", "TextComponent", "text")...
     ]

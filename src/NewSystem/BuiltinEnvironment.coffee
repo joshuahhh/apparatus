@@ -21,13 +21,10 @@ global.BuiltinEnvironment = BuiltinEnvironment  # TODO: temp
 # CURRENT SOLUTION: Bundles! I guess?
 
 
-BuiltinEnvironment.changes_CloneSymbolAndAddToRoot = (symbolId, cloneId) ->
+BuiltinEnvironment.changes_CloneSymbolAndAddToParent = (parentId, symbolId, cloneId) ->
   [
     new NewSystem.Change_CloneSymbol(symbolId, cloneId)
-    new NewSystem.Change_AddChild(
-      new NewSystem.NodeRef_Pointer("root"),
-      new NewSystem.NodeRef_Pointer(NewSystem.buildId(cloneId, "root")),
-      Infinity)
+    new NewSystem.Change_AddChild(parentId, NewSystem.buildId(cloneId, "root"), Infinity)
   ]
 
 (require "./BuiltinEnvironment.Node")(BuiltinEnvironment)
