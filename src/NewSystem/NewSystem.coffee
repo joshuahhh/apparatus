@@ -395,7 +395,7 @@ class NewSystem.ChangeList
     for change, i in @changes
       numberString = "#{i}"
       numberString = new Array((numberStringWidth - numberString.length) + 1).join(" ") + numberString
-      toReturn += "#{numberString}. #{change.toString()}\n"
+      toReturn += "#{numberString}. #{JSON.stringify(change)}\n"
     return toReturn
 
   apply: (tree, environment, from=0) ->

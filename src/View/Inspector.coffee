@@ -47,9 +47,9 @@ R.create "FullAttributesList",
     {element} = @props
     {project} = @context
 
-    project.addChanges(
-      {type: "AddVariableToElement", element.node.id, Util.generateId())
-    )
+    project.addChanges [
+      {type: "AddVariableToElement", elementId: element.node.id, variableCloneId: Util.generateId()}
+    ]
 
 
 R.create "ComponentSection",

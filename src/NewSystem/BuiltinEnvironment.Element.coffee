@@ -217,7 +217,7 @@ module.exports = (BuiltinEnvironment) ->
       {type: "RunConstructor", nodeId: "root", methodName: "setUpElement", methodArguments: []}
     ]
 
-  BuiltinEnvironment.addCompoundChangeType "AddVariableToElement", (elementId, variableCloneId) ->
+  BuiltinEnvironment.addCompoundChangeType "AddVariableToElement", ({elementId, variableCloneId}) ->
     [
       {type: "CloneSymbol", symbolId: "Variable", cloneId: variableCloneId}
       {type: "SetAttributeExpression", attributeId: NewSystem.buildId(variableCloneId, "root"), exprString: "0.00"}
