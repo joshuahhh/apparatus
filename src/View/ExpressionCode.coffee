@@ -87,7 +87,7 @@ R.create "ExpressionCode",
     el = dblClickEvent.target
     if Util.matches(el, ".cm-number")
       dblClickEvent.preventDefault()
-      @_endNumberScrub(dblClickEvent) 
+      @_endNumberScrub(dblClickEvent)
 
   _onMouseUp: (mouseUpEvent) ->
     {attribute} = @props
@@ -119,7 +119,7 @@ R.create "ExpressionCode",
         isUsed = (newExprString.indexOf(referenceKey) != -1)
         if isUsed
           newReferences[referenceKey] = referenceNode
-      attribute.setExpression(newExprString, newReferences)
+      @context.project.setExpression(attribute.node.id, newExprString, newReferences)
 
 
   # ===========================================================================
@@ -138,7 +138,7 @@ R.create "ExpressionCode",
     referenceKey = Util.generateId()
     references[referenceKey] = referenceAttribute
     exprString = attribute.exprString
-    attribute.setExpression(exprString, references)
+    @context.project.setExpression(attribute.node.id, exprString, references)
     @mirror.replaceSelection(referenceKey)
 
   _replaceAllWithReference: (referenceAttribute) ->
@@ -147,7 +147,7 @@ R.create "ExpressionCode",
     referenceKey = Util.generateId()
     references[referenceKey] = referenceAttribute
     exprString = referenceKey
-    attribute.setExpression(exprString, references)
+    @context.project.setExpression(attribute.node.id, exprString, references)
 
 
   # ===========================================================================

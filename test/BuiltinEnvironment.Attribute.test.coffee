@@ -20,17 +20,16 @@ BuiltinEnvironment = require("../src/NewSystem/BuiltinEnvironment")
 
 
 makeAttribute = (tree, attributeId) ->
-  (new NewSystem.Change_CloneSymbol("Attribute", attributeId)).apply(tree, BuiltinEnvironment)
+  change = {type: "CloneSymbol", symbolId: "Attribute", cloneId: attributeId}
+  resolvedChange = BuiltinEnvironment.resolveChange(change)
+  resolvedChange.apply(tree, BuiltinEnvironment)
   return tree.getNodeById("#{attributeId}/root")
 
-setExpression = (tree, attribute, exprString, references) ->
-  changes = BuiltinEnvironment.changes_SetAttributeExpression(
-    attribute.id,
-    exprString
-    references)
-  for change in changes
-    change.apply(tree, BuiltinEnvironment)
 
+setExpression = (tree, attribute, exprString, references) ->
+  change = {type: "SetAttributeExpression", attributeId: attribute.id, exprString: exprString, references: references}
+  resolvedChange = BuiltinEnvironment.resolveChange(change)
+  resolvedChange.apply(tree, BuiltinEnvironment)
 
 
 test "Simple attribute test", (t) ->
@@ -38,6 +37,7 @@ test "Simple attribute test", (t) ->
   attribute1 = makeAttribute(tree, "attribute1")
   attribute2 = makeAttribute(tree, "attribute2")
 
+  console.log("attribute2.id", attribute2.id)
   setExpression(tree, attribute1, "testing", {a: attribute2.id})
   t.equal(attribute1.bundle.exprString, "testing", "exprString set correctly")
   t.equal(attribute1.linkTargetIds['a'], attribute2.id, "link target set correctly")

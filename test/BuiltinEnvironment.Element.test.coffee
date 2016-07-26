@@ -14,9 +14,9 @@ test "Make a rectangle", (t) ->
   #   console.log(symbol.changeList.toString())
 
   tree = new NewSystem.Tree()
-  changes = new NewSystem.ChangeList([
-    new NewSystem.Change_CloneSymbol("Rectangle", "myRect")
-  ])
+  changes = new NewSystem.ChangeList [
+    {type: "CloneSymbol", symbolId: "Rectangle", cloneId: "myRect"}
+  ]
   changes.apply(tree, BuiltinEnvironment)
 
   myRect = tree.getNodeById("myRect/root")
@@ -32,11 +32,8 @@ test "Make a rectangle", (t) ->
 test "Make a wide rectangle", (t) ->
   tree = new NewSystem.Tree()
   changes = new NewSystem.ChangeList([
-    new NewSystem.Change_CloneSymbol("Rectangle", "myRect")
-    BuiltinEnvironment.changes_SetAttributeExpression(
-      "myRect/transform/sx/root"
-      "2"
-    )...
+    {type: "CloneSymbol", symbolId: "Rectangle", cloneId: "myRect"}
+    {type: "SetAttributeExpression", attributeId: "myRect/transform/sx/root", exprString: "2"}
   ])
   changes.apply(tree, BuiltinEnvironment)
 
@@ -53,17 +50,10 @@ test "Make a wide rectangle", (t) ->
 test "Make a rectangle in a transformed group", (t) ->
   tree = new NewSystem.Tree()
   changes = new NewSystem.ChangeList([
-    new NewSystem.Change_CloneSymbol("Rectangle", "myRect")
-    new NewSystem.Change_CloneSymbol("Group", "myGroup")
-    new NewSystem.Change_AddChild(
-      "myGroup/root"
-      "myRect/root"
-      Infinity
-    )
-    BuiltinEnvironment.changes_SetAttributeExpression(
-      "myGroup/transform/sx/root"
-      "2"
-    )...
+    {type: "CloneSymbol", symbolId: "Rectangle", cloneId: "myRect"}
+    {type: "CloneSymbol", symbolId: "Group", cloneId: "myGroup"}
+    {type: "AddChild", parentId: "myGroup/root", childId: "myRect/root", insertionIndex: Infinity}
+    {type: "SetAttributeExpression", attributeId: "myGroup/transform/sx/root", exprString: "2"}
   ])
   changes.apply(tree, BuiltinEnvironment)
 
@@ -79,21 +69,12 @@ test "Make a rectangle in a transformed group", (t) ->
 
 test "Make some text", (t) ->
   tree = new NewSystem.Tree()
-  changes = new NewSystem.ChangeList([
-    new NewSystem.Change_CloneSymbol("Text", "myText")
-    BuiltinEnvironment.changes_SetAttributeExpression(
-      "myText/text/text/root"
-      '"Testing"'
-    )...
-    BuiltinEnvironment.changes_SetAttributeExpression(
-      "myText/transform/sx/root"
-      '0.2'
-    )...
-    BuiltinEnvironment.changes_SetAttributeExpression(
-      "myText/transform/sy/root"
-      '0.2'
-    )...
-  ])
+  changes = new NewSystem.ChangeList [
+    {type: "CloneSymbol", symbolId: "Text", cloneId: "myText"}
+    {type: "SetAttributeExpression", attributeId: "myText/text/text/root", exprString: '"Testing"'}
+    {type: "SetAttributeExpression", attributeId: "myText/transform/sx/root", exprString: "0.2"}
+    {type: "SetAttributeExpression", attributeId: "myText/transform/sy/root", exprString: "0.2"}
+  ]
   changes.apply(tree, BuiltinEnvironment)
 
   myText = tree.getNodeById("myText/root")

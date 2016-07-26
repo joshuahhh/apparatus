@@ -9,7 +9,7 @@ Util = require "../Util/Util"
 module.exports = class Project
   constructor: ->
     @userEnvironment = new NewSystem.Environment()
-    @fullEnvironment = new NewSystem.CompoundEnvironment([BuiltinEnvironment, @userEnvironment])
+    @__fullEnvironment = new NewSystem.CompoundEnvironment([BuiltinEnvironment, @userEnvironment])
 
     initialSymbolId = @createNewSymbol()
 
@@ -36,6 +36,9 @@ module.exports = class Project
   # Selection
   # ===========================================================================
 
+  editingSymbol: ->
+    return @__fullEnvironment.getSymbolById(@editingSymbolId)
+
   setEditing: (symbolId) ->
     @editingSymbolId = symbolId
     @selectedParticularElement = null
@@ -59,12 +62,9 @@ module.exports = class Project
   createNewSymbol: ->
     symbolId = Util.generateId()
 
-    rootRef = new NewSystem.NodeRef_Pointer(NewSystem.buildId("master", "root"))
-
     changes = [
-      new NewSystem.Change_CloneSymbol("Group", "master")
-      new NewSystem.Change_SetPointerDestination("root", rootRef)
-      new NewSystem.Change_ExtendNodeWithLiteral(rootRef, {label: "New Symbol", expanded: true})
+      {type: "CloneSymbol", symbolId: "Group", cloneId: ""}
+      {type: "ExtendNodeWithLiteral", nodeId: "root", literal: {label: "New Symbol", expanded: true}}
     ]
     changeList = new NewSystem.ChangeList(changes)
     symbol = new NewSystem.Symbol(changeList)
@@ -72,6 +72,16 @@ module.exports = class Project
     @userEnvironment.addSymbol(symbolId, symbol)
 
     return symbolId
+
+  addChanges: (changes) ->
+    @editingSymbol().changeList.addChanges(changes)
+
+    console.log("#{@editingSymbolId} is now:\n" + @editingSymbol().changeList.toString())
+
+  setExpression: (attributeId, exprString, references) ->
+    @addChanges [
+      {type: "SetAttributeExpression", attributeId: attributeId, exprString: exprString, references: references}
+    ]
 
   removeSelectedElement: ->
     throw "NOT IMPLEMENTED YET"
@@ -159,13 +169,10 @@ module.exports = class Project
   # ===========================================================================
 
   controlledAttributes: ->
-    throw "NOT IMPLEMENTED YET"
     return @selectedParticularElement?.element.controlledAttributes() ? []
 
   implicitlyControlledAttributes: ->
-    throw "NOT IMPLEMENTED YET"
     return @selectedParticularElement?.element.implicitlyControlledAttributes() ? []
 
   controllableAttributes: ->
-    throw "NOT IMPLEMENTED YET"
     return @selectedParticularElement?.element.controllableAttributes() ? []

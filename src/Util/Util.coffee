@@ -66,12 +66,14 @@ Util.clearTextFocus = ->
 # IDs
 # =============================================================================
 
+ID_PROPERTY = "_id"
+
 Util.getId = (object) ->
-  return object.id if object.hasOwnProperty("id")
+  return object[ID_PROPERTY] if object.hasOwnProperty(ID_PROPERTY)
   return Util.assignId(object, Util.generateId())
 
 Util.assignId = (object, id) ->
-  return object.id = id
+  return object[ID_PROPERTY] = id
 
 counter = 0
 Util.generateId = ->

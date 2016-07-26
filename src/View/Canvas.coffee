@@ -327,7 +327,8 @@ R.create "Canvas",
             # trialValues. Maybe if this ever becomes a problem we could have
             # the objective "clean up" after itself, setting the attributes
             # back to their original values, to make it pure.
-            attribute.setExpression(trialValue)
+            @context.project.setExpression(attribute.node.id, trialValue, {})
+            # attribute.setExpression(trialValue)
           trialAccumulatedMatrix = particularElementToDrag.accumulatedMatrix()
           trialMousePixel = @_viewMatrix().compose(trialAccumulatedMatrix).fromLocal(originalMouseLocal)
           error = Util.quadrance(trialMousePixel, currentMousePixel)
@@ -342,7 +343,8 @@ R.create "Canvas",
           if key.command
             solvedValue = Util.roundToPrecision(solvedValue, precision - 1)
           solvedValue = Util.toPrecision(solvedValue, precision)
-          attribute.setExpression(solvedValue)
+          @context.project.setExpression(attribute.node.id, solvedValue, {})
+          # attribute.setExpression(solvedValue)
 
     if startImmediately
       dragManager.drag.onMove(mouseDownEvent)
@@ -428,9 +430,13 @@ R.create "Canvas",
     return @_rectCached = el.getBoundingClientRect()
 
   _editingElement: ->
-    project = @context.project
-    element = project.editingElement
-    return element
+    {project} = @context
+
+    symbol = project.__fullEnvironment.getSymbolById(project.editingSymbolId)
+    tree = symbol.getTree(project.__fullEnvironment)
+    rootNode = tree.getNodeById("root")
+
+    return rootNode.bundle
 
   _graphics: (useCached=false) ->
     if useCached and @_cachedGraphics

@@ -114,25 +114,28 @@ module.exports = (BuiltinEnvironment) ->
         return result
     }
     [
-      new NewSystem.Change_RunConstructor("root", "setUpAttribute")
+      {type: "RunConstructor", nodeId: "root", methodName: "setUpAttribute", methodArguments: []}
     ]
 
-  BuiltinEnvironment.changes_SetAttributeExpression = (attributeId, exprString, references = {}) ->
+  BuiltinEnvironment.addCompoundChangeType "SetAttributeExpression", ({attributeId, exprString, references}) ->
     # references should be a map from reference name to node id
 
     [
-      new NewSystem.Change_ExtendNodeWithLiteral(attributeId, {exprString: String(exprString)})
-      new NewSystem.Change_RemoveAllLinks(attributeId)
-      (new NewSystem.Change_SetNodeLinkTarget(attributeId, linkKey, linkRef) for own linkKey, linkRef of references)...
+      {type: "ExtendNodeWithLiteral", nodeId: attributeId, literal: {exprString: String(exprString)}}
+      {type: "RemoveAllLinks", nodeId: attributeId}
+      (
+        for own linkKey, linkId of references
+          {type: "SetNodeLinkTarget", nodeId: attributeId, linkKey: linkKey, targetId: linkId}
+      )...
     ]
 
-  BuiltinEnvironment.changes_AddAttributeToParent = (parentId, label, name, exprString) ->
+  BuiltinEnvironment.addCompoundChangeType "AddAttributeToParent", ({parentId, label, name, exprString}) ->
     attributeId = NewSystem.buildId(name, "root")
 
     [
-      BuiltinEnvironment.changes_CloneSymbolAndAddToParent(parentId, "Attribute", name)...
-      new NewSystem.Change_ExtendNodeWithLiteral(attributeId, {label: label, name: name})
-      BuiltinEnvironment.changes_SetAttributeExpression(attributeId, exprString)...
+      {type: "CloneSymbolAndAddToParent", parentId: parentId, symbolId: "Attribute", cloneId: name}
+      {type: "ExtendNodeWithLiteral", nodeId: attributeId, literal: {label: label, name: name}}
+      {type: "SetAttributeExpression", attributeId: attributeId, exprString: exprString, references: {}}
     ]
 
   class CompiledExpression
@@ -211,7 +214,7 @@ module.exports = (BuiltinEnvironment) ->
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Variable", "Attribute",
     {
-      label: "Attribute"
+      label: "Variable"
 
       isVariable: ->
         true

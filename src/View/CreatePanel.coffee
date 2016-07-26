@@ -31,9 +31,9 @@ R.create "CreatePanel",
 
   _createNewElement: ->
     project = @context.project
-    element = project.createNewElement()
-    project.createPanelElements.push(element)
-    project.setEditing(element)
+    symbolId = project.createNewSymbol()
+    project.createPanelSymbolIds.push(symbolId)
+    project.setEditing(symbolId)
 
 
 R.create "CreatePanelItem",
@@ -45,7 +45,13 @@ R.create "CreatePanelItem",
     symbolId: String
 
   render: ->
-    symbolId = @props.symbolId
+    {symbolId} = @props
+    {project} = @context
+
+    symbol = project.__fullEnvironment.getSymbolById(symbolId)
+    tree = symbol.getTree(project.__fullEnvironment)
+    rootNode = tree.getNodeById("root")
+
     R.div {
       className: R.cx {
         "CreatePanelItem": true
@@ -56,7 +62,7 @@ R.create "CreatePanelItem",
         className: "CreatePanelThumbnail"
         onMouseDown: @_onMouseDown
       },
-        R.Thumbnail {symbolId}
+        R.Thumbnail {element: rootNode.bundle}
 
       if @_isEditable()
         R.span {},
@@ -74,7 +80,7 @@ R.create "CreatePanelItem",
         className: "CreatePanelLabel"
       },
         R.EditableText {
-          value: element.label
+          value: rootNode.bundle.label
           setValue: @_setLabelValue
         }
 
@@ -89,6 +95,7 @@ R.create "CreatePanelItem",
     return !_.contains(builtIn, element)
 
   _setLabelValue: (newValue) ->
+    throw "NOT IMPLEMENTED YET"
     @props.element.label = newValue
 
   _editElement: ->

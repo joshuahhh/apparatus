@@ -9,13 +9,13 @@ window.NewSystem = NewSystem
 
 tree = new NewSystem.Tree()
 changeList = new NewSystem.ChangeList([
-  new NewSystem.Change_CloneSymbol("Group", "myGroup")
-  new NewSystem.Change_CloneSymbol("Rectangle", "myRectangle")
-  new NewSystem.Change_AddChild(
+  {type: "CloneSymbol", "Group", "myGroup")
+  {type: "CloneSymbol", "Rectangle", "myRectangle")
+  {type: "AddChild",
     new NewSystem.NodeRef_Pointer("myGroup/root"),
     new NewSystem.NodeRef_Pointer("myRectangle/root"),
     Infinity)
-  # BuiltinEnvironment.changes_SetAttributeExpression(
+  # {type: "SetAttributeExpression", 
   #   # it's really interesting that this id path sucks so much...
   #   new NewSystem.NodeRef_Pointer("group/master/transform/x/root"),
   #   "ref1 * 2 + ref2",

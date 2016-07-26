@@ -47,11 +47,11 @@ module.exports = (BuiltinEnvironment) ->
         ]
     }
     [
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "X", "x", "0.00")...
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "Y", "y", "0.00")...
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "Scale X", "sx", "1.00")...
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "Scale Y", "sy", "1.00")...
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "Rotate", "rotate", "0.00")...
+      {type: "AddAttributeToParent", parentId: "root", label: "X", name: "x", exprString: "0.00"}
+      {type: "AddAttributeToParent", parentId: "root", label: "Y", name: "y", exprString: "0.00"}
+      {type: "AddAttributeToParent", parentId: "root", label: "Scale X", name: "sx", exprString: "1.00"}
+      {type: "AddAttributeToParent", parentId: "root", label: "Scale Y", name: "sy", exprString: "1.00"}
+      {type: "AddAttributeToParent", parentId: "root", label: "Rotate", name: "rotate", exprString: "0.00"}
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "FillComponent", "Component",
@@ -61,7 +61,7 @@ module.exports = (BuiltinEnvironment) ->
       graphicClass: Graphic.FillComponent
     }
     [
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "Fill Color", "color", "rgba(0.93, 0.93, 0.93, 1.00)")...
+      {type: "AddAttributeToParent", parentId: "root", label: "Fill Color", name: "color", exprString: "rgba(0.93, 0.93, 0.93, 1.00)"}
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "StrokeComponent", "Component",
@@ -71,8 +71,8 @@ module.exports = (BuiltinEnvironment) ->
       graphicClass: Graphic.StrokeComponent
     }
     [
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "Stroke Color", "color", "rgba(0.60, 0.60, 0.60, 1.00)")...
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "Line Width", "lineWidth", "1")...
+      {type: "AddAttributeToParent", parentId: "root", label: "Stroke Color", name: "color", exprString: "rgba(0.60, 0.60, 0.60, 1.00)"}
+      {type: "AddAttributeToParent", parentId: "root", label: "Line Width", name: "lineWidth", exprString: "1"}
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "PathComponent", "Component",
@@ -82,7 +82,7 @@ module.exports = (BuiltinEnvironment) ->
       graphicClass: Graphic.PathComponent
     }
     [
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "Close Path", "closed", "true")...
+      {type: "AddAttributeToParent", parentId: "root", label: "Close Path", name: "closed", exprString: "true"}
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "TextComponent", "Component",
@@ -92,9 +92,9 @@ module.exports = (BuiltinEnvironment) ->
       graphicClass: Graphic.TextComponent
     }
     [
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "Text", "text", '"Text"')...
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "Font", "fontFamily", '"Lucida Grande"')...
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "Color", "color", "rgba(0.20, 0.20, 0.20, 1.00)")...
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "Align", "textAlign", '"start"')...
-      BuiltinEnvironment.changes_AddAttributeToParent("root", "Baseline", "textBaseline", '"alphabetic"')...
+      {type: "AddAttributeToParent", parentId: "root", label: "Text", name: "text", exprString: '"Text"'}
+      {type: "AddAttributeToParent", parentId: "root", label: "Font", name: "fontFamily", exprString: '"Lucida Grande"'}
+      {type: "AddAttributeToParent", parentId: "root", label: "Color", name: "color", exprString: "rgba(0.20, 0.20, 0.20, 1.00)"}
+      {type: "AddAttributeToParent", parentId: "root", label: "Align", name: "textAlign", exprString: '"start"'}
+      {type: "AddAttributeToParent", parentId: "root", label: "Baseline", name: "textBaseline", exprString: '"alphabetic"'}
     ]

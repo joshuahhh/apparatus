@@ -10,7 +10,13 @@ R.create "Outline",
 
   render: ->
     {project} = @context
-    element = project.editingElement
+
+    symbol = project.__fullEnvironment.getSymbolById(project.editingSymbolId)
+    tree = symbol.getTree(project.__fullEnvironment)
+    rootNode = tree.getNodeById("root")
+
+    element = rootNode.bundle
+
     R.div {className: "Outline"},
       R.div {className: "Header"}, "Outline"
       R.div {className: "Scroller"},
@@ -19,7 +25,7 @@ R.create "Outline",
 
 R.create "OutlineTree",
   propTypes:
-    element: Model.Element
+    element: "any"
 
   contextTypes:
     dragManager: R.DragManager
@@ -55,12 +61,12 @@ R.create "OutlineTree",
 
   annotation: ->
     # Used for drag reording.
-    {element: @props.element}
+    {elementBundle: @props.element}
 
 
 R.create "OutlineChildren",
   propTypes:
-    element: Model.Element
+    element: "any"
 
   mixins: [R.AnnotateMixin]
 
@@ -78,7 +84,7 @@ R.create "OutlineChildren",
 
 R.create "OutlineItem",
   propTypes:
-    element: Model.Element
+    element: "any"
 
   contextTypes:
     project: Model.Project
@@ -221,7 +227,7 @@ R.create "OutlineItem",
       if quadrance < bestDropSpot.quadrance
         bestDropSpot = {quadrance, outlineChildrenEl, beforeOutlineTreeEl}
 
-    allowedDraggingClasses = element.getAllowedShapeInterpretationContext().map((interpretationContext) -> 
+    allowedDraggingClasses = element.getAllowedShapeInterpretationContext().map((interpretationContext) ->
       ".OutlineChildren." + interpretationContext).join(", ")
 
     # All the places within which we could drop.

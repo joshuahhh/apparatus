@@ -65,7 +65,7 @@ module.exports = (BuiltinEnvironment) ->
 
       controlledAttributes: ->
         controlledAttributes = []
-        for controlledAttributeLink in @childrenOfType(Model.ControlledAttributeLink)
+        for controlledAttributeLink in @childBundlesOfType("isControlledAttributeLink")
           attribute = controlledAttributeLink.target()
           controlledAttributes.push(attribute)
         return controlledAttributes
@@ -76,7 +76,7 @@ module.exports = (BuiltinEnvironment) ->
         @addChild(controlledAttributeLink)
 
       removeControlledAttribute: (attributeToRemove) ->
-        for controlledAttributeLink in @childrenOfType(Model.ControlledAttributeLink)
+        for controlledAttributeLink in @childBundlesOfType("isControlledAttributeLink")
           attribute = controlledAttributeLink.target()
           if attribute == attributeToRemove
             @removeChild(controlledAttributeLink)
@@ -214,16 +214,14 @@ module.exports = (BuiltinEnvironment) ->
         return @depth() > 20
     }
     [
-      new NewSystem.Change_RunConstructor("root", "setUpElement")
+      {type: "RunConstructor", nodeId: "root", methodName: "setUpElement", methodArguments: []}
     ]
 
-  BuiltinEnvironment.changes_AddVariableToElement = (elementId, variableCloneId) ->
-    variableId = NewSystem.buildId(variableCloneId, "root")
-
+  BuiltinEnvironment.addCompoundChangeType "AddVariableToElement", (elementId, variableCloneId) ->
     [
-      new NewSystem.Change_CloneSymbol("Variable", variableCloneId)
-      BuiltinEnvironment.changes_SetAttributeExpression(variableId, "0.00")...
-      new NewSystem.Change_AddChild(elementId, variableId, Infinity)
+      {type: "CloneSymbol", symbolId: "Variable", cloneId: variableCloneId}
+      {type: "SetAttributeExpression", attributeId: NewSystem.buildId(variableCloneId, "root"), exprString: "0.00"}
+      {type: "AddChild", parentId: "elementId", childId: "variableId", insertionIndex: Infinity}
     ]
 
   # Shape Interpretation Contexts
@@ -242,7 +240,7 @@ module.exports = (BuiltinEnvironment) ->
         return [RENDERING]
     }
     [
-      BuiltinEnvironment.changes_CloneSymbolAndAddToParent("root", "TransformComponent", "transform")...
+      {type: "CloneSymbolAndAddToParent", parentId: "root", symbolId: "TransformComponent", cloneId: "transform"}
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Group", "Shape",
@@ -280,16 +278,15 @@ module.exports = (BuiltinEnvironment) ->
 
     graphicClass: Graphic.Anchor
 
-  BuiltinEnvironment.changes_AddAnchorToParent = (parentId, anchorCloneId, x, y) ->
+  BuiltinEnvironment.addCompoundChangeType "AddAnchorToParent", ({parentId, anchorCloneId, x, y}) ->
     anchorId = NewSystem.buildId(anchorCloneId, "root")
     xId = NewSystem.buildId(anchorCloneId, "transform", "x", "root")
     yId = NewSystem.buildId(anchorCloneId, "transform", "y", "root")
 
     [
-      new NewSystem.Change_CloneSymbol("Anchor", anchorCloneId)
-      BuiltinEnvironment.changes_SetAttributeExpression(xId, x)...
-      BuiltinEnvironment.changes_SetAttributeExpression(yId, y)...
-      new NewSystem.Change_AddChild(parentId, anchorId, Infinity)
+      {type: "CloneSymbolAndAddToParent", parentId: parentId, symbolId: "Anchor", cloneId: anchorCloneId}
+      {type: "SetAttributeExpression", attributeId: xId, exprString: x, references: {}}
+      {type: "SetAttributeExpression", attributeId: yId, exprString: y, references: {}}
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Path", "Shape",
@@ -298,9 +295,9 @@ module.exports = (BuiltinEnvironment) ->
       graphicClass: Graphic.Path
     }
     [
-      BuiltinEnvironment.changes_CloneSymbolAndAddToParent("root", "PathComponent", "path")...
-      BuiltinEnvironment.changes_CloneSymbolAndAddToParent("root", "FillComponent", "fill")...
-      BuiltinEnvironment.changes_CloneSymbolAndAddToParent("root", "StrokeComponent", "stroke")...
+      {type: "CloneSymbolAndAddToParent", parentId: "root", symbolId: "PathComponent", cloneId: "path"}
+      {type: "CloneSymbolAndAddToParent", parentId: "root", symbolId: "FillComponent", cloneId: "fill"}
+      {type: "CloneSymbolAndAddToParent", parentId: "root", symbolId: "StrokeComponent", cloneId: "stroke"}
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Circle", "Path",
@@ -318,10 +315,10 @@ module.exports = (BuiltinEnvironment) ->
         return [ANCHOR_COLLECTION]
     }
     [
-      BuiltinEnvironment.changes_AddAnchorToParent("root", "1", "0.00", "0.00")...
-      BuiltinEnvironment.changes_AddAnchorToParent("root", "2", "0.00", "1.00")...
-      BuiltinEnvironment.changes_AddAnchorToParent("root", "3", "1.00", "1.00")...
-      BuiltinEnvironment.changes_AddAnchorToParent("root", "4", "1.00", "0.00")...
+      {type: "AddAnchorToParent", parentId: "root", anchorCloneId: "1", x: "0.00", y: "0.00"}
+      {type: "AddAnchorToParent", parentId: "root", anchorCloneId: "2", x: "0.00", y: "1.00"}
+      {type: "AddAnchorToParent", parentId: "root", anchorCloneId: "3", x: "1.00", y: "1.00"}
+      {type: "AddAnchorToParent", parentId: "root", anchorCloneId: "4", x: "1.00", y: "0.00"}
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "Text", "Shape",
@@ -332,5 +329,5 @@ module.exports = (BuiltinEnvironment) ->
       graphicClass: Graphic.Text
     }
     [
-      BuiltinEnvironment.changes_CloneSymbolAndAddToParent("root", "TextComponent", "text")...
+      {type: "CloneSymbolAndAddToParent", parentId: "root", symbolId: "TextComponent", cloneId: "text"}
     ]

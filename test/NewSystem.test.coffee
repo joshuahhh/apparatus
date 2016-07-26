@@ -2,6 +2,8 @@ _ = require("underscore")
 test = require("tape")
 
 NewSystem = require("../src/NewSystem/NewSystem")
+# TODO: Should these basic changes be put someplace outside BuiltinEnvironment?
+BuiltinEnvironment = require("../src/NewSystem/BuiltinEnvironment")
 
 
 test "getNodeById works", (t) ->
@@ -15,84 +17,77 @@ test "getNodeById works", (t) ->
   t.end()
 
 
-test "Change_AddNode basically works", (t) ->
+test "AddNode basically works", (t) ->
   tree = new NewSystem.Tree([new NewSystem.TreeNode("a")])
-  change = new NewSystem.Change_AddNode("b")
-  change.apply(tree, null)  # no environment needed
+  change = {type: "AddNode", nodeId: "b"}
+  BuiltinEnvironment.resolveChange(change).apply(tree, null)  # no environment needed
   t.deepEqual(tree.nodes.map((node) => node.id), ["a", "b"])
   t.end()
 
 
-test "Change_AddChild basically works", (t) ->
+test "AddChild basically works", (t) ->
   tree = new NewSystem.Tree([
     node_a = new NewSystem.TreeNode("a"),
     node_b = new NewSystem.TreeNode("b"),
   ])
-  change = new NewSystem.Change_AddChild(
-    "a",
-    "b",
-    Infinity
-  )
-  change.apply(tree, null)  # no environment needed
+  change = {type: "AddChild", parentId: "a", childId: "b", insertionIndex: Infinity}
+  BuiltinEnvironment.resolveChange(change).apply(tree, null)  # no environment needed
   t.deepEqual(node_a.childIds, ["b"])
   t.end()
 
 
-test "Change_CloneSymbol basically works", (t) ->
-  environment = new NewSystem.Environment({
-    mySymbol: new NewSystem.Symbol(
-      new NewSystem.ChangeList([
-        new NewSystem.Change_AddNode("a"),
-        new NewSystem.Change_AddNode("b"),
-        new NewSystem.Change_AddChild(
-          "a",
-          "b",
-          Infinity
-        ),
-      ])
-    )
-  })
+test "CloneSymbol basically works", (t) ->
+  environment = new NewSystem.CompoundEnvironment([
+    BuiltinEnvironment
+    new NewSystem.Environment
+      mySymbol: new NewSystem.Symbol(
+        new NewSystem.ChangeList([
+          {type: "AddNode", nodeId: "a"}
+          {type: "AddNode", nodeId: "b"}
+          {type: "AddChild", parentId: "a", childId: "b", insertionIndex: Infinity}
+        ])
+      )
+  ])
   tree = new NewSystem.Tree([node_a = new NewSystem.TreeNode("a")])
-  change = new NewSystem.Change_CloneSymbol("mySymbol", "myCloneId")
-  change.apply(tree, environment)
+  change = {type: "CloneSymbol", symbolId: "mySymbol", cloneId: "myCloneId"}
+  environment.resolveChange(change).apply(tree, environment)
   t.deepEqual(tree.nodes.map((node) => node.id), ["a", "myCloneId/a", "myCloneId/b"], "We have the right nodeIds")
   t.deepEqual(tree.getNodeById("myCloneId/a").childIds, ["myCloneId/b"], "Child relationships are preserved")
   t.end()
 
 
-test "'Group' integration test", (t) ->
-  environment = new NewSystem.Environment
-    Node: new NewSystem.Symbol(
-      new NewSystem.ChangeList([
-        new NewSystem.Change_AddNode("root"),
-      ])
-    )
-    Transform: new NewSystem.Symbol(
-      new NewSystem.ChangeList([
-        new NewSystem.Change_CloneSymbol("Node", "")
-      ])
-    )
-    Group: new NewSystem.Symbol(
-      new NewSystem.ChangeList([
-        new NewSystem.Change_AddNode("groupNode"),
-        new NewSystem.Change_CloneSymbol("Transform", "transform"),
-        new NewSystem.Change_AddChild(
-          "groupNode",
-          "transform/root",
-          Infinity
-        ),
-      ])
-    )
+test "'MyGroup' integration test", (t) ->
+  environment = new NewSystem.CompoundEnvironment [
+    BuiltinEnvironment
+    new NewSystem.Environment
+      MyNode: new NewSystem.Symbol(
+        new NewSystem.ChangeList [
+          {type: "AddNode", nodeId: "root"}
+        ]
+      )
+      MyTransform: new NewSystem.Symbol(
+        new NewSystem.ChangeList [
+          {type: "CloneSymbol", symbolId: "MyNode", cloneId: ""}
+        ]
+      )
+      MyGroup: new NewSystem.Symbol(
+        new NewSystem.ChangeList [
+          {type: "CloneSymbol", symbolId: "MyNode", cloneId: ""}
+          {type: "CloneSymbol", symbolId: "MyTransform", cloneId: "transform"}
+          {type: "AddChild", parentId: "root", childId: "transform/root", insertionIndex: Infinity}
+        ]
+      )
+  ]
   tree = new NewSystem.Tree()
-  change = new NewSystem.Change_CloneSymbol("Group", "group1")
-  change.apply(tree, environment)
+  change = {type: "CloneSymbol", symbolId: "MyGroup", cloneId: ""}
+  BuiltinEnvironment.resolveChange(change).apply(tree, environment)
   t.deepEqual(
     tree.nodes.map((node) -> _.pick(node, "id", "childIds")),
     [
-      id: "group1/groupNode"
-      childIds: ["group1/transform/root"]
+      id: "root"
+      childIds: ["transform/root"]
     ,
-      id: "group1/transform/root"
+      id: "transform/root"
       childIds: []
     ]
   )

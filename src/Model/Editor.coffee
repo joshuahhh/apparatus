@@ -189,6 +189,7 @@ module.exports = class Editor
     @maxUndoStackSize = 100
 
   checkpoint: ->
+    return  # TODO: checkpointing disabled for now
     jsonString = @saveToLocalStorage()
     return if @current == jsonString
     @undoStack.push(@current)

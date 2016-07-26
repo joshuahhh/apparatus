@@ -21,10 +21,10 @@ global.BuiltinEnvironment = BuiltinEnvironment  # TODO: temp
 # CURRENT SOLUTION: Bundles! I guess?
 
 
-BuiltinEnvironment.changes_CloneSymbolAndAddToParent = (parentId, symbolId, cloneId) ->
+BuiltinEnvironment.addCompoundChangeType "CloneSymbolAndAddToParent", ({parentId, symbolId, cloneId}) ->
   [
-    new NewSystem.Change_CloneSymbol(symbolId, cloneId)
-    new NewSystem.Change_AddChild(parentId, NewSystem.buildId(cloneId, "root"), Infinity)
+    {type: "CloneSymbol", symbolId: symbolId, cloneId: cloneId}
+    {type: "AddChild", parentId: parentId, childId: NewSystem.buildId(cloneId, "root"), insertionIndex: Infinity}
   ]
 
 (require "./BuiltinEnvironment.Node")(BuiltinEnvironment)

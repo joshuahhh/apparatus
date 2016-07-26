@@ -119,7 +119,6 @@ class Graphic.Path extends Graphic.Element
       return null
 
   performPaintOps: ({ctx}) ->
-    console.log("components:", @components)
     for component in @componentsOfType(Graphic.PaintOp)
       component.paint(ctx)
 

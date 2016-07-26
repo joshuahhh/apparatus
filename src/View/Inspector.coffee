@@ -23,6 +23,9 @@ R.create "FullAttributesList",
   propTypes:
     element: Model.Element
 
+  contextTypes:
+    project: Model.Project
+
   render: ->
     element = @props.element
 
@@ -42,7 +45,11 @@ R.create "FullAttributesList",
 
   _addVariable: ->
     {element} = @props
-    element.addVariable()
+    {project} = @context
+
+    project.addChanges(
+      {type: "AddVariableToElement", element.node.id, Util.generateId())
+    )
 
 
 R.create "ComponentSection",
@@ -80,7 +87,7 @@ R.create "NovelAttributesList",
 
     R.div {className: "AttributesList"},
       for attribute, i in element.allAttributes()
-        shouldShow = attribute.isNovel() or attribute.isVariantOf(Model.Variable)
+        shouldShow = attribute.isNovel() or attribute.isVariable?()
         if shouldShow
           R.AttributeRow {key: i, attribute}
       if element == project.editingElement

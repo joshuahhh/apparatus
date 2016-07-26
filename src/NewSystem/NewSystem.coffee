@@ -122,7 +122,7 @@ class NewSystem.Tree
 
 
 class NewSystem.Environment
-  constructor: (@symbols = {}, @mixins = {}) ->
+  constructor: (@symbols = {}, @mixins = {}, @changeTypes = {}) ->
     # For now, @symbols maps symbolId => Symbol
 
   getSymbolById: (symbolId) ->
@@ -136,6 +136,27 @@ class NewSystem.Environment
 
   addMixin: (mixinId, mixin) ->
     @mixins[mixinId] = mixin
+
+  getChangeTypeById: (changeTypeId) ->
+    @changeTypes[changeTypeId]
+
+  addChangeType: (changeTypeId, changeType) ->
+    changeType.id = changeTypeId
+    @changeTypes[changeTypeId] = changeType
+
+  addAtomicChangeType: (changeTypeId, applyFunc) ->
+    @addChangeType(changeTypeId, new NewSystem.AtomicChangeType(applyFunc))
+
+  addCompoundChangeType: (changeTypeId, expandFunc) ->
+    @addChangeType(changeTypeId, new NewSystem.CompoundChangeType(expandFunc))
+
+  resolveChange: (change) ->
+    changeType = @getChangeTypeById(change.type)
+    if not changeType
+      console.log _.keys(@changeTypes)
+      throw "Change type #{change.type} not found!"
+
+    return new NewSystem.ResolvedChange(changeType, _.omit(change, "type"))
 
   getTreeForSymbol: (symbolId) ->
     # IMPORTANT: Do not mutate the result of this method! It's a tree which
@@ -157,17 +178,16 @@ class NewSystem.Environment
     @addMixin(mixinId, mixin)
 
     if masterSymbolId
-      rootChange = new NewSystem.Change_CloneSymbol(masterSymbolId, "")
+      rootChange = {type: "CloneSymbol", symbolId: masterSymbolId, cloneId: ""}
     else
       # If "masterSymbolId" is undefined, then we're starting from a bare node,
       # instead of making a variant of an existing symbol. (This is used for
       # defining the traditional Apparatus "Node".)
-
-      rootChange = new NewSystem.Change_AddNode("root")
+      rootChange = {type: "AddNode", nodeId: "root"}
 
     allChanges = [
       rootChange
-      new NewSystem.Change_ExtendNodeWithMixin("root", mixinId)
+      {type: "ExtendNodeWithMixin", nodeId: "root", mixinId: mixinId}
       changes...
     ]
     changeList = new NewSystem.ChangeList(allChanges)
@@ -179,7 +199,7 @@ class NewSystem.CompoundEnvironment extends NewSystem.Environment
   constructor: (@childEnvironments = []) ->
 
   getSymbolById: (symbolId) ->
-    for childEnvironment in childEnvironments
+    for childEnvironment in @childEnvironments
       maybeSymbol = childEnvironment.getSymbolById(symbolId)
       if maybeSymbol then return maybeSymbol
 
@@ -187,11 +207,19 @@ class NewSystem.CompoundEnvironment extends NewSystem.Environment
     throw "Not implemented: CompoundEnvironment is read-only"
 
   getMixinById: (mixinId) ->
-    for childEnvironment in childEnvironments
-      maybeMixin = childEnvironment.getMixinById(symbolId)
+    for childEnvironment in @childEnvironments
+      maybeMixin = childEnvironment.getMixinById(mixinId)
       if maybeMixin then return maybeMixin
 
   addMixin: (mixinId, mixin) ->
+    throw "Not implemented: CompoundEnvironment is read-only"
+
+  getChangeTypeById: (changeTypeId) ->
+    for childEnvironment in @childEnvironments
+      maybeChangeType = childEnvironment.getChangeTypeById(changeTypeId)
+      if maybeChangeType then return maybeChangeType
+
+  addChangeType: (changeTypeId, changeType) ->
     throw "Not implemented: CompoundEnvironment is read-only"
 
 
@@ -305,126 +333,35 @@ class NewSystem.TreeCloneOrigin
 # the tree, or just de-parent it? What happens if, post-cloning, some descendent
 # node is moved outside the deleted node?
 
-class NewSystem.Change
-  constructor: () ->
 
-  apply: (tree, environment) ->
+# A ChangeType (instance of NewSystem.ChangeType) is a type of change, as you might refer
+# to with a name such as "AddChild" or "SetAttributeExpression".
+
+class NewSystem.ChangeType
+  apply: (parameters, tree, environment) ->
     throw ["Not implemented!", this]
-
-  toString: ->
-    propStrings = for own propName, propValue of this
-      "#{propName} = #{@propValueToString(propName, propValue)}"
-    return @constructor.name.slice(7) + ": " + propStrings.join(", ")
 
   propValueToString: (propName, propValue) ->
     # to be overridden in special cases
-    return propValue.toString()
+    return propValue?.toString()
 
-class NewSystem.Change_AddNode extends NewSystem.Change
-  constructor: (@newNodeId) ->
+class NewSystem.AtomicChangeType
+  constructor: (@applyFunc) ->
 
-  apply: (tree, environment) ->
-    # Can't fail!
-    tree.addNode(new NewSystem.TreeNode(@newNodeId))
-    return
+  apply: (parameters, tree, environment) ->
+    @applyFunc(parameters, tree, environment)
 
-class NewSystem.Change_CloneSymbol extends NewSystem.Change
-  constructor: (@symbolId, @newCloneId) ->
-    # An empty-string @newCloneId stands for cloning-as-master
-    if not _.isString(@newCloneId)
-      throw "Change_CloneSymbol needs a string-valued newCloneId!"
+class NewSystem.CompoundChangeType
+  constructor: (@expandFunc) ->
 
-  apply: (tree, environment) ->
-    # Fails if symbol doesn't exist
-    symbolTree = environment.getTreeForSymbol(@symbolId)
-    clonedTree = symbolTree.makeClone(@symbolId, @newCloneId)
-    tree.mergeTree(clonedTree)
-    return
+  expand: (parameters) ->
+    return @expandFunc(parameters)
 
-# PARENTS AND CHILDREN
+  apply: (parameters, tree, environment) ->
+    expanded = @expand(parameters)
+    for change in expanded
+      environment.resolveChange(change).apply(tree, environment)
 
-class NewSystem.Change_AddChild extends NewSystem.Change
-  constructor: (@parentId, @childId, @insertionIndex) ->
-    if not _.isNumber(@insertionIndex)
-      throw "Change_AddChild needs a numeric insertionIndex! (Can be `Infinity`.)"
-
-  apply: (tree, environment) ->
-    # Fails if either parent or child doesn't exist
-    tree.addChildToNode(@parentId, @childId, @insertionIndex)
-    return
-
-class NewSystem.Change_DeparentNode extends NewSystem.Change
-  constructor: (@nodeId) ->
-
-  apply: (tree, environment) ->
-    # Fails if child doesn't exist
-    tree.deparentNode(@nodeId)
-    return
-
-# LINKS
-
-class NewSystem.Change_SetNodeLinkTarget extends NewSystem.Change
-  constructor: (@nodeId, @linkKey, @targetId) ->
-
-  apply: (tree, environment) ->
-    # Fails if node or target don't exist
-    tree.getNodeById(@nodeId).setLinkTarget(@linkKey, @targetId)
-    return
-
-class NewSystem.Change_RemoveNodeLink extends NewSystem.Change
-  constructor: (@nodeId, @linkKey) ->
-
-  apply: (tree, environment) ->
-    # Fails if node doesn't exist
-    tree.getNodeById(@nodeId).setLinkTarget(@linkKey, undefined)
-    return
-
-class NewSystem.Change_RemoveAllLinks extends NewSystem.Change
-  constructor: (@nodeId) ->
-
-  apply: (tree, environment) ->
-    # Fails if node doesn't exist
-    tree.getNodeById(@nodeId).removeAllLinks()
-    return
-
-# IN THE BUNDLE
-
-class NewSystem.Change_ExtendNodeWithMixin extends NewSystem.Change
-  constructor: (@nodeId, @mixinId) ->
-
-  apply: (tree, environment) ->
-    # Fails if node doesn't exist or mixin doesn't exist
-    tree.getNodeById(@nodeId).extendBundle(environment.getMixinById(@mixinId))
-    return
-
-class NewSystem.Change_ExtendNodeWithLiteral extends NewSystem.Change
-  constructor: (@nodeId, @literal) ->
-
-  apply: (tree, environment) ->
-    # Fails if node doesn't exist
-    tree.getNodeById(@nodeId).extendBundle(@literal)
-    return
-
-  propValueToString: (propName, propValue) ->
-    if propName == "literal"
-      return JSON.stringify(propValue)
-    else
-      return propValue.toString()
-
-class NewSystem.Change_RunConstructor extends NewSystem.Change
-  constructor: (@nodeId, @methodName, @methodArguments = []) ->
-
-  apply: (tree, environment) ->
-    # Fails if node or method don't exist
-    tree.getNodeById(@nodeId).runConstructorAndRemember(@methodName, @methodArguments)
-    return
-
-class NewSystem.Change_Log extends NewSystem.Change
-  constructor: () ->
-
-  apply: (tree, environment) ->
-    console.log tree
-    return
 
 indent = (text, spaces) ->
   text
@@ -433,6 +370,21 @@ indent = (text, spaces) ->
     .join("\n")
 
 indentLevel = 0
+
+# A ResolvedChange (instance of NewSystem.ResolvedChange) is a resolved
+# ChangeType together with a set of parameters. It is ready to be applied to a
+# tree!
+
+class NewSystem.ResolvedChange
+  constructor: (@changeType, @parameters) ->
+
+  apply: (tree, environment) ->
+    @changeType.apply(@parameters, tree, environment)
+
+  toString: ->
+    propStrings = for own paramName, paramValue of @parameters
+      "#{propName} = #{@changeType.propValueToString(propName, propValue)}"
+    return @changeType.id + ": " + propStrings.join(", ")
 
 class NewSystem.ChangeList
   constructor: (@changes = []) ->
@@ -452,12 +404,16 @@ class NewSystem.ChangeList
         console.error(change)
         throw "ChangeLists should contain Changes, not arrays!"
       tree.recomputeRedundancies()
-      # console.log("Running change #{i + 1}/#{@changes.length} in ChangeList: ", change.toString())
-      change.apply(tree, environment)
+      # console.log("Running change #{i + 1}/#{@changes.length} in ChangeList: ", JSON.stringify(change))
+      resolvedChange = environment.resolveChange(change)
+      resolvedChange.apply(tree, environment)
     tree.recomputeRedundancies()
 
   addChange: (change) ->
     @changes.push(change)
+
+  addChanges: (changes) ->
+    @changes.push(changes...)
 
   numChanges: ->
     @changes.length
