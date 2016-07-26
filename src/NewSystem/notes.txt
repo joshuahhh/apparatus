@@ -1,0 +1,140 @@
+
+# 2016-07-18
+#
+# A case study on CLONING and CONSTRUCTORS:
+#
+# Apparatus nodes sometimes need complex bits of mutable state which require
+# per-node set-up. For instance, Attributes have a @value Dataflow cell which
+# needs to be hooked up to the right value function, bound to the right `this`.
+# (NOTE: Some of this state could maybe be re-engineered? But let's put that
+# aside for now.) This means that for every Attribute which is added to a
+# diagram, directly or indirectly (through nth-order cloning), we need to run
+# some set-up code.
+#
+# At first I thought I had a good solution to this: add a "RunMethod" change to
+# the Attribute symbol's changelist. But with the current cloning system
+# (construct-then-copy), this doesn't work: the constructed mutable state
+# refers to the ORIGINAL nodes, and when you clone them, it is misdirected.
+#
+# If we used the construct-in-place cloning system, this wouldn't be a problem,
+# since the "RunMethod" change would be running on what would ultimately be the
+# final node in the diagram.
+#
+# But I am wary of adopting construct-in-place, since it means we can't keep
+# around pre-built trees to clone as needed... it shuts off a LOT of
+# opportunities for memoization. (Implementation is also a liiittle bit tricky,
+# since you need to keep the context of what "place" you're cloning into around
+# for everything you do, rather than just ignoring it, and having a single
+# centralized copy method.)
+#
+# How can we implement constructor (or constructor-like) behavior in a
+# construct-then-copy world? One option is just to do what Apparatus does now:
+# have constructors, and run them on copy. I am wary of this for exactly one
+# reason: how do you stack up constructors? Does each constructor have to refer
+# to previous ones explicitly? Can we just assume they run in order, and
+# maintain a constructor queue? (I really don't want to rely on JS inheritance
+# bullshit, or have nodes referring to their "masters". NO SLAVES, NO MASTERS.)
+# Or maybe we can keep the existing API, with "RunMethod", but keep a "methods
+# to run on copy" queue? That sounds real slick. I think I'll do that for now.
+# (But I think I'll switch to calling them "constructors", since that makes
+# their semantics more clear?)
+
+# 2016-07-18
+#
+# On what changes can be:
+#
+# So I coded up a bunch of "changesForX" methods, which take a living node and
+# generate a list of changes which achieve a given effect. I used them in tests
+# and everything looked great.
+#
+# I was implementing Element::changesForAddVariable, and it seemed clear that it
+# should call Attribute::changesForSetExpression. I realized I was in trouble:
+# changesForX methods live on live nodes, but they're supposed to construct
+# static representations of potential future changes. How can I call
+# changesForSetExpression on attributes which I am only imagining and never
+# actually creating?
+#
+# I saw two roads forward:
+#
+# 1. Change the interface that changesForX methods work with, so that they
+# actually perform the changes as they go, and can refer to intermediate
+# products when deriving future changes in the list.
+#
+# 2. Design the set of changes so that you never need access to live nodes to
+# construct compound change-lists. Better way to put this: design the set of
+# changes so that all "changesForX" methods can be static methods. (That way,
+# Element::changesForAddVariable can call Attribute::changesForSetExpression.)
+#
+# Thinking about it, I realized that "never need[ing] access to live nodes to
+# construct compound change-lists" was actually a requirement for another
+# important reason: robustness of changes to modifications of earlier cloned
+# symbols. Attribute::changesForSetExpression is a very good example here. In
+# its current implementation, it looks at existing references and pushes changes
+# to remove them. Those individual changes then become the permanent source of
+# truth on the symbol's change-list. But what if you're setting an expression
+# which comes from a cloned symbol, and the symbol's expression changes to have
+# different references? The individual reference-removals you hard-coded on the
+# change-list are no longer valid, and your diagram will be corrupted.
+#
+# So there's actually an elegant convenience here: by writing your changesForX
+# methods statically, you ensure they don't rely on any tree state (other than
+# the explicitly provided arguments), which is likely to make change-lists more
+# robust. I like this a lot.
+#
+# To be clear, this requires that more types of changes be implemented. You
+# can't just depend on some RISC. But I like this, because higher-level changes
+# do a better job of expressing programmer intent, and can do a better job of
+# accurately performing this intent in a shifting environment.
+
+# 2016-07-19
+#
+# On IDs:
+#
+# change_X functions shouldn't call Util.generateId(), since this introduces
+# non-determinism, and these functions are used to set up the built-in
+# environment. Util.generateId() should only really be called by the UI, in
+# response to user interactions.
+
+
+# 2016-07-25
+#
+# Recent thoughts:
+#
+# 1. createVariantOfBuiltinSymbol should probably make shortcuts for ALL
+# pointers on the master, not just "root". So when you define Shape, you make a
+# pointer "transform" to the TransformComponent, and then that pointer persists
+# even as you define different nth-order clones of Shape. This way, you don't
+# need to count out "master"s when you want to refer to some Shape's transform.
+# Not sure how this fits with the desire to have createVariantOfBuiltinSymbol be
+# "static" (not depend on rendered trees) – how do we know what pointers exist
+# and should be cloned? One way to keep it static: explicitly list which
+# pointers should be rewritten. Another way to keep it static: make rewriting
+# pointers part of a Change. For instance, there could be an argument to
+# Change_CloneSymbol called "copyPointers".
+#
+# 2. I am troubled by the fragility of node IDs, as determined by the cloning
+# hierarchy. For instance, if I want to change how Attributes work, by adding a
+# new "superclass", then this will change the node-IDs of all attributes. My
+# hope, that existing user-change-lists would be compatible with the new
+# BuiltinEnvironment, would fail, if the user changes refer to attributes using
+# their whole node ID.
+#
+# 3. OH WAIT the above two issues (really one issue) can be resolved if we have
+# a concept of a "primary" cloning operation (of a symbol which could be called
+# a "master"), which, rather than just preserving pointers, actually preserves
+# node IDs. When you perform a primary-clone, you don't prepend a clone-id to
+# the node IDs; you keep them as they are. I think this makes a lot of sense. My
+# one concern is, what happens to our ability to apply new changes in the
+# definitions of cloned symbols "in place"? (This isn't something we support
+# now, and it might never be, but I was happy that I was keeping the door open
+# to this feature, or ones like it.) Well, let's think this out: If we wanted to
+# have a feature like this, we'd need to keep track of what clones exist in our
+# tree (no matter what). So we have some list of cloning-ids, together with
+# their origins and relevant metadata. This list would necessarily NOT be
+# affected by the node-id compression: it would use paths with "master". (We
+# need to distinguish from "master" and "master/master" clonings!) So then, if
+# we wanted to apply a change to, say, the "master/master/transform/master"
+# cloning, we would take the local node ids in the change and prepend
+# "transform" to put them in context. I guess the "master"s don't really matter
+# here? OK this is confusing but my intuition is that everything still works.
+# Let's do this!
