@@ -51,11 +51,17 @@ class NewSystem.Tree
 
   makeClone: (symbolId, cloneId) ->
     toReturn = new NewSystem.Tree(
-      @nodes.map((node) -> node.clone(cloneId)),
+      @nodes.map((node) -> node.clone(cloneId))
       @cloneOrigins.map((cloneOrigin) -> cloneOrigin.clone(cloneId))
         .concat([new NewSystem.TreeCloneOrigin(cloneId, symbolId)])
     )
     return toReturn
+
+  makeCopy: ->
+    return new NewSystem.Tree(
+      _.invoke(@nodes, "makeCopy")
+      _.invoke(@cloneOrigins, "makeCopy")
+    )
 
   mergeTree: (tree) ->
     for node in tree.nodes
@@ -276,6 +282,22 @@ class NewSystem.TreeNode
 
     return newNode
 
+  makeCopy: ->
+    # TODO: this is kinda dumb?
+
+    newNode = new NewSystem.TreeNode(
+      @id
+      @childIds.slice(0)
+      _.clone(@linkTargetIds)
+      Object.create(@bundle),  # We use prototypes only for efficiency, not dynamics!
+      @constructors.slice(0)  # UGH WHAT A BUG; where are my immutable data structures...
+    )
+
+    for [methodName, methodArguments] in @constructors
+      newNode.runConstructor(methodName, methodArguments)
+
+    return newNode
+
   extendBundle: (obj) ->
     _.extend @bundle, obj
 
@@ -316,6 +338,9 @@ class NewSystem.TreeCloneOrigin
       NewSystem.buildId(cloneId, @id),
       @symbolId
     )
+
+  makeCopy: ->
+    return new NewSystem.TreeCloneOrigin(@id, @symbolId)
 
 # A "Change" is a description of a change which can be performed to a tree.
 # Changes are a static, syntactic sort of thing, except for the "apply" method.

@@ -1,0 +1,21 @@
+class Environment
+  qualifyCommit: (unqualifiedCommit) ->
+    if unqualifiedCommit is undefined
+      return an empty tree
+
+    if there's an up-to-date qualifiedCommit with qualifiedCommit.master == unqualifiedCommit
+      return it!
+    else
+      parentUnqualifiedCommit = unqualifiedCommit.parent
+      parentQualifiedCommit = @qualifyCommit(parentUnqualifiedCommit)
+      qualifiedCommit = parentQualifiedCommit.applyUnqualifiedCommit(unqualifiedCommit)
+      return qualifiedCommit
+
+  isUpToDate: (qualifiedCommit) ->
+    for symbolId, dependencyQualifiedCommit of qualifiedCommit.versions
+
+
+
+
+
+SUPER DUMB VERSION:
