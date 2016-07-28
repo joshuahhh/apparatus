@@ -39,6 +39,9 @@ module.exports = class Project
   editingSymbol: ->
     return @__fullEnvironment.getSymbolById(@editingSymbolId)
 
+  editingTree: ->
+    return @editingSymbol().getTree(@__fullEnvironment)
+
   setEditing: (symbolId) ->
     @editingSymbolId = symbolId
     @selectedParticularElement = null
@@ -48,7 +51,7 @@ module.exports = class Project
       @selectedParticularElement = null
       return
     @selectedParticularElement = particularElement
-    @_expandToElement(particularElement.element)
+    @_expandToElement(particularElement.element(@editingTree()))
 
   _expandToElement: (element) ->
     while element = element.parentBundle()
@@ -59,7 +62,7 @@ module.exports = class Project
   # Actions
   # ===========================================================================
 
-  createNewSymbol: ->
+  createNewSymbol: (symbolId) ->
     symbolId = Util.generateId()
 
     changes = [
@@ -74,35 +77,47 @@ module.exports = class Project
     return symbolId
 
   addChanges: (changes) ->
-    @editingSymbol().changeList.addChanges(changes)
+    @editingSymbol().addChanges(changes)
 
-    console.log("#{@editingSymbolId} is now:\n" + @editingSymbol().changeList.toString())
+    # console.log("#{@editingSymbolId} is now:\n" + @editingSymbol().changeList.toString())
 
   setExpression: (attributeId, exprString, references) ->
+    console.log("Project::setExpression", attributeId, exprString, references)
     @addChanges [
       {type: "SetAttributeExpression", attributeId: attributeId, exprString: exprString, references: references}
     ]
 
+  createElement: (symbolId) ->
+    cloneId = Util.generateId()
+    @addChanges [
+      {type: "AddChildFromClonedSymbol", parentId: "root", insertionIndex: Infinity, symbolId, cloneId}
+    ]
+
+    newParticularElement = new Model.ParticularElement(NewSystem.buildId(cloneId, "root"))
+    @select(newParticularElement)
+    return newParticularElement
+
   removeSelectedElement: ->
-    throw "NOT IMPLEMENTED YET"
     return unless @selectedParticularElement
-    selectedElement = @selectedParticularElement.element
+    selectedElement = @selectedParticularElement.element(@editingTree())
     parent = selectedElement.parent()
     return unless parent
-    parent.removeChild(selectedElement)
+    @addChanges [
+      {type: "DeparentNode", nodeId: selectedElement.node.id}
+    ]
     @select(null)
 
   groupSelectedElement: ->
     throw "NOT IMPLEMENTED YET"
     return unless @selectedParticularElement
-    selectedElement = @selectedParticularElement.element
+    selectedElement = @selectedParticularElement.element(@editingTree())
     parent = selectedElement.parent()
     return unless parent
     group = Model.Group.createVariant()
     group.expanded = true
     parent.replaceChildWith(selectedElement, group)
     group.addChild(selectedElement)
-    @select(new Model.ParticularElement(group))
+    @select(new Model.ParticularElement(group.node.id))
 
   duplicateSelectedElement: ->
     throw "NOT IMPLEMENTED YET"
@@ -110,7 +125,7 @@ module.exports = class Project
     # is not in createPanelElements. This leads to weirdness with showing
     # novel attributes in the right sidebar.
     return unless @selectedParticularElement
-    selectedElement = @selectedParticularElement.element
+    selectedElement = @selectedParticularElement.element(@editingTree())
     parent = selectedElement.parent()
     return unless parent
     firstClone = selectedElement.createVariant()
@@ -118,18 +133,18 @@ module.exports = class Project
     parent.replaceChildWith(selectedElement, firstClone)
     index = parent.children().indexOf(firstClone)
     parent.addChild(secondClone, index+1)
-    @select(new Model.ParticularElement(secondClone))
+    @select(new Model.ParticularElement(secondClone.node.id))
 
   createSymbolFromSelectedElement: ->
     throw "NOT IMPLEMENTED YET"
     return unless @selectedParticularElement
-    selectedElement = @selectedParticularElement.element
+    selectedElement = @selectedParticularElement.element(@editingTree())
     parent = selectedElement.parent()
     return unless parent
     master = selectedElement
     variant = selectedElement.createVariant()
     parent.replaceChildWith(selectedElement, variant)
-    @select(new Model.ParticularElement(variant))
+    @select(new Model.ParticularElement(variant.node.id))
     # Insert master into createPanelElements.
     index = @createPanelElements.indexOf(@editingElement)
     @createPanelElements.splice(index, 0, master)
@@ -169,10 +184,10 @@ module.exports = class Project
   # ===========================================================================
 
   controlledAttributes: ->
-    return @selectedParticularElement?.element.controlledAttributes() ? []
+    return @selectedParticularElement?.element(@editingTree()).controlledAttributes() ? []
 
   implicitlyControlledAttributes: ->
-    return @selectedParticularElement?.element.implicitlyControlledAttributes() ? []
+    return @selectedParticularElement?.element(@editingTree()).implicitlyControlledAttributes() ? []
 
   controllableAttributes: ->
-    return @selectedParticularElement?.element.controllableAttributes() ? []
+    return @selectedParticularElement?.element(@editingTree()).controllableAttributes() ? []

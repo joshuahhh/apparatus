@@ -56,6 +56,22 @@ test "CloneSymbol basically works", (t) ->
   t.end()
 
 
+test "Node::makeCopy basically works", (t) ->
+  myNode = new NewSystem.TreeNode("myNode", ["child1", "child2"], {}, {myNodeProperty: "myNodeProperty"})
+
+  myClonedNode = myNode.clone("myClone")
+  myClonedNode.bundle.myClonedNodeProperty = "myClonedNodeProperty"
+  t.deepEqual(myClonedNode.id, "myClone/myNode", "id is cloned correctly")
+  t.deepEqual(myClonedNode.bundle.myNodeProperty, "myNodeProperty", "bundle is cloned correctly")
+
+  myClonedNodeCopy = myClonedNode.makeCopy()
+  t.deepEqual(myClonedNodeCopy.id, "myClone/myNode", "id is copied correctly")
+  t.deepEqual(myClonedNodeCopy.bundle.myClonedNodeProperty, "myClonedNodeProperty", "bundle is copied correctly")
+  t.deepEqual(myClonedNodeCopy.bundle.myNodeProperty, "myNodeProperty", "cloned part of bundle is copied correctly")
+
+  t.end()
+
+
 test "'MyGroup' integration test", (t) ->
   environment = new NewSystem.CompoundEnvironment [
     BuiltinEnvironment

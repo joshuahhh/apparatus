@@ -35,13 +35,15 @@ R.create "Picture",
     element = @props.element
     viewMatrix = @_viewMatrix()
 
+    tree = project.editingTree()
+
     highlight = (graphic) ->
       particularElement = graphic.particularElement
-      if hoverManager.controllerParticularElement?.isAncestorOf(particularElement)
+      if hoverManager.controllerParticularElement?.isAncestorOf(particularElement, tree)
         return {color: "#c00", lineWidth: 2.5}
-      if project.selectedParticularElement?.isAncestorOf(particularElement)
+      if project.selectedParticularElement?.isAncestorOf(particularElement, tree)
         return {color: "#09c", lineWidth: 2.5}
-      if hoverManager.hoveredParticularElement?.isAncestorOf(particularElement)
+      if hoverManager.hoveredParticularElement?.isAncestorOf(particularElement, tree)
         return {color: "#0c9", lineWidth: 2.5}
 
     renderOpts = {ctx, viewMatrix, highlight}

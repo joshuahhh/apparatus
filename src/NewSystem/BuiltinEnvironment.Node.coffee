@@ -81,6 +81,12 @@ module.exports = (BuiltinEnvironment) ->
     # Fails if either parent or child doesn't exist
     tree.addChildToNode(parentId, childId, insertionIndex)
 
+  BuiltinEnvironment.addCompoundChangeType "AddChildFromClonedSymbol", ({parentId, insertionIndex, symbolId, cloneId}) ->
+    [
+      {type: "CloneSymbol", symbolId, cloneId}
+      {type: "AddChild", parentId, childId: NewSystem.buildId(cloneId, "root"), insertionIndex}
+    ]
+
   BuiltinEnvironment.addAtomicChangeType "DeparentNode", ({nodeId}, tree, environment) ->
     # Fails if child doesn't exist
     tree.deparentNode(nodeId)

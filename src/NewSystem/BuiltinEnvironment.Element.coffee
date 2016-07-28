@@ -188,7 +188,7 @@ module.exports = (BuiltinEnvironment) ->
         graphic = new @graphicClass()
 
         spreadEnv = Dataflow.currentSpreadEnv()
-        graphic.particularElement = new Model.ParticularElement(this, spreadEnv)
+        graphic.particularElement = new Model.ParticularElement(@node.id, spreadEnv)
 
         graphic.matrix = @accumulatedMatrix()
 

@@ -49,13 +49,15 @@ R.create "Canvas",
     {project, hoverManager} = @context
     viewMatrix = @_viewMatrix()
 
+    tree = project.editingTree()
+
     highlight = (graphic) ->
       particularElement = graphic.particularElement
-      if hoverManager.controllerParticularElement?.isAncestorOf(particularElement)
+      if hoverManager.controllerParticularElement?.isAncestorOf(particularElement, tree)
         return {color: "#c00", lineWidth: 2.5}
-      if project.selectedParticularElement?.isAncestorOf(particularElement)
+      if project.selectedParticularElement?.isAncestorOf(particularElement, tree)
         return {color: "#09c", lineWidth: 2.5}
-      if hoverManager.hoveredParticularElement?.isAncestorOf(particularElement)
+      if hoverManager.hoveredParticularElement?.isAncestorOf(particularElement, tree)
         return {color: "#0c9", lineWidth: 2.5}
 
     renderOpts = {ctx, viewMatrix, highlight}
@@ -91,7 +93,7 @@ R.create "Canvas",
   _drawBackgroundGrid: (ctx) ->
     {project} = @context
 
-    matrix = project.selectedParticularElement?.contextMatrix()
+    matrix = project.selectedParticularElement?.contextMatrix(project.editingTree())
     matrix ?= new Util.Matrix()
 
     matrix = @_viewMatrix().compose(matrix)
@@ -149,11 +151,11 @@ R.create "Canvas",
     selectedParticularElement = project.selectedParticularElement
     return [] unless selectedParticularElement
 
-    matrix = selectedParticularElement.accumulatedMatrix()
+    matrix = selectedParticularElement.accumulatedMatrix(project.editingTree())
     return [] unless matrix
     matrix = @_viewMatrix().compose(matrix)
 
-    controlPoints = selectedParticularElement.element.controlPoints()
+    controlPoints = selectedParticularElement.element(project.editingTree()).controlPoints()
     for controlPoint in controlPoints
       controlPoint.point = matrix.fromLocal(controlPoint.point)
 
@@ -191,8 +193,8 @@ R.create "Canvas",
     {dragManager} = @context
     return unless dragManager.drag?.type == "createElement"
 
-    element = dragManager.drag.element
-    @_createElement(mouseEvent, element)
+    symbolId = dragManager.drag.symbolId
+    @_createElement(mouseEvent, symbolId)
 
   _onMouseLeave: (mouseEvent) ->
     # TODO
@@ -221,6 +223,8 @@ R.create "Canvas",
     {project} = @context
     selectedParticularElement = project.selectedParticularElement
 
+    tree = project.editingTree()
+
     hits = @_hitDetect(mouseEvent)
 
     controlPoint = @_hitDetectControlPoint(mouseEvent)
@@ -230,7 +234,7 @@ R.create "Canvas",
       return null if controlPoint
       return null unless hits
       for hit in hits
-        return hit if hit.element.isController()
+        return hit if hit.element(tree).isController()
       return null
 
     # What to select if it's a double click.
@@ -245,14 +249,14 @@ R.create "Canvas",
       # Find "deepest sibling"
       for hit, index in hits
         nextHit = hits[index + 1]
-        if !nextHit or nextHit.isAncestorOf(selectedParticularElement)
+        if !nextHit or nextHit.isAncestorOf(selectedParticularElement, tree)
           return hit
 
     # What to select if it's a single click.
     nextSelectSingle = do ->
       return null if !nextSelectDouble
       return selectedParticularElement if controller or controlPoint
-      if selectedParticularElement?.isAncestorOf(nextSelectDouble)
+      if selectedParticularElement?.isAncestorOf(nextSelectDouble, tree)
         return selectedParticularElement
       else
         return nextSelectDouble
@@ -260,9 +264,9 @@ R.create "Canvas",
     if controlPoint
       attributesToChange = controlPoint.attributesToChange
     else if controller
-      attributesToChange = controller.element.attributesToChange()
+      attributesToChange = controller.element(tree).attributesToChange()
     else if nextSelectSingle
-      attributesToChange = nextSelectSingle.element.attributesToChange()
+      attributesToChange = nextSelectSingle.element(tree).attributesToChange()
     else
       attributesToChange = []
 
@@ -299,7 +303,7 @@ R.create "Canvas",
       particularElementToDrag = controller ? nextSelectSingle
 
     if particularElementToDrag
-      accumulatedMatrix = particularElementToDrag.accumulatedMatrix()
+      accumulatedMatrix = particularElementToDrag.accumulatedMatrix(project.editingTree())
       originalMousePixel = @_mousePosition(mouseDownEvent)
       originalMouseLocal = @_viewMatrix().compose(accumulatedMatrix).toLocal(originalMousePixel)
       @_startDrag(mouseDownEvent, particularElementToDrag, attributesToChange, originalMouseLocal)
@@ -307,7 +311,7 @@ R.create "Canvas",
       @_startPan(mouseDownEvent)
 
   _startDrag: (mouseDownEvent, particularElementToDrag, attributesToChange, originalMouseLocal, startImmediately=false) ->
-    {dragManager} = @context
+    {dragManager, project} = @context
 
     dragManager.start mouseDownEvent,
       onMove: (mouseMoveEvent) =>
@@ -329,7 +333,7 @@ R.create "Canvas",
             # back to their original values, to make it pure.
             @context.project.setExpression(attribute.node.id, trialValue, {})
             # attribute.setExpression(trialValue)
-          trialAccumulatedMatrix = particularElementToDrag.accumulatedMatrix()
+          trialAccumulatedMatrix = particularElementToDrag.accumulatedMatrix(project.editingTree())
           trialMousePixel = @_viewMatrix().compose(trialAccumulatedMatrix).fromLocal(originalMouseLocal)
           error = Util.quadrance(trialMousePixel, currentMousePixel)
           return error
@@ -349,17 +353,14 @@ R.create "Canvas",
     if startImmediately
       dragManager.drag.onMove(mouseDownEvent)
 
-  _createElement: (mouseEvent, element) ->
+  _createElement: (mouseEvent, symbolId) ->
     {project} = @context
 
-    parent = @_editingElement()
-    newElement = element.createVariant()
-    parent.addChild(newElement)
+    tree = project.editingTree()
 
-    newParticularElement = new Model.ParticularElement(newElement)
-    project.select(newParticularElement)
+    newParticularElement = project.createElement(symbolId)
 
-    attributesToChange = newParticularElement.element.attributesToChange()
+    attributesToChange = newParticularElement.element(tree).attributesToChange()
 
     @_startDrag(mouseEvent, newParticularElement, attributesToChange, [0, 0], true)
 
@@ -432,8 +433,7 @@ R.create "Canvas",
   _editingElement: ->
     {project} = @context
 
-    symbol = project.__fullEnvironment.getSymbolById(project.editingSymbolId)
-    tree = symbol.getTree(project.__fullEnvironment)
+    tree = project.editingTree()
     rootNode = tree.getNodeById("root")
 
     return rootNode.bundle

@@ -11,8 +11,7 @@ R.create "Outline",
   render: ->
     {project} = @context
 
-    symbol = project.__fullEnvironment.getSymbolById(project.editingSymbolId)
-    tree = symbol.getTree(project.__fullEnvironment)
+    tree = project.editingTree()
     rootNode = tree.getNodeById("root")
 
     element = rootNode.bundle
@@ -75,7 +74,7 @@ R.create "OutlineChildren",
     interpretationClasses = element.getAllowedShapeInterpretationContextForChildren().join(" ")
     R.div {className: "OutlineChildren " + interpretationClasses},
       for childElement in element.childElements()
-        R.OutlineTree {element: childElement, key: Util.getId(childElement)}
+        R.OutlineTree {element: childElement, key: childElement.node.id}
 
   annotation: ->
     # Used for drag reording.
@@ -146,7 +145,7 @@ R.create "OutlineItem",
     {element} = @props
     {dragManager, hoverManager} = @context
     return if dragManager.drag?
-    particularElement = new Model.ParticularElement(element)
+    particularElement = new Model.ParticularElement(element.node.id)
     hoverManager.hoveredParticularElement = particularElement
 
   _onMouseLeave: ->
@@ -170,7 +169,7 @@ R.create "OutlineItem",
   _select: ->
     {element} = @props
     {project} = @context
-    particularElement = new Model.ParticularElement(element)
+    particularElement = new Model.ParticularElement(element.node.id)
     project.select(particularElement)
 
 

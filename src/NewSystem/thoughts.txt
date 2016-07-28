@@ -18,4 +18,16 @@ class Environment
 
 
 
+class NewSystem.CommitWithoutDependencies
+  constructor: (@parent, @change) ->
+
+class NewSystem.CommitWithDependencies
+  constructor: (@master, @parent, @dependencies, @tree) ->
+
+
+
+
+
+
+
 SUPER DUMB VERSION:

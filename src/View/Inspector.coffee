@@ -9,7 +9,7 @@ R.create "Inspector",
 
   render: ->
     project = @context.project
-    element = project.selectedParticularElement?.element
+    element = project.selectedParticularElement?.element(project.editingTree())
 
     R.div {className: "Inspector"},
       R.div {className: "Header"},
@@ -36,12 +36,12 @@ R.create "FullAttributesList",
             "Variables"
         R.div {className: "ComponentSectionContent"},
           for attribute in element.variables()
-            R.AttributeRow {attribute, key: Util.getId(attribute)}
+            R.AttributeRow {attribute, key: attribute.node.id}
         R.div {className: "AddVariableRow"},
           R.button {className: "AddButton", onClick: @_addVariable}
 
       for component in element.components()
-        R.ComponentSection {component, key: Util.getId(component)}
+        R.ComponentSection {component, key: component.node.id}
 
   _addVariable: ->
     {element} = @props
@@ -65,7 +65,7 @@ R.create "ComponentSection",
           component.label
       R.div {className: "ComponentSectionContent"},
         for attribute in component.attributes()
-          R.AttributeRow {attribute, key: Util.getId(attribute)}
+          R.AttributeRow {attribute, key: attribute.node.id}
 
 
 # NovelAttributesList is used to show attributes in the Outline. A design

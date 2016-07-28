@@ -94,10 +94,6 @@ class NewSystem.Tree
     for node in @nodes
       node.parentId = undefined
 
-    # Clear parents
-    for node in @nodes
-      node.parentId = undefined
-
     # Assign parents
     for node in @nodes
       for childId in node.childIds
@@ -109,6 +105,7 @@ class NewSystem.Tree
     # Clear parents
     for node in @nodes
       delete node.parentId
+      delete node.tree
 
     @redundanciesUpToDate = false
 
@@ -150,6 +147,9 @@ class NewSystem.Environment
     changeType.id = changeTypeId
     @changeTypes[changeTypeId] = changeType
 
+  getChangeTypes: ->
+    @_changeTypes
+
   addAtomicChangeType: (changeTypeId, applyFunc) ->
     @addChangeType(changeTypeId, new NewSystem.AtomicChangeType(applyFunc))
 
@@ -159,7 +159,7 @@ class NewSystem.Environment
   resolveChange: (change) ->
     changeType = @getChangeTypeById(change.type)
     if not changeType
-      console.log _.keys(@changeTypes)
+      console.log _.keys(@getChangeTypes())
       throw "Change type #{change.type} not found!"
 
     return new NewSystem.ResolvedChange(changeType, _.omit(change, "type"))
@@ -228,21 +228,8 @@ class NewSystem.CompoundEnvironment extends NewSystem.Environment
   addChangeType: (changeTypeId, changeType) ->
     throw "Not implemented: CompoundEnvironment is read-only"
 
-
-class NewSystem.Symbol
-  constructor: (@changeList) ->
-    @__numChangesApplied = 0
-    @__tree = new NewSystem.Tree()
-
-  getTree: (environment) ->
-    # IMPORTANT: Do not mutate the result of this method! It's a tree which
-    # belongs to the symbol itself! You should view it, or clone it.
-
-    # TODO: assumes the change-list is append only
-    @changeList.apply(@__tree, environment, @__numChangesApplied)
-    @__numChangesApplied = @changeList.numChanges()
-    return @__tree
-
+  getChangeTypes: ->
+    _.extend {}, (childEnvironment.getChangeTypes() for childEnvironment in @childEnvironments)...
 
 class NewSystem.TreeNode
   constructor: (@id, @childIds = [], @linkTargetIds = {}, @bundle = {}, @constructors = []) ->
@@ -273,7 +260,7 @@ class NewSystem.TreeNode
       maybeBuildId(@id)
       @childIds.map maybeBuildId
       _.mapObject @linkTargetIds, maybeBuildId
-      Object.create(@bundle),  # We use prototypes only for efficiency, not dynamics!
+      Object.create(@bundle),
       @constructors.slice(0)  # UGH WHAT A BUG; where are my immutable data structures...
     )
 
@@ -289,7 +276,7 @@ class NewSystem.TreeNode
       @id
       @childIds.slice(0)
       _.clone(@linkTargetIds)
-      Object.create(@bundle),  # We use prototypes only for efficiency, not dynamics!
+      _.create(@bundle.__proto__, @bundle)
       @constructors.slice(0)  # UGH WHAT A BUG; where are my immutable data structures...
     )
 
@@ -308,6 +295,7 @@ class NewSystem.TreeNode
   runConstructor: (methodName, methodArguments=[]) ->
     method = @bundle[methodName]
     if not method
+      console.log(this)
       throw "Cannot find method #{methodName} in node #{@id}!"
     method.apply(@bundle, methodArguments)
 
@@ -396,11 +384,12 @@ indent = (text, spaces) ->
 
 indentLevel = 0
 
-# A ResolvedChange (instance of NewSystem.ResolvedChange) is a resolved
-# ChangeType together with a set of parameters. It is ready to be applied to a
-# tree!
-
 class NewSystem.ResolvedChange
+  ###
+  A ResolvedChange is a resolved ChangeType together with a set of parameters.
+  It is ready to be applied to a tree!
+  ###
+
   constructor: (@changeType, @parameters) ->
 
   apply: (tree, environment) ->
@@ -410,6 +399,7 @@ class NewSystem.ResolvedChange
     propStrings = for own paramName, paramValue of @parameters
       "#{propName} = #{@changeType.propValueToString(propName, propValue)}"
     return @changeType.id + ": " + propStrings.join(", ")
+
 
 class NewSystem.ChangeList
   constructor: (@changes = []) ->
@@ -432,6 +422,7 @@ class NewSystem.ChangeList
       # console.log("Running change #{i + 1}/#{@changes.length} in ChangeList: ", JSON.stringify(change))
       resolvedChange = environment.resolveChange(change)
       resolvedChange.apply(tree, environment)
+      # console.log("applying #{JSON.stringify(change)}")
     tree.recomputeRedundancies()
 
   addChange: (change) ->
@@ -442,3 +433,47 @@ class NewSystem.ChangeList
 
   numChanges: ->
     @changes.length
+
+  compact: ->
+    # Compactify tail SetAttributeExpressions
+    lastNonSetIndex = _.findLastIndex(@changes, (change) -> change.type != "SetAttributeExpression")
+    firstTailSetIndex = if lastNonSetIndex == -1 then 0 else lastNonSetIndex + 1
+
+    changesToKeepByAttributeId = {}
+    for i in [firstTailSetIndex...@changes.length]
+      change = @changes[i]
+      changesToKeepByAttributeId[change.attributeId] = change
+
+    @changes = @changes.slice(0, firstTailSetIndex)
+    @addChanges(_.values(changesToKeepByAttributeId))
+    # console.log {lastNonSetIndex, firstTailSetIndex}
+    return {numOverlappingChanges: firstTailSetIndex}
+
+class NewSystem.Symbol
+  constructor: (@changeList) ->
+    @__savedTrees = [new NewSystem.Tree()]
+
+  getTree: (environment) ->
+    # IMPORTANT: Do not mutate the result of this method! It's a tree which
+    # belongs to the symbol itself! You should view it, or clone it.
+
+    lastSavedTreeIndex = _.findLastIndex(@__savedTrees)
+    lastSavedTree = @__savedTrees[lastSavedTreeIndex]
+
+    # console.log("getTree #{lastSavedTreeIndex} / #{@changeList.numChanges()}")
+
+    if lastSavedTreeIndex == @changeList.numChanges()
+      return lastSavedTree
+
+    copy = lastSavedTree.makeCopy()
+    @__savedTrees[lastSavedTreeIndex] = copy
+
+    # TODO: assumes the change-list has only seen appends
+    @changeList.apply(lastSavedTree, environment, lastSavedTreeIndex)
+    @__savedTrees[@changeList.numChanges()] = lastSavedTree
+    return lastSavedTree
+
+  addChanges: (changes) ->
+    @changeList.addChanges(changes)
+    {numOverlappingChanges} = @changeList.compact()
+    @__savedTrees = @__savedTrees.slice(0, numOverlappingChanges)

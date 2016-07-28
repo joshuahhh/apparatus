@@ -2,23 +2,30 @@ Dataflow = require "../Dataflow/Dataflow"
 
 
 module.exports = class ParticularElement
-  constructor: (@element, @spreadEnv) ->
+  constructor: (@elementId, @spreadEnv) ->
     @spreadEnv ?= Dataflow.SpreadEnv.empty
 
+  element: (tree) ->
+    return tree.getNodeById(@elementId).bundle
+
   isEqualTo: (particularElement) ->
-    return @element == particularElement.element and
+    return @elementId == particularElement.elementId and
       @spreadEnv.isEqualTo(particularElement.spreadEnv)
 
-  isAncestorOf: (particularElement) ->
-    return @element.isAncestorOf(particularElement.element) and
+  isAncestorOf: (particularElement, tree) ->
+    element = tree.getNodeById(@elementId).bundle
+    otherElement = tree.getNodeById(particularElement.elementId).bundle
+    return element.isAncestorOf(otherElement) and
       @spreadEnv.contains(particularElement.spreadEnv)
 
-  accumulatedMatrix: ->
-    accumulatedMatrix = @element.accumulatedMatrix.asSpread()
+  accumulatedMatrix: (tree) ->
+    element = tree.getNodeById(@elementId).bundle
+    accumulatedMatrix = element.accumulatedMatrix.asSpread()
     accumulatedMatrix = @spreadEnv.resolveWithDefault(accumulatedMatrix)
     return accumulatedMatrix
 
-  contextMatrix: ->
-    contextMatrix = @element.contextMatrix.asSpread()
+  contextMatrix: (tree) ->
+    element = tree.getNodeById(@elementId).bundle
+    contextMatrix = element.contextMatrix.asSpread()
     contextMatrix = @spreadEnv.resolveWithDefault(contextMatrix)
     return contextMatrix

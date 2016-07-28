@@ -85,39 +85,40 @@ R.create "CreatePanelItem",
         }
 
   _isEditing: ->
-    {element} = @props
+    {symbolId} = @props
     {project} = @context
-    return element == project.editingElement
+    return symbolId == project.editingSymbolId
 
   _isEditable: ->
-    {element} = @props
-    builtIn = _.values(Model)
-    return !_.contains(builtIn, element)
+    {symbolId} = @props
+    {project} = @context
+    return !!project.userEnvironment.symbols[symbolId]
 
   _setLabelValue: (newValue) ->
     throw "NOT IMPLEMENTED YET"
     @props.element.label = newValue
 
   _editElement: ->
-    {element} = @props
+    {symbolId} = @props
     {project} = @context
-    project.setEditing(element)
+    project.setEditing(symbolId)
 
   _remove: ->
-    {element} = @props
+    throw "NOT IMPLEMENTED YET"
+    {symbolId} = @props
     {project} = @context
     project.createPanelElements = _.without(project.createPanelElements, element)
 
   _onMouseDown: (mouseDownEvent) ->
     {dragManager} = @context
-    {element} = @props
+    {symbolId} = @props
 
     mouseDownEvent.preventDefault()
     Util.clearTextFocus()
 
     dragManager.start mouseDownEvent,
       type: "createElement"
-      element: element
+      symbolId: symbolId
       onCancel: =>
         if @_isEditable()
           @_editElement()

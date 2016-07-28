@@ -108,9 +108,9 @@ module.exports = (BuiltinEnvironment) ->
         return @_analyzeDependencies().circularReferencePath
 
       parentElement: ->
-        result = @parent()
+        result = @parentBundle()
         until result.isElement?()
-          result = result.parent()
+          result = result.parentBundle()
         return result
     }
     [
