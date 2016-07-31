@@ -34,3 +34,5 @@ BuiltinEnvironment.addCompoundChangeType "CloneSymbolAndAddToParent", ({parentId
 (require "./BuiltinEnvironment.Component")(BuiltinEnvironment)
 
 (require "./BuiltinEnvironment.Element")(BuiltinEnvironment)
+
+(require "./BuiltinEnvironment.Link")(BuiltinEnvironment)

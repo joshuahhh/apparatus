@@ -380,7 +380,7 @@ R.create "Canvas",
         currentMousePixel = @_mousePosition(mouseMoveEvent)
         currentMouseLocal = @_viewMatrix().toLocal(currentMousePixel)
         offset = numeric.sub(currentMouseLocal, originalMouseLocal)
-        element.viewMatrix = element.viewMatrix.translate(offset...)
+        @_editingSymbol().viewMatrix = @_editingSymbol().viewMatrix.translate(offset...)
 
   _zoom: (wheelEvent) ->
     element = @_editingElement()
@@ -388,11 +388,11 @@ R.create "Canvas",
     mousePixel = @_mousePosition(wheelEvent)
     [x, y] = @_viewMatrix().toLocal(mousePixel)
 
-    matrix = element.viewMatrix
+    matrix = @_editingSymbol().viewMatrix
     matrix = matrix.translate(x, y)
     matrix = matrix.scale(scaleFactor, scaleFactor)
     matrix = matrix.translate(-x, -y)
-    element.viewMatrix = matrix
+    @_editingSymbol().viewMatrix = matrix
 
   _toggleLayout: ->
     { layout } = @context.editor
@@ -430,13 +430,11 @@ R.create "Canvas",
     el = R.findDOMNode(@)
     return @_rectCached = el.getBoundingClientRect()
 
+  _editingSymbol: ->
+    return @context.project.editingSymbol()
+
   _editingElement: ->
-    {project} = @context
-
-    tree = project.editingTree()
-    rootNode = tree.getNodeById("root")
-
-    return rootNode.bundle
+    return @_editingSymbol().getTree().getNodeById("root").bundle
 
   _graphics: (useCached=false) ->
     if useCached and @_cachedGraphics
@@ -445,9 +443,10 @@ R.create "Canvas",
     return @_cachedGraphics = element.allGraphics()
 
   _viewMatrix: ->
-    element = @_editingElement()
+    symbolViewMatrix = @_editingSymbol().viewMatrix
+
     rect = @_rect()
     {width, height} = rect
     screenMatrix = new Util.Matrix(1, 0, 0, -1, width / 2, height / 2)
-    elementViewMatrix = element.viewMatrix
-    return screenMatrix.compose(elementViewMatrix)
+
+    return screenMatrix.compose(symbolViewMatrix)

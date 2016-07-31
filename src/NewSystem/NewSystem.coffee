@@ -1,5 +1,6 @@
 _ = require "underscore"
 util = require "util"
+Util = require "../Util/Util"
 
 
 module.exports = NewSystem = {}
@@ -449,9 +450,15 @@ class NewSystem.ChangeList
     # console.log {lastNonSetIndex, firstTailSetIndex}
     return {numOverlappingChanges: firstTailSetIndex}
 
+
 class NewSystem.Symbol
   constructor: (@changeList) ->
     @__savedTrees = [new NewSystem.Tree()]
+
+    # TODO: it bums me out that this is in NewSystem
+    # viewMatrix determines the pan and zoom of a Symbol. The default is zoomed
+    # to 100 pixels per unit.
+    @viewMatrix = new Util.Matrix(100, 0, 0, 100, 0, 0)
 
   getTree: (environment) ->
     # IMPORTANT: Do not mutate the result of this method! It's a tree which

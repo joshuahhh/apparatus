@@ -5,12 +5,12 @@ Util = require "../Util/Util"
 
 R.create "Thumbnail",
   propTypes:
-    element: Model.Element
+    symbol: Object
 
   render: ->
-    element = @props.element
+    {symbol} = @props
     R.div {className: "Thumbnail"},
-      R.Picture {element}
+      R.Picture {symbol}
 
 
 
@@ -22,7 +22,7 @@ R.create "Picture",
     hoverManager: R.HoverManager
 
   propTypes:
-    element: Model.Element
+    symbol: Object
 
   render: ->
     R.HTMLCanvas {
@@ -32,8 +32,9 @@ R.create "Picture",
   _draw: (ctx) ->
     project = @context.project
     hoverManager = @context.hoverManager
-    element = @props.element
+    {symbol} = @props
     viewMatrix = @_viewMatrix()
+    element = symbol.getTree().getNodeById("root").bundle
 
     tree = project.editingTree()
 
@@ -52,11 +53,12 @@ R.create "Picture",
       graphic.render(renderOpts)
 
   _viewMatrix: ->
-    {element} = @props
+    {symbol} = @props
     {width, height} = @_size()
     screenMatrix = new Util.Matrix(0.1, 0, 0, -0.1, width / 2, height / 2)
-    elementViewMatrix = element.viewMatrix
-    return screenMatrix.compose(elementViewMatrix)
+    symbolViewMatrix = symbol.viewMatrix
+    # console.log(symbol, symbolViewMatrix)
+    return screenMatrix.compose(symbolViewMatrix)
 
   _size: ->
     return @_cachedSize if @_cachedSize

@@ -62,12 +62,12 @@ R.create "AttributeRow",
   _toggleControl: ->
     {attribute} = @props
     {project} = @context
-    selectedElement = project.selectedParticularElement?.element
+    selectedElement = project.selectedParticularElement?.element(project.editingTree())
     return unless selectedElement
     if @_isControlled()
-      selectedElement.removeControlledAttribute(attribute)
+      project.removeControlledAttribute(selectedElement.node.id, attribute.node.id)
     else
-      selectedElement.addControlledAttribute(attribute)
+      project.addControlledAttribute(selectedElement.node.id, attribute.node.id)
 
 
 R.create "AttributeLabel",

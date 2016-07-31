@@ -13,7 +13,8 @@ Apparatus.Model = Model
 Apparatus.Storage = Storage
 Apparatus.R = R
 Apparatus.Util = Util
-
+Apparatus.NewSystem = require "./NewSystem/NewSystem"
+Apparatus.BuiltinEnvironment = require "./NewSystem/BuiltinEnvironment"
 
 
 

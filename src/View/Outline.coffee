@@ -163,7 +163,14 @@ R.create "OutlineItem",
 
   _onClickTriangle: ->
     {element} = @props
-    element.expanded = !element.expanded
+    {project} = @context
+
+    newState = !element.expanded
+
+    project.addChanges [
+      {type: "ExtendNodeWithLiteral", nodeId: element.node.id, literal: {expanded: newState}}
+    ]
+
     return
 
   _select: ->

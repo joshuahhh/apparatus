@@ -54,8 +54,11 @@ module.exports = class Project
     @_expandToElement(particularElement.element(@editingTree()))
 
   _expandToElement: (element) ->
+    changes = []
     while element = element.parentBundle()
-      element.expanded = true
+      if not element.expanded
+        changes.push({type: "ExtendNodeWithLiteral", nodeId: element.node.id, literal: {expanded: true}})
+    @addChanges(changes)
 
 
   # ===========================================================================
@@ -82,7 +85,6 @@ module.exports = class Project
     # console.log("#{@editingSymbolId} is now:\n" + @editingSymbol().changeList.toString())
 
   setExpression: (attributeId, exprString, references) ->
-    console.log("Project::setExpression", attributeId, exprString, references)
     @addChanges [
       {type: "SetAttributeExpression", attributeId: attributeId, exprString: exprString, references: references}
     ]
@@ -96,6 +98,16 @@ module.exports = class Project
     newParticularElement = new Model.ParticularElement(NewSystem.buildId(cloneId, "root"))
     @select(newParticularElement)
     return newParticularElement
+
+  addControlledAttribute: (elementId, attributeId) ->
+    @addChanges [
+      {type: "AddControlledAttributeToElement", elementId, attributeId}
+    ]
+
+  removeControlledAttribute: (elementId, attributeId) ->
+    @addChanges [
+      {type: "RemoveControlledAttributeFromElement", elementId, attributeId}
+    ]
 
   removeSelectedElement: ->
     return unless @selectedParticularElement

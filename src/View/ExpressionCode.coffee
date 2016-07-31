@@ -41,6 +41,8 @@ R.create "ExpressionCode",
   componentDidMount: ->
     el = R.findDOMNode(@)
 
+    @suppressOnChange = false
+
     @mirror = CodeMirror(el, {
       mode: "javascript"
 
@@ -73,6 +75,10 @@ R.create "ExpressionCode",
     @_updateMirrorFromAttribute()
 
   _onChange: ->
+    if @suppressOnChange
+      @suppressOnChange = false
+      return
+
     @_updateAttributeFromMirror()
     if @mirror.hasFocus()
       @_showAutocomplete()
@@ -133,15 +139,14 @@ R.create "ExpressionCode",
       @_replaceAllWithReference(referenceAttribute)
 
   _replaceSelectionWithReference: (referenceAttribute) ->
-    console.log("_replaceSelectionWithReference:", referenceAttribute)
     {attribute} = @props
     references = attribute.references()
     referenceKey = Util.generateId()
     references[referenceKey] = referenceAttribute.node.id
-    console.log("references", references)
-    exprString = attribute.exprString
+    @mirror.replaceSelection(referenceKey)  # UNSAFE
+    exprString = @mirror.getValue()
     @context.project.setExpression(attribute.node.id, exprString, references)
-    @mirror.replaceSelection(referenceKey)
+    @suppressOnChange = true
 
   _replaceAllWithReference: (referenceAttribute) ->
     {attribute} = @props
@@ -170,7 +175,6 @@ R.create "ExpressionCode",
     value = @mirror.getValue()
     marks = []
     for own referenceKey, referenceAttribute of attribute.references()
-      console.log("here's a reference:", referenceKey, referenceAttribute, value)
       startChar = value.indexOf(referenceKey)
       continue if startChar == -1
       endChar = startChar + referenceKey.length
@@ -388,4 +392,4 @@ R.create "ExpressionCode",
         if key.command
           newValue = Util.roundToPrecision(newValue, precision - 1)
         newValue = Util.toPrecision(newValue, precision)
-        @mirror.replaceSelection(""+newValue, "around")
+        @mirror.replaceSelection(""+newValue, "around")  # SAFE

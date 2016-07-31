@@ -31,11 +31,6 @@ module.exports = (BuiltinEnvironment) ->
         for prop in propsToCellify
           this[prop] = Dataflow.cell(this["_" + prop].bind(this))
 
-      # viewMatrix determines the pan and zoom of an Element. It is only used for
-      # Elements that can be a Project.editingElement (i.e. Elements within the
-      # create panel). The default is zoomed to 100 pixels per unit.
-      viewMatrix: new Util.Matrix(100, 0, 0, 100, 0, 0)
-
 
       # ===========================================================================
       # Getters
@@ -69,17 +64,6 @@ module.exports = (BuiltinEnvironment) ->
           attribute = controlledAttributeLink.target()
           controlledAttributes.push(attribute)
         return controlledAttributes
-
-      addControlledAttribute: (attributeToAdd) ->
-        controlledAttributeLink = Model.ControlledAttributeLink.createVariant()
-        controlledAttributeLink.setTarget(attributeToAdd)
-        @addChild(controlledAttributeLink)
-
-      removeControlledAttribute: (attributeToRemove) ->
-        for controlledAttributeLink in @childBundlesOfType("isControlledAttributeLink")
-          attribute = controlledAttributeLink.target()
-          if attribute == attributeToRemove
-            @removeChild(controlledAttributeLink)
 
       isController: ->
         return @controlledAttributes().length > 0
@@ -223,6 +207,22 @@ module.exports = (BuiltinEnvironment) ->
       {type: "SetAttributeExpression", attributeId: NewSystem.buildId(variableCloneId, "root"), exprString: "0.00"}
       {type: "AddChild", parentId: "elementId", childId: "variableId", insertionIndex: Infinity}
     ]
+
+  BuiltinEnvironment.addCompoundChangeType "AddControlledAttributeToElement", ({elementId, attributeId}) ->
+    linkCloneId = Util.generateId()
+    [
+      {type: "CloneSymbolAndAddToParent", symbolId: "ControlledAttributeLink", cloneId: linkCloneId, parentId: elementId, insertionIndex: Infinity}
+      {type: "SetOldSchoolLinkTarget", linkId: NewSystem.buildId(linkCloneId, "root"), linkTargetId: attributeId}
+    ]
+
+  BuiltinEnvironment.addAtomicChangeType "RemoveControlledAttributeFromElement", ({elementId, attributeId}, tree, environment) ->
+    element = tree.getNodeById(elementId).bundle
+
+    for controlledAttributeLink in element.childBundlesOfType("isControlledAttributeLink")
+      curAttributeId = controlledAttributeLink.target().node.id
+      if curAttributeId == attributeId
+        tree.deparentNode(controlledAttributeLink.node.id)
+
 
   # Shape Interpretation Contexts
   RENDERING = 'renderingContext'

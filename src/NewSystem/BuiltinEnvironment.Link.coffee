@@ -12,12 +12,12 @@ module.exports = (BuiltinEnvironment) ->
       label: "Link"
 
       target: ->
-        @node.linkTargetBundles()["old_school_link"]
+        @linkTargetBundles()["old_school_link"]
     }
 
   BuiltinEnvironment.addCompoundChangeType "SetOldSchoolLinkTarget", ({linkId, linkTargetId}) ->
     [
-      {type: "SetNodeLinkTarget", nodeId: linkId, linkId: "old_school_link", targetId: linkTargetId}
+      {type: "SetNodeLinkTarget", nodeId: linkId, linkKey: "old_school_link", targetId: linkTargetId}
     ]
 
   BuiltinEnvironment.createVariantOfBuiltinSymbol "ControlledAttributeLink", "Link",

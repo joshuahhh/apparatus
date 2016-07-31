@@ -62,7 +62,7 @@ R.create "CreatePanelItem",
         className: "CreatePanelThumbnail"
         onMouseDown: @_onMouseDown
       },
-        R.Thumbnail {element: rootNode.bundle}
+        R.Thumbnail {symbol}
 
       if @_isEditable()
         R.span {},
